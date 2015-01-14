@@ -24,7 +24,6 @@
 #define _uglMsg_h
 
 #include "uglMsgTypes.h"
-#include "uglinput.h"
 
 /* Pointer buttons */
 #define UGL_PTR_BUTTON1        0x00000001
@@ -143,31 +142,6 @@ UGL_STATUS uglMsgQGet (
     UGL_MSG_Q_ID  qId,
     UGL_MSG      *pMsg,
     UGL_TIMEOUT   timeout
-    );
-
-/******************************************************************************
- *
- * uglInputMsgPost - Post message to input queue
- *
- * RETURNS: UGL_STATUS_OK or error code
- */
-
-UGL_STATUS uglInputMsgPost (
-    UGL_INPUT_SERVICE_ID  srvId,  
-    UGL_MSG              *pMsg
-    );
-
-/******************************************************************************
- *
- * uglInputMsgGet - Get message from input queue
- *
- * RETURNS: UGL_STATUS_OK or error code
- */
-
-UGL_STATUS uglInputMsgGet (
-    UGL_INPUT_SERVICE_ID  srvId,
-    UGL_MSG              *pMsg,
-    UGL_TIMEOUT           timeout
     );
 
 /******************************************************************************

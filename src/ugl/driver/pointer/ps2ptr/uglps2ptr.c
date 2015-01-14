@@ -37,7 +37,7 @@ typedef struct ugl_ps2_ptr_device {
 
 /* Locals */
 UGL_LOCAL UGL_INPUT_DEV_ID uglPs2PtrOpen (
-    char          *name,
+    UGL_CHAR      *name,
     UGL_INPUT_DRV *pDriver
     );
 
@@ -74,7 +74,7 @@ UGL_INPUT_DRV uglPsPtrDriver = {
  */
 
 UGL_LOCAL UGL_INPUT_DEV_ID uglPs2PtrOpen (
-    char          *name,
+    UGL_CHAR      *name,
     UGL_INPUT_DRV *pDriver
     ) {
     UGL_PS2_PTR_DEVICE *ps2Dev;

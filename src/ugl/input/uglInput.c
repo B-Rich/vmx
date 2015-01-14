@@ -30,7 +30,16 @@
 
 /* Defines */
 
-#define UGL_INPUT_Q_SIZE    64
+#define UGL_INPUT_Q_SIZE         64
+
+#define UGL_SERVICE_RUN           0
+#define UGL_SERVICE_IDLE          1
+#define UGL_SERVICE_DEAD          2
+#define UGL_SERVICE_IDLE_REQ      3
+#define UGL_SERVICE_RESUME_REQ    4
+#define UGL_SERVICE_KILL_REQ      5
+
+#define UGL_SERVICE_DELAY_CYCLE 100
 
 /* Types */
 
@@ -45,6 +54,7 @@ typedef struct ugl_input_service {
     struct ugl_cb_list    *pCbList;
     struct ugl_msg_queue  *pDefaultQ;
     struct ugl_msg_queue  *pInputQ;
+    struct ugl_input_dev  *ppDevice[UGL_MAX_INPUT_DEVICES];
 } UGL_INPUT_SERVICE;
 
 /* Locals */
@@ -52,6 +62,248 @@ typedef struct ugl_input_service {
 UGL_LOCAL UGL_VOID uglInputTask (
     UGL_INPUT_SERVICE_ID  srvId
     );
+
+LOCAL UGL_STATUS uglInputServiceIdle(
+    UGL_INPUT_SERVICE_ID  srvId
+    );
+
+LOCAL UGL_STATUS uglInputServiceResume(
+    UGL_INPUT_SERVICE_ID  srvId
+    );
+
+/******************************************************************************
+ *
+ * uglInputDevAdd - Add input device to input system
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputDevAdd (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_INPUT_DEV_ID      devId
+    ) {
+    UGL_STATUS  status;
+    UGL_ORD     devNum = 0;
+
+    if (srvId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        uglOSLock(srvId->lockId);
+
+        /* Find free slot in device list */
+        while (srvId->ppDevice[devNum] != UGL_NULL &&
+               devNum < UGL_MAX_INPUT_DEVICES) {
+            devNum++;
+        }
+
+        if (devNum >= UGL_MAX_INPUT_DEVICES) {
+            status = UGL_STATUS_ERROR;
+        }
+        else {
+            srvId->ppDevice[devNum] = devId;
+            devId->inputServiceId   = srvId;
+
+            uglOSUnlock(srvId->lockId);
+            status = UGL_STATUS_OK;
+        }
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * uglInputDevRemove - Remove input device from input system
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputDevRemove (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_INPUT_DEV_ID      devId
+    ) {
+    UGL_STATUS  status;
+    UGL_ORD     devNum = 0;
+
+    if (srvId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        uglInputServiceIdle(srvId);
+        uglOSUnlock(srvId->lockId);
+
+        /* Find device */
+        while (srvId->ppDevice[devNum] != devId &&
+               devNum < UGL_MAX_INPUT_DEVICES) {
+           devNum++;
+        }
+
+        /* Remove device */
+        if (devNum < UGL_MAX_INPUT_DEVICES) {
+            srvId->ppDevice[devNum] = UGL_NULL;
+            status = UGL_STATUS_OK;
+        }
+        else {
+            status = UGL_STATUS_ERROR;
+        }
+
+        uglOSUnlock(srvId->lockId);
+        uglInputServiceResume(srvId);
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * uglInputDevOpen - Open input device
+ *
+ * RETURNS: UGL_INPUT_DEV_ID or UGL_NULL
+ */
+
+UGL_INPUT_DEV_ID uglInputDevOpen (
+    UGL_CHAR       *name,
+    UGL_INPUT_DRV  *pDriver
+    ) {
+
+    return (*pDriver->open) (name, pDriver);
+}
+
+/******************************************************************************
+ *
+ * uglInputDevClose - Close input device
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputDevClose (
+    UGL_INPUT_DEV_ID  devId
+    ) {
+    UGL_STATUS  status;
+
+    if (devId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        if (devId->inputServiceId != UGL_NULL) {
+            uglInputDevRemove(devId->inputServiceId, devId);
+        }
+
+        status = (*devId->pDriver->close) (devId);
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * uglInputDevControl - Input device control
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputDevControl (
+    UGL_INPUT_DEV_ID  devId,
+    UGL_DEVICE_REQ    request,
+    void             *pArg
+    ) {
+    UGL_STATUS         status;
+    UGL_INPUT_SERVICE *pSrv;
+    UGL_RECT          *pRect;
+    UGL_POINT         *pPoint;
+    UGL_POINT          point;
+    UGL_MSG            msg;
+    UGL_UINT32         leds;
+
+    if (devId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        pSrv = devId->inputServiceId;
+
+        switch(request) {
+            case ICR_SET_PTR_POS:
+                pPoint = (UGL_POINT *) pArg;
+
+                if (pPoint->x < pSrv->boundingRect.left) {
+                    pPoint->x = pSrv->boundingRect.left;
+                }
+                else if (pPoint->x > pSrv->boundingRect.right) {
+                    pPoint->x = pSrv->boundingRect.right;
+                }
+
+                if (pPoint->y < pSrv->boundingRect.top) {
+                    pPoint->y = pSrv->boundingRect.top;
+                }
+                else if (pPoint->y > pSrv->boundingRect.bottom) {
+                    pPoint->y = pSrv->boundingRect.bottom;
+                }
+
+                if (pPoint->x != pSrv->position.x ||
+                    pPoint->y != pSrv->position.y) {
+
+                    msg.type                    = MSG_RAW_PTR;
+                    msg.objectId                = UGL_NULL_ID;
+                    msg.data.rawPtr.deviceId    = devId;
+                    msg.data.rawPtr.buttonState =
+                        (pSrv->modifiers & UGL_PTR_BUTTON_MASK);
+                    msg.data.rawPtr.isAbsolute  = UGL_TRUE;
+                    memcpy(&msg.data.rawPtr.pos.absolute,
+                           pPoint,
+                           sizeof(UGL_POINT));
+                    status = uglInputMsgPost(pSrv, &msg);
+                    if (status == UGL_STATUS_OK) {
+                        status = (*devId->pDriver->control) (
+                                     devId,
+                                     request,
+                                     pArg
+                                     );
+                    }
+                }
+                else {
+                    status = UGL_STATUS_OK;
+                }
+                break;
+
+            case ICR_SET_PTR_CONSTRAINT:
+                pRect = (UGL_RECT *) pArg;
+
+                memcpy(&pSrv->boundingRect, pRect, sizeof(UGL_RECT));
+
+                if (UGL_POINT_IN_RECT(pSrv->position, pSrv->boundingRect) ==
+                    UGL_FALSE) {
+
+                    memcpy(&point, &pSrv->position, sizeof(UGL_POINT));
+                    status = uglInputDevControl(devId, ICR_SET_PTR_POS, &point);
+                }
+                else {
+                    status = UGL_STATUS_OK;
+                }
+                break;
+
+            case ICR_SET_AUTO_LED_CONTROL:
+                pSrv->autoLedControl = *(UGL_BOOL *) pArg;
+                status = UGL_STATUS_OK;
+                break;
+
+            case ICR_SET_LED_STATE:
+                leds = *(UGL_UINT32 *) pArg;
+                status = uglInputDevControl(devId, ICR_SET_LED, &leds);
+                if (status == UGL_STATUS_OK) {
+                    leds = ~leds;
+                    status = uglInputDevControl(devId, ICR_CLEAR_LED, &leds);
+                }
+                break;
+
+            default:
+                status = (*devId->pDriver->control) (devId, request, pArg);
+                break;
+        }
+    }
+
+    return status;
+}
 
 /******************************************************************************
  *
@@ -170,6 +422,101 @@ UGL_INPUT_SERVICE_ID uglInputServiceCreate (
     }
 
     return pSrv;
+}
+
+/******************************************************************************
+ *
+ * uglInputServiceDestroy - Destroy input service
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputServiceDestroy (
+    UGL_INPUT_SERVICE_ID  srvId
+    ) {
+    UGL_STATUS  status;
+
+    if (srvId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+       srvId->taskState = UGL_SERVICE_KILL_REQ;
+       while (srvId->taskState != UGL_SERVICE_DEAD) {
+           uglOSTaskDelay(UGL_SERVICE_DELAY_CYCLE);
+       }
+
+       if (srvId->pInputQ != UGL_NULL) {
+           uglMsgQDestroy(srvId->pInputQ);
+       }
+
+       if (srvId->pDefaultQ != UGL_NULL) {
+           uglMsgQDestroy(srvId->pDefaultQ);
+       }
+
+       if (srvId->pCbList != UGL_NULL) {
+           uglCbListDestroy(srvId->pCbList);
+       }
+
+       uglOSLockDestroy(srvId->lockId);
+       UGL_FREE(srvId);
+       status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * uglInputServiceIdle - Put input service in idle mode
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+LOCAL UGL_STATUS uglInputServiceIdle(
+    UGL_INPUT_SERVICE_ID  srvId
+    ) {
+    STATUS  status;
+
+    if (srvId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        srvId->taskState = UGL_SERVICE_IDLE_REQ;
+        while (srvId->taskState != UGL_SERVICE_IDLE) {
+            uglOSTaskDelay(UGL_SERVICE_DELAY_CYCLE);
+        }
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * uglInputServiceResume - Resume input service from idle mode
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+LOCAL UGL_STATUS uglInputServiceResume(
+    UGL_INPUT_SERVICE_ID  srvId
+    ) {
+    STATUS  status;
+
+    if (srvId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        srvId->taskState = UGL_SERVICE_RESUME_REQ;
+        while (srvId->taskState != UGL_SERVICE_RUN) {
+            uglOSTaskDelay(UGL_SERVICE_DELAY_CYCLE);
+        }
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
 }
 
 /******************************************************************************

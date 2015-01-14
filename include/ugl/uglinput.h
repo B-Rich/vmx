@@ -23,6 +23,8 @@
 #ifndef _uglinput_h
 #define _uglinput_h
 
+#include "uglMsg.h"
+
 /* Basic settings */
 #define UGL_MAX_INPUT_DEVICES            10
 #define UGL_INPUT_TASK_PRIORITY          60
@@ -36,7 +38,7 @@
 
 /* Input device requests */
 #define ICR_SET_PTR_POS                   1
-#define ICR_SET_PTR_CONSTANT              2
+#define ICR_SET_PTR_CONSTRAINT            2
 #define ICR_SET_AUTO_LED_CONTROL          3
 #define ICR_SET_LED                       4
 #define ICR_CLEAR_LED                     5
@@ -94,6 +96,116 @@ typedef struct {
     UGL_UINT32    filterMax;
     void         *pParam;
 } UGL_INPUT_CB_ITEM;
+
+/* Functions */
+
+/******************************************************************************
+ *
+ * uglInputDevAdd - Add input device to input system
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputDevAdd (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_INPUT_DEV_ID      devId
+    );
+
+/******************************************************************************
+ *
+ * uglInputDevRemove - Remove input device from input system
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputDevRemove (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_INPUT_DEV_ID      devId
+    );
+
+/******************************************************************************
+ *
+ * uglInputDevOpen - Open input device
+ *
+ * RETURNS: UGL_INPUT_DEV_ID or UGL_NULL
+ */
+
+UGL_INPUT_DEV_ID uglInputDevOpen (
+    UGL_CHAR       *name,
+    UGL_INPUT_DRV  *pDriver
+    );
+
+/******************************************************************************
+ *
+ * uglInputDevClose - Close input device
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputDevClose (
+    UGL_INPUT_DEV_ID  devId
+    );
+
+/******************************************************************************
+ *
+ * uglInputDevControl - Input device control
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputDevControl (
+    UGL_INPUT_DEV_ID  devId,
+    UGL_DEVICE_REQ    request,
+    void             *pArg
+    );
+
+/******************************************************************************
+ *
+ * uglInputMsgPost - Post message to input queue
+ *
+ * RETURNS: UGL_STATUS_OK or error code
+ */
+
+UGL_STATUS uglInputMsgPost (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_MSG              *pMsg
+    );
+
+/******************************************************************************
+ *
+ * uglInputMsgGet - Get message from input queue
+ *
+ * RETURNS: UGL_STATUS_OK or error code
+ */
+
+UGL_STATUS uglInputMsgGet (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_MSG              *pMsg,
+    UGL_TIMEOUT           timeout
+    );
+
+/******************************************************************************
+ *
+ * uglInputServiceCreate - Create input service
+ *
+ * RETURNS: UGL_INPUT_SERVICE_ID or UGL_NULL
+ */
+
+UGL_INPUT_SERVICE_ID uglInputServiceCreate (
+    UGL_RECT           *pInputRect,
+    UGL_INPUT_CB_ITEM  *pInputCbArray
+    );
+
+/******************************************************************************
+ *
+ * uglInputServiceDestroy - Destroy input service
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputServiceDestroy (
+    UGL_INPUT_SERVICE_ID  srvId
+    );
 
 #ifdef __cplusplus
 }

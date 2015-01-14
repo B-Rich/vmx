@@ -183,7 +183,7 @@ UGL_STATUS uglOSUnlock (
  */
 
 UGL_TASK_ID uglOSTaskCreate (
-    char       *name,
+    UGL_CHAR   *name,
     UGL_FPTR    entry,
     UGL_UINT32  priority,
     UGL_UINT32  options,

@@ -88,6 +88,7 @@ typedef UGL_STATUS (*UGL_FPTR) (void);
 
 /* Misc */
 #define UGL_NULL                ((void *) 0)
+#define UGL_NULL_ID             0
 #define UGL_LOCAL               static
 #define UGL_TRUE                ((UGL_BOOL) 1)
 #define UGL_FALSE               ((UGL_BOOL) 0)
