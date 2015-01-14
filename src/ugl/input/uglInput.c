@@ -34,10 +34,10 @@
 
 #define UGL_SERVICE_RUN           0
 #define UGL_SERVICE_IDLE          1
-#define UGL_SERVICE_DEAD          2
+#define UGL_SERVICE_DESTROYED     2
 #define UGL_SERVICE_IDLE_REQ      3
 #define UGL_SERVICE_RESUME_REQ    4
-#define UGL_SERVICE_KILL_REQ      5
+#define UGL_SERVICE_DESTROY_REQ   5
 
 #define UGL_SERVICE_DELAY_CYCLE 100
 
@@ -440,8 +440,10 @@ UGL_STATUS uglInputServiceDestroy (
         status = UGL_STATUS_ERROR;
     }
     else {
-       srvId->taskState = UGL_SERVICE_KILL_REQ;
-       while (srvId->taskState != UGL_SERVICE_DEAD) {
+
+       /* Wait for shutdown */
+       srvId->taskState = UGL_SERVICE_DESTROY_REQ;
+       while (srvId->taskState != UGL_SERVICE_DESTROYED) {
            uglOSTaskDelay(UGL_SERVICE_DELAY_CYCLE);
        }
 

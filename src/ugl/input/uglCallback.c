@@ -150,6 +150,92 @@ UGL_STATUS uglCbListDestroy (
 
 /******************************************************************************
  *
+ * uglCbListExecute - Execute callback list
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglCbListExecute (
+    UGL_CB_LIST_ID  cbListId,
+    UGL_ID          objectId,
+    UGL_MSG        *pMsg,
+    void           *pParam
+    ) {
+    UGL_CB_ITEM *pCbArray;
+    UGL_CB_ITEM *pCbItem;
+    UGL_ORD      i;
+    UGL_ORD      j;
+    UGL_UINT32   filterMin;
+    UGL_UINT32   filterMax;
+    UGL_STATUS   status = UGL_STATUS_OK;
+
+    if (cbListId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        pCbArray = cbListId->pCbArray;
+
+        for (i = cbListId->numCallbacks - 1; i >= 0; i--) {
+            filterMin = pCbArray[i].filterMin;
+            filterMax = pCbArray[i].filterMax;
+
+            if (filterMin == 0) {
+                filterMax = 0xffffffff;
+            }
+            else if (filterMax == 0) {
+                filterMax = filterMin;
+            }
+
+            if (filterMin <= pMsg->type &&
+                filterMax >= pMsg->type) {
+
+                if (pCbArray[i].pCallback != UGL_NULL) {
+                    status = (*pCbArray[i].pCallback)(
+                        objectId,
+                        pMsg,
+                        pParam,
+                        pCbArray[i].pParam
+                        );
+                }
+                else if (pCbArray[i].pParam != UGL_NULL) {
+                    pCbItem = (UGL_CB_ITEM *) pCbArray[i].pParam;
+
+                    for (j = 0; pCbItem[j].pCallback != UGL_NULL; j++) {
+                        filterMin = pCbItem[j].filterMin;
+                        filterMax = pCbItem[j].filterMax;
+
+                        if (filterMin == 0) {
+                            filterMax = 0xffffffff;
+                        }
+                        else if (filterMax == 0) {
+                            filterMax = filterMin;
+                        }
+
+                        if (filterMin <= pMsg->type &&
+                            filterMax >= pMsg->type) {
+
+                            status = (*pCbItem[j].pCallback)(
+                                objectId,
+                                pMsg,
+                                pParam,
+                                pCbItem[j].pParam
+                            );
+                        }
+                    }
+                }
+            }
+
+            if (status != UGL_STATUS_OK) {
+                break;
+            }
+        }
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * uglCbArrayRealloc - Reallocate storage for array
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR

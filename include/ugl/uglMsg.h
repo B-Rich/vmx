@@ -193,6 +193,20 @@ UGL_STATUS uglCbListDestroy (
     UGL_CB_LIST_ID  cbListId
     );
 
+/******************************************************************************
+ *
+ * uglCbListExecute - Execute callback list
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglCbListExecute (
+    UGL_CB_LIST_ID  cbListId,
+    UGL_ID          objectId,
+    UGL_MSG        *pMsg,
+    void           *pParam
+    );
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
