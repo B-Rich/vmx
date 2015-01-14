@@ -33,8 +33,8 @@ int sysClockRateGet(void);
  */
 
 UGL_OS_MSG_Q_ID uglOSMsgQCreate (
-    UGL_UINT32  maxMsgs,
-    UGL_UINT32  maxMsgSize
+    UGL_SIZE  maxMsgs,
+    UGL_SIZE  maxMsgSize
     ) {
 
     return msgQCreate(maxMsgs, maxMsgSize, MSG_Q_FIFO);
@@ -73,7 +73,7 @@ UGL_STATUS uglOSMsgQPost(
     UGL_OS_MSG_Q_ID  qId,
     UGL_TIMEOUT      timeout,
     void            *pMsg,
-    UGL_UINT32       msgSize
+    UGL_SIZE         msgSize
     ) {
     UGL_STATUS  status;
     int         ern;
@@ -113,7 +113,7 @@ UGL_STATUS uglOSMsgQGet(
     UGL_OS_MSG_Q_ID  qId,
     UGL_TIMEOUT      timeout,
     void            *pMsg,
-    UGL_UINT32       msgSize
+    UGL_SIZE         msgSize
     ) {
     UGL_STATUS  status;
     int         ern;

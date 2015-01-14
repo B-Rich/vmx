@@ -24,6 +24,7 @@
 #define _uglMsg_h
 
 #include "uglMsgTypes.h"
+#include "uglinput.h"
 
 /* Pointer buttons */
 #define UGL_PTR_BUTTON1        0x00000001
@@ -70,12 +71,153 @@ typedef union ugl_msg_data {
     UGL_RAW_PTR_DATA    rawPtr;
 } UGL_MSG_DATA;
 
-/* Message */
+/* Messages */
 typedef struct ugl_msg {
     UGL_MSG_TYPE    type;
     UGL_ID          objectId;
     UGL_MSG_DATA    data;
 } UGL_MSG;
+
+struct ugl_msg_queue;
+typedef struct ugl_msg_queue *UGL_MSG_Q_ID;
+
+/* Callbacks */
+
+typedef UGL_STATUS  (UGL_CB) (UGL_ID objectId, struct ugl_msg *pMsg,
+                              void *pObjectData, void *pParam);
+
+typedef struct ugl_cb_item {
+    UGL_UINT32    filterMin;
+    UGL_UINT32    filterMax;
+    UGL_CB       *pCallback;
+    void         *pParam;
+} UGL_CB_ITEM;
+
+struct ugl_cb_list;
+typedef struct ugl_cb_list *UGL_CB_LIST_ID;
+
+/* Functions */
+/******************************************************************************
+ *
+ * uglMsgQCreate - Create message queue
+ *
+ * RETURNS: UGL_MSG_Q_ID or UGL_NULL
+ */
+
+UGL_MSG_Q_ID uglMsgQCreate (
+    UGL_SIZE  queueSize
+    );
+
+/******************************************************************************
+ *
+ * uglMsgQDestroy - Destroy message queue
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglMsgQDestroy (
+    UGL_MSG_Q_ID  qId
+    );
+
+/******************************************************************************
+ *
+ * uglMsgQPost - Post message to message queue
+ *
+ * RETURNS: UGL_STATUS_OK or error code
+ */
+
+UGL_STATUS uglMsgQPost (
+    UGL_MSG_Q_ID  qId,
+    UGL_MSG      *pMsg,
+    UGL_TIMEOUT   timeout
+    );
+
+/******************************************************************************
+ *
+ * uglMsgQGet - Get message from message queue
+ *
+ * RETURNS: UGL_STATUS_OK or error code
+ */
+
+UGL_STATUS uglMsgQGet (
+    UGL_MSG_Q_ID  qId,
+    UGL_MSG      *pMsg,
+    UGL_TIMEOUT   timeout
+    );
+
+/******************************************************************************
+ *
+ * uglInputMsgPost - Post message to input queue
+ *
+ * RETURNS: UGL_STATUS_OK or error code
+ */
+
+UGL_STATUS uglInputMsgPost (
+    UGL_INPUT_SERVICE_ID  srvId,  
+    UGL_MSG              *pMsg
+    );
+
+/******************************************************************************
+ *
+ * uglInputMsgGet - Get message from input queue
+ *
+ * RETURNS: UGL_STATUS_OK or error code
+ */
+
+UGL_STATUS uglInputMsgGet (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_MSG              *pMsg,
+    UGL_TIMEOUT           timeout
+    );
+
+/******************************************************************************
+ *
+ * uglCbAdd - Add callback to callback list
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglCbAdd (
+    UGL_CB_LIST_ID  cbListId,
+    UGL_UINT32      filterMin,
+    UGL_UINT32      filterMax,
+    UGL_CB         *pCallback,
+    void           *pParam
+    );
+
+/******************************************************************************
+ *
+ * uglCbAddArray - Add array of callbacks to callback list
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglCbAddArray (
+    UGL_CB_LIST_ID    cbListId,
+    const UGL_CB_ITEM *pCbArray
+    );
+
+/******************************************************************************
+ *
+ * uglCbListCreate - Create callback list
+ *
+ * RETURNS: UGL_CB_LIST_ID or UGL_NULL
+ */
+
+UGL_CB_LIST_ID uglCbListCreate (
+    const  UGL_CB_ITEM  *pCbArray
+    );
+
+/******************************************************************************
+ *
+ * uglCbListDestroy - Destroy callback list
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+ 
+UGL_STATUS uglCbListDestroy (
+    UGL_CB_LIST_ID  cbListId
+    );
 
 #ifdef __cplusplus
 }

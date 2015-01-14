@@ -177,6 +177,26 @@ UGL_STATUS uglOSUnlock (
 
 /******************************************************************************
  *
+ * uglOSTaskCreate - Create a task
+ *
+ * RETURNS: UGL_TASK_ID or error code
+ */
+
+UGL_TASK_ID uglOSTaskCreate (
+    char       *name,
+    UGL_FPTR    entry,
+    UGL_UINT32  priority,
+    UGL_UINT32  options,
+    UGL_SIZE    stackSize,
+    UGL_ARG     arg0,
+    UGL_ARG     arg1,
+    UGL_ARG     arg2,
+    UGL_ARG     arg3,
+    UGL_ARG     arg4
+    );
+
+/******************************************************************************
+ *
  * uglOSTaskDelay - Put task to sleep
  *
  * RETURNS: N/A
@@ -216,8 +236,8 @@ UGL_STATUS uglOSTaskUnlock (
  */
 
 UGL_OS_MSG_Q_ID uglOSMsgQCreate (
-    UGL_UINT32  maxMsgs,
-    UGL_UINT32  maxMsgSize
+    UGL_SIZE  maxMsgs,
+    UGL_SIZE  maxMsgSize
     );
 
 /******************************************************************************
@@ -242,7 +262,7 @@ UGL_STATUS uglOSMsgQPost(
     UGL_OS_MSG_Q_ID  qId,
     UGL_TIMEOUT      timeout,
     void            *pMsg,
-    UGL_UINT32       msgSize
+    UGL_SIZE         msgSize
     );
 
 /******************************************************************************
@@ -256,7 +276,7 @@ UGL_STATUS uglOSMsgQGet(
     UGL_OS_MSG_Q_ID  qId,
     UGL_TIMEOUT      timeout,
     void            *pMsg,
-    UGL_UINT32       msgSize
+    UGL_SIZE         msgSize
     );
 
 #ifdef __cplusplus

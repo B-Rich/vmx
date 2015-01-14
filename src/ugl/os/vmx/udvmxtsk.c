@@ -30,6 +30,31 @@ int sysClockRateGet (void);
 
 /******************************************************************************
  *
+ * uglOSTaskCreate - Create a task
+ *
+ * RETURNS: UGL_TASK_ID or error code
+ */
+
+UGL_TASK_ID uglOSTaskCreate (
+    char       *name,
+    UGL_FPTR    entry,
+    UGL_UINT32  priority,
+    UGL_UINT32  options,
+    UGL_SIZE    stackSize,
+    UGL_ARG     arg0,
+    UGL_ARG     arg1,
+    UGL_ARG     arg2,
+    UGL_ARG     arg3,
+    UGL_ARG     arg4
+    ) {
+
+    return taskSpawn(name, priority, options, stackSize, (FUNCPTR) entry,
+                     arg0, arg1, arg2, arg3, arg4,
+                     (ARG) 0, (ARG) 0, (ARG) 0, (ARG) 0, (ARG) 0);
+}
+
+/******************************************************************************
+ *
  * uglOSTaskDelay - Put task to sleep
  *
  * RETURNS: N/A

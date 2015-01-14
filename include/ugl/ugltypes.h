@@ -81,6 +81,10 @@ typedef int                     UGL_SIZE;
 typedef int                     UGL_ORD;
 typedef int                     UGL_POS;
 typedef void *                  UGL_SEARCH_ID;
+typedef void *                  UGL_ARG;
+
+/* Function pointers */
+typedef UGL_STATUS (*UGL_FPTR) (void);
 
 /* Misc */
 #define UGL_NULL                ((void *) 0)

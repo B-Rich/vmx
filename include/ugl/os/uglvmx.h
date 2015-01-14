@@ -59,6 +59,7 @@ extern "C" {
 #define UGL_IN_LONG(port)               sysInLong(port)
 #define UGL_OUT_LONG(port, val)         sysOutLong(port, val)
 
+typedef int         UGL_TASK_ID;
 typedef SEM_ID      UGL_LOCK_ID;
 typedef MSG_Q_ID    UGL_OS_MSG_Q_ID;
 typedef PART_ID     UGL_MEM_POOL_ID;

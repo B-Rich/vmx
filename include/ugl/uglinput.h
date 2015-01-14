@@ -61,6 +61,8 @@ typedef int UGL_DEVICE_TYPE;
 typedef int UGL_DEVICE_REQ;
 
 struct ugl_input_service;
+typedef struct ugl_input_service *UGL_INPUT_SERVICE_ID;
+
 typedef struct ugl_input_dev {
     int                       fd;
     UGL_DEVICE_TYPE           deviceType;

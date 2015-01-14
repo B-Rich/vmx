@@ -235,13 +235,13 @@ UGL_LOCAL UGL_STATUS uglPs2PtrReadMsg (
             else {
                 pDevice->buttonState = msg.data.rawPtr.buttonState;
 
-                /* TODO: uglInputMsgPost(pDevice->inputDev.inputServiceId, &msg); */
+                uglInputMsgPost(pDevice->inputDev.inputServiceId, &msg);
                 uglPs2PtrDecodeMsgPacket(chunk, &msg);
             }
         }
 
         /* Post message */
-        /* TODO: uglInputMsgPost(pDevice->inputDev.inputServiceId, &msg); */
+        uglInputMsgPost(pDevice->inputDev.inputServiceId, &msg);
 
         /* Reset state */
         pDevice->state = 0;
