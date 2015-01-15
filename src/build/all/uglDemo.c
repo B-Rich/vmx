@@ -3072,7 +3072,7 @@ int uglFontList(int index)
   return 0;
 }
 
-IMPORT UGL_INPUT_DRV uglPsPtrDriver;
+IMPORT UGL_INPUT_DRV uglPs2PtrDriver;
 UGL_INPUT_CB_ITEM cbList[] = {
     { 0, 0, UGL_NULL }
 };
@@ -3097,7 +3097,7 @@ int uglMouseInit(void)
     status = UGL_STATUS_ERROR;
   }
   else {
-    inputDevId = uglInputDevOpen("/mouse", &uglPsPtrDriver);
+    inputDevId = uglInputDevOpen("/mouse", &uglPs2PtrDriver);
     if (inputDevId == UGL_NULL) {
       status = UGL_STATUS_ERROR;
     }

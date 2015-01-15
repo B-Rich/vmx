@@ -60,7 +60,7 @@ UGL_LOCAL void uglPs2PtrDecodeMsgPacket (
     UGL_MSG   *pMsg
     );
 
-UGL_INPUT_DRV uglPsPtrDriver = {
+UGL_INPUT_DRV uglPs2PtrDriver = {
     uglPs2PtrOpen,
     uglPs2PtrClose,
     uglPs2PtrControl
@@ -264,17 +264,17 @@ UGL_LOCAL void uglPs2PtrDecodeMsgPacket (
 
     /* Get relative position */
     if ((data[0] & 0x10) != 0x00) {
-        pMsg->data.rawPtr.pos.relative.x = (UGL_POS) (data[1] - 256);
+        pMsg->data.rawPtr.pos.relative.x = (UGL_INT8) (data[1] - 256);
     }
     else {
-        pMsg->data.rawPtr.pos.relative.x = (UGL_POS) data[1];
+        pMsg->data.rawPtr.pos.relative.x = (UGL_INT8) data[1];
     }
 
     if ((data[0] & 0x20) != 0x00) {
-        pMsg->data.rawPtr.pos.relative.y = (UGL_POS) -(data[2] - 256);
+        pMsg->data.rawPtr.pos.relative.y = (UGL_INT8) (-(data[2] - 256));
     }
     else {
-        pMsg->data.rawPtr.pos.relative.y = (UGL_POS) -data[2];
+        pMsg->data.rawPtr.pos.relative.y = (UGL_INT8) (-data[2]);
     }
 
     /* Get button state */
