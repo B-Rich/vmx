@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/time.h>
+#include <sys/select.h>
 #include "ugl.h"
 #include "uglos.h"
 #include "uglMsg.h"
@@ -30,16 +32,17 @@
 
 /* Defines */
 
-#define UGL_INPUT_Q_SIZE         64
+#define UGL_INPUT_Q_SIZE           64
 
-#define UGL_SERVICE_RUN           0
-#define UGL_SERVICE_IDLE          1
-#define UGL_SERVICE_DESTROYED     2
-#define UGL_SERVICE_IDLE_REQ      3
-#define UGL_SERVICE_RESUME_REQ    4
-#define UGL_SERVICE_DESTROY_REQ   5
+#define UGL_SERVICE_RUN             0
+#define UGL_SERVICE_IDLE            1
+#define UGL_SERVICE_DESTROYED       2
+#define UGL_SERVICE_IDLE_REQ        3
+#define UGL_SERVICE_RESUME_REQ      4
+#define UGL_SERVICE_DESTROY_REQ     5
 
-#define UGL_SERVICE_DELAY_CYCLE 100
+#define UGL_SERVICE_DELAY_CYCLE   100
+#define UGL_SELECT_TIMEOUT       1000
 
 /* Types */
 
@@ -531,7 +534,121 @@ LOCAL UGL_STATUS uglInputServiceResume(
 UGL_LOCAL UGL_VOID uglInputTask (
     UGL_INPUT_SERVICE_ID  srvId
     ) {
+    UGL_STATUS     status;
+    struct timeval timeout;
+    struct timeval tmpTimeout;
+    fd_set         readFds;
+    fd_set         tmpReadFds;
+    int            result;
+    int            width;
+    int            ern;
+    UGL_ORD        i;
+    UGL_INPUT_DEV *pDev;
+    UGL_MSG        msg;
+    UGL_MSG_Q_ID   qId;
 
-    /* TODO */
+    /* Timeout for select */
+    timeout.tv_sec  = UGL_SELECT_TIMEOUT / 1000;
+    timeout.tv_usec = (UGL_SELECT_TIMEOUT % 1000) * 1000;
+
+    while (srvId->taskState != UGL_SERVICE_DESTROY_REQ) {
+
+        FD_ZERO(&readFds);
+        width = 0;
+
+        uglOSLock(srvId->lockId);
+
+        /* Select file descriptors for all input devices */
+        for (i = 0; i < UGL_MAX_INPUT_DEVICES; i++) {
+
+            if (srvId->ppDevice[i] != UGL_NULL && srvId->ppDevice[i]->fd > 0) {
+                FD_SET(srvId->ppDevice[i]->fd, &readFds);
+                if (srvId->ppDevice[i]->fd > width) {
+                    width = srvId->ppDevice[i]->fd;
+                }
+            }
+        }
+
+        width++;
+
+        uglOSUnlock(srvId->lockId);
+
+        /* Perform select on input filedescriptors */
+        ern = errno;
+        result = select(width, &readFds, UGL_NULL, UGL_NULL, &timeout);
+        if (result > 0) {
+
+            /* Perform operation for all selected devices */
+            for (i = 0; i < UGL_MAX_INPUT_DEVICES; i++) {
+                pDev = srvId->ppDevice[i];
+
+                if (pDev != UGL_NULL && FD_ISSET(pDev->fd, &readFds)) {
+
+                    /* Perform read operation for selected device */
+                    (*pDev->pDriver->control) (pDev, ICR_READ, UGL_NULL);
+
+                    /* Perform additional selects without waiting */
+                    tmpTimeout.tv_sec  = 0;
+                    tmpTimeout.tv_usec = 0;
+
+                    FD_ZERO(&tmpReadFds);
+                    FD_SET(pDev->fd, &tmpReadFds);
+
+                    ern = errno;
+
+                    while ((result = select(pDev->fd + 1, &tmpReadFds,
+                                            UGL_NULL, UGL_NULL, &tmpTimeout)) &&
+                           result >= 0) {
+
+                        (*pDev->pDriver->control) (pDev, ICR_READ, UGL_NULL);
+
+                        FD_ZERO(&tmpReadFds);
+                        FD_SET(pDev->fd, &tmpReadFds);
+                    }
+
+                    if (result == 0) {
+                        errno = ern;
+                    }
+                }
+            }
+        }
+        else if (result == 0) {
+            errno = ern;
+        }
+
+        /* Process messages put on queue by device read control command */
+        while (uglMsgQGet(srvId->pInputQ, &msg, UGL_NO_WAIT) ==
+               UGL_STATUS_OK) {
+            qId = srvId->pDefaultQ;
+
+            status = uglCbListExecute(srvId->pCbList, srvId, &msg, qId);
+            if (status == UGL_STATUS_OK || qId != UGL_NULL_ID) {
+                uglMsgQPost(qId, &msg, UGL_NO_WAIT);
+            }
+        }
+
+        /* Check input task for state changes */
+        while (srvId->taskState != UGL_SERVICE_RUN &&
+               srvId->taskState != UGL_SERVICE_DESTROY_REQ) {
+
+            switch(srvId->taskState) {
+                case UGL_SERVICE_IDLE_REQ:
+                    srvId->taskState = UGL_SERVICE_IDLE;
+                    break;
+
+                case UGL_SERVICE_RESUME_REQ:
+                    srvId->taskState = UGL_SERVICE_RUN;
+                    break;
+
+                default:
+                    uglOSTaskDelay(UGL_SERVICE_DELAY_CYCLE);
+                    break;
+            }
+        }
+    }
+
+    /* If we end up here the input task is destroyed */
+    srvId->taskId    = (UGL_TASK_ID) 0;
+    srvId->taskState = UGL_SERVICE_DESTROYED;
 }
 

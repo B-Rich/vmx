@@ -247,7 +247,7 @@ UGL_OS_MSG_Q_ID uglOSMsgQCreate (
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
  */
  
-UGL_STATUS uglOSMsgQDelete(
+UGL_STATUS uglOSMsgQDelete (
     UGL_OS_MSG_Q_ID  qId
     );
 
@@ -258,7 +258,7 @@ UGL_STATUS uglOSMsgQDelete(
  * RETURNS: UGL_STATUS_OK, UGL_STATUS_Q_FULL or UGL_STATUS_ERROR
  */
 
-UGL_STATUS uglOSMsgQPost(
+UGL_STATUS uglOSMsgQPost (
     UGL_OS_MSG_Q_ID  qId,
     UGL_TIMEOUT      timeout,
     void            *pMsg,
@@ -272,7 +272,7 @@ UGL_STATUS uglOSMsgQPost(
  * RETURNS: UGL_STATUS_OK, UGL_STATUS_Q_EMPTY or UGL_STATUS_ERROR
  */
 
-UGL_STATUS uglOSMsgQGet(
+UGL_STATUS uglOSMsgQGet (
     UGL_OS_MSG_Q_ID  qId,
     UGL_TIMEOUT      timeout,
     void            *pMsg,

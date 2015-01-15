@@ -4,7 +4,7 @@
 ADDED_CFLAGS += -Wall
 ADDED_INCFLAGS += -I$(VMX_BASE)/include/ugl
 
-OBJS = udvmxmem.o udvmxlck.o udvmxtsk.o udvmxq.o
+OBJS = udvmxmem.o udvmxlck.o udvmxtsk.o udvmxq.o udvmxlog.o
 SUBDIRS =
 LIB_TGT = ugl-os
 
