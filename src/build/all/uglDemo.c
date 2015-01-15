@@ -32,6 +32,7 @@
 #include <os/memPartLib.h>
 
 #include "ugl.h"
+#include "uglinput.h"
 #include "driver/graphics/vga/udvga.h"
 #include "driver/graphics/vga/udvgamode.h"
 #include "driver/graphics/generic/udgen.h"
@@ -3071,40 +3072,70 @@ int uglFontList(int index)
   return 0;
 }
 
+IMPORT UGL_INPUT_DRV uglPsPtrDriver;
+UGL_INPUT_CB_ITEM cbList[] = {
+    { 0, 0, UGL_NULL }
+};
+UGL_INPUT_SERVICE_ID inputSrvId;
+UGL_INPUT_DEV_ID     inputDevId;
+
 int uglMouseInit(void)
 {
+  UGL_RECT rect;
+  UGL_STATUS status;
+
   i8042MseDrvInit();
   i8042MseDevCreate("/mouse");
 
-  return 0;
+  rect.left   = 0;
+  rect.right  = 640;
+  rect.top    = 0;
+  rect.bottom = 480;
+
+  inputSrvId = uglInputServiceCreate(&rect, cbList);
+  if (inputSrvId == UGL_NULL) {
+    status = UGL_STATUS_ERROR;
+  }
+  else {
+    inputDevId = uglInputDevOpen("/mouse", &uglPsPtrDriver);
+    if (inputDevId == UGL_NULL) {
+      status = UGL_STATUS_ERROR;
+    }
+    else {
+      status = uglInputDevAdd(inputSrvId, inputDevId);
+    }
+  }
+
+  return status;
 }
 
 int uglMouseLogger(void)
 {
-    static int8_t buf[3];
-    int16_t mouse_x, mouse_y;
-    int nread;
-    int fd;
+  UGL_STATUS status;
+  UGL_MSG msg;
 
-    fd = open("/mouse", 0);
-    while (1) {
-        nread = read(fd, buf, 3);
-        if (nread == 3) {
-            mouse_x += (int16_t) buf[1];
-            if (mouse_x < 0) {
-                mouse_x = 0;
-            }
+  while (1) {
+    status = uglInputMsgGet(inputSrvId, &msg, UGL_WAIT_FOREVER);
+    if (status == UGL_STATUS_OK) {
+      switch(msg.type) {
+        case MSG_RAW_PTR:
+          printf("Pointer input message: %x, %d, %d\n",
+                 msg.data.rawPtr.buttonState,
+                 msg.data.rawPtr.pos.relative.x,
+                 msg.data.rawPtr.pos.relative.y);
+          break;
 
-            mouse_y -= (int16_t) buf[2];
-            if (mouse_y < 0) {
-                mouse_y = 0;
-            }
-        }
-        printf("Mouse logger: %d %d\n", mouse_x, mouse_y);
+        default:
+          printf("Got input message of type: %d\n", msg.type);
+          break;
+      }
     }
-    close(fd);
+    else {
+      printf("Failed to get input message: %d\n", status);
+    }
+  }
 
-    return 0;
+  return 0;
 }
 
 int uglMouseLog(void)
@@ -3151,6 +3182,7 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_uglConvertTest", uglConvertTest, 0, N_TEXT | N_EXT},
   {NULL, "_uglFontList", uglFontList, 0, N_TEXT | N_EXT},
   {NULL, "_uglRectCreate", uglRectCreate, 0, N_TEXT | N_EXT},
+  {NULL, "_uglOSMsgQCreate", uglOSMsgQCreate, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseInit", uglMouseInit, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseLog", uglMouseLog, 0, N_TEXT | N_EXT}
 };
