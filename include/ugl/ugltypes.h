@@ -94,6 +94,9 @@ typedef UGL_STATUS (*UGL_FPTR) (void);
 #define UGL_FALSE               ((UGL_BOOL) 0)
 #define UGL_VOID                void
 
+/* Registry */
+#define UGL_REG_MAX_NAME_LENGTH    64
+
 /* Complex types */
 typedef struct ugl_range {
     UGL_ORD  min;
@@ -111,6 +114,13 @@ typedef struct ugl_rect {
     UGL_POS  right;
     UGL_POS  bottom;
 } UGL_RECT;
+
+typedef struct ugl_reg_data {
+    UGL_UINT32    type;
+    UGL_UINT32    id;
+    UGL_ARG       data;
+    UGL_CHAR      name[UGL_REG_MAX_NAME_LENGTH];
+} UGL_REG_DATA;
 
 /* Macros */
 

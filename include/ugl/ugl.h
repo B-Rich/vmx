@@ -988,6 +988,53 @@ UGL_STATUS uglColorCubeLookup (
     UGL_ARGB *       pActualArgb
     );
 
+/******************************************************************************
+ *
+ * uglRegistryInit - Initialize registry
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglRegistryInit (
+    void
+    );
+
+/******************************************************************************
+ *
+ * uglRegistryDeinit - De-initialize registry
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglRegistryDeinit (
+    void
+    );
+
+/******************************************************************************
+ *
+ * uglRegistryAdd - Add entry to registry
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglRegistryAdd (
+    UGL_UINT32  type,
+    UGL_ARG     data,
+    UGL_UINT32  id,
+    UGL_CHAR   *name
+    );
+
+/******************************************************************************
+ *
+ * uglRegistryRemove - Remove entry from registry
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglRegistryRemove (
+    UGL_REG_DATA  *pData
+    );
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
