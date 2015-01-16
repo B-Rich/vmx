@@ -4,7 +4,7 @@
 ADDED_CFLAGS += -Wall
 ADDED_INCFLAGS += -I$(VMX_BASE)/include/ugl
 
-OBJS = winWindow.o
+OBJS = winList.o winWindow.o
 SUBDIRS =
 LIB_TGT = ugl-win
 
