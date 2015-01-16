@@ -54,6 +54,7 @@ typedef struct ugl_input_service {
     UGL_UINT32             modifiers;
     volatile UGL_UINT32    taskState;
     UGL_BOOL               autoLedControl;
+    UGL_KBD_MAP           *pKbdMap;
     struct ugl_cb_list    *pCbList;
     struct ugl_msg_queue  *pDefaultQ;
     struct ugl_msg_queue  *pInputQ;
@@ -72,6 +73,11 @@ LOCAL UGL_STATUS uglInputServiceIdle(
 
 LOCAL UGL_STATUS uglInputServiceResume(
     UGL_INPUT_SERVICE_ID  srvId
+    );
+
+UGL_LOCAL UGL_STATUS uglPtrMsgMap (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_MSG              *pMsg
     );
 
 /******************************************************************************
@@ -247,7 +253,7 @@ UGL_STATUS uglInputDevControl (
                     pPoint->y != pSrv->position.y) {
 
                     msg.type                    = MSG_RAW_PTR;
-                    msg.objectId                = UGL_NULL_ID;
+                    msg.objectId                = UGL_NULL;
                     msg.data.rawPtr.deviceId    = devId;
                     msg.data.rawPtr.buttonState =
                         (pSrv->modifiers & UGL_PTR_BUTTON_MASK);
@@ -310,6 +316,102 @@ UGL_STATUS uglInputDevControl (
 
 /******************************************************************************
  *
+ * uglInputCbAdd - Add callback to input service
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputCbAdd (
+    UGL_INPUT_SERVICE_ID srvId,
+    UGL_INT32            filterMin,
+    UGL_INT32            filterMax,
+    UGL_INPUT_CB        *pCallback,
+    void                *pParam
+    ) {
+    UGL_STATUS  status;
+
+    if (srvId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        status = uglCbAdd(srvId->pCbList, filterMin, filterMax,
+                          (UGL_CB *) pCallback, pParam);
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * uglInputCbAddArray - Add array of callbacks to input service
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputCbAddArray (
+    UGL_INPUT_SERVICE_ID     srvId,
+    const UGL_INPUT_CB_ITEM *pCbArray
+    ) {
+    UGL_STATUS  status;
+
+    if (pCbArray == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        status = uglCbAddArray(srvId->pCbList, (UGL_CB_ITEM *) pCbArray);
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * uglInputCbRemove - Remove callback from input service
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputCbRemove (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_INPUT_CB         *pCallback
+    ) {
+    UGL_STATUS  status;
+
+    if (srvId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        status = uglCbRemove(srvId->pCbList, (UGL_CB *) pCallback);
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * uglInputCbRemoveArray - Remove array of callbacks from input service
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputCbRemoveArray (
+    UGL_INPUT_SERVICE_ID     srvId,
+    const UGL_INPUT_CB_ITEM *pCbArray
+    ) {
+    UGL_STATUS  status;
+
+    if (srvId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        uglCbRemoveArray(srvId->pCbList, (UGL_CB_ITEM *) pCbArray);
+   }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * uglInputMsgPost - Post message to input queue
  *
  * RETURNS: UGL_STATUS_OK or error code
@@ -325,7 +427,12 @@ UGL_STATUS uglInputMsgPost (
         status = UGL_STATUS_ERROR;
     }
     else {
-        /* TODO: Raw keyboard map */
+        if (pMsg->type == MSG_RAW_KBD) {
+            /* TODO */
+        }
+        else if (pMsg->type == MSG_RAW_PTR) {
+            uglPtrMsgMap(srvId, pMsg);
+        }
 
         status = uglMsgQPost(srvId->pInputQ, pMsg, UGL_NO_WAIT);
     }
@@ -622,7 +729,7 @@ UGL_LOCAL UGL_VOID uglInputTask (
             qId = srvId->pDefaultQ;
 
             status = uglCbListExecute(srvId->pCbList, srvId, &msg, qId);
-            if (status == UGL_STATUS_OK && qId != UGL_NULL_ID) {
+            if (status == UGL_STATUS_OK && qId != UGL_NULL) {
                 uglMsgQPost(qId, &msg, UGL_NO_WAIT);
             }
         }
@@ -652,3 +759,72 @@ UGL_LOCAL UGL_VOID uglInputTask (
     srvId->taskState = UGL_SERVICE_DESTROYED;
 }
 
+/******************************************************************************
+ *
+ * uglPtrMsgMap - Map raw pointer messages
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_LOCAL UGL_STATUS uglPtrMsgMap (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_MSG              *pMsg
+    ) {
+    UGL_STATUS  status;
+
+    if (pMsg->type != MSG_RAW_PTR) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+
+        /* Convert raw pointer message to pointer message */
+        pMsg->type = MSG_POINTER;
+        pMsg->data.pointer.timeStamp = uglOSTimeStamp();
+
+        /* Convert coordinates */
+        if (pMsg->data.rawPtr.isAbsolute) {
+            memcpy(&pMsg->data.pointer.position,
+                   &pMsg->data.rawPtr.pos.absolute,
+                   sizeof(UGL_POINT));
+        }
+        else {
+            pMsg->data.pointer.position.x =
+               srvId->position.x + pMsg->data.rawPtr.pos.relative.x;
+            pMsg->data.pointer.position.y =
+               srvId->position.y + pMsg->data.rawPtr.pos.relative.y;
+        }
+
+        /* Clip to bouding rectangle */
+        if (pMsg->data.pointer.position.x < srvId->boundingRect.left) {
+            pMsg->data.pointer.position.x = srvId->boundingRect.left;
+        }
+
+        if (pMsg->data.pointer.position.x > srvId->boundingRect.right) {
+            pMsg->data.pointer.position.x = srvId->boundingRect.right;
+        }
+
+        if (pMsg->data.pointer.position.y < srvId->boundingRect.top) {
+            pMsg->data.pointer.position.y = srvId->boundingRect.top;
+        }
+
+        if (pMsg->data.pointer.position.y > srvId->boundingRect.bottom) {
+            pMsg->data.pointer.position.y = srvId->boundingRect.bottom;
+        }
+
+        /* Calculate position delta */
+        pMsg->data.pointer.delta.x =
+            pMsg->data.pointer.position.x - srvId->position.x;
+        pMsg->data.pointer.delta.y =
+            pMsg->data.pointer.position.y - srvId->position.y;
+
+        /* Determine button state change */
+       pMsg->data.pointer.buttonChange = pMsg->data.rawPtr.buttonState ^
+          (srvId->modifiers & UGL_PTR_MOD_MASK);
+       pMsg->data.pointer.buttonState =
+           srvId->modifiers ^= pMsg->data.pointer.buttonChange;
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}

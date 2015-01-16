@@ -279,6 +279,17 @@ UGL_STATUS uglOSMsgQGet (
     UGL_SIZE         msgSize
     );
 
+/******************************************************************************
+ *
+ * uglOSTimeStamp - Get current timestamp
+ *
+ * RETURNS: UGL_TIMESTAMP
+ */
+
+UGL_TIMESTAMP uglOSTimeStamp (
+    void
+    );
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

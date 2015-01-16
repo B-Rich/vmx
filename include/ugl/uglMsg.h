@@ -146,6 +146,28 @@ UGL_STATUS uglMsgQGet (
 
 /******************************************************************************
  *
+ * uglCbListCreate - Create callback list
+ *
+ * RETURNS: UGL_CB_LIST_ID or UGL_NULL
+ */
+
+UGL_CB_LIST_ID uglCbListCreate (
+    const  UGL_CB_ITEM  *pCbArray
+    );
+
+/******************************************************************************
+ *
+ * uglCbListDestroy - Destroy callback list
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+ 
+UGL_STATUS uglCbListDestroy (
+    UGL_CB_LIST_ID  cbListId
+    );
+
+/******************************************************************************
+ *
  * uglCbAdd - Add callback to callback list
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -173,24 +195,26 @@ UGL_STATUS uglCbAddArray (
 
 /******************************************************************************
  *
- * uglCbListCreate - Create callback list
+ * uglCbRemove - Remove callback from list
  *
- * RETURNS: UGL_CB_LIST_ID or UGL_NULL
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
  */
 
-UGL_CB_LIST_ID uglCbListCreate (
-    const  UGL_CB_ITEM  *pCbArray
+UGL_STATUS uglCbRemove (
+    UGL_CB_LIST_ID  cbListId,
+    UGL_CB         *pCallback
     );
 
 /******************************************************************************
  *
- * uglCbListDestroy - Destroy callback list
+ * uglCbRemoveArray - Remove array of callbacks from list
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
  */
- 
-UGL_STATUS uglCbListDestroy (
-    UGL_CB_LIST_ID  cbListId
+
+UGL_STATUS uglCbRemoveArray (
+    UGL_CB_LIST_ID     cbListId,
+    const UGL_CB_ITEM *pCbArray
     );
 
 /******************************************************************************

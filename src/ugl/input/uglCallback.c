@@ -44,6 +44,56 @@ UGL_LOCAL UGL_STATUS uglCbArrayRealloc (
 
 /******************************************************************************
  *
+ * uglCbListCreate - Create callback list
+ *
+ * RETURNS: UGL_CB_LIST_ID or UGL_NULL
+ */
+
+UGL_CB_LIST_ID uglCbListCreate (
+    const  UGL_CB_ITEM  *pCbArray
+    ) {
+    UGL_CB_LIST  *pCbList;
+
+    pCbList = (UGL_CB_LIST *) UGL_CALLOC(1, sizeof(UGL_CB_LIST));
+    if (pCbList != UGL_NULL) {
+        if (uglCbAddArray(pCbList, pCbArray) != UGL_STATUS_OK) {
+            UGL_FREE(pCbList);
+            pCbList = UGL_NULL;
+        }
+    }
+
+    return pCbList;
+}
+
+/******************************************************************************
+ *
+ * uglCbListDestroy - Destroy callback list
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglCbListDestroy (
+    UGL_CB_LIST_ID  cbListId
+    ) {
+    UGL_STATUS  status;
+
+    if (cbListId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        if (cbListId->arraySize > 0) {
+            UGL_FREE(cbListId->pCbArray);
+        }
+
+        UGL_FREE(cbListId);
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * uglCbAdd - Add callback to callback list
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -100,49 +150,92 @@ UGL_STATUS uglCbAddArray (
 
 /******************************************************************************
  *
- * uglCbListCreate - Create callback list
- *
- * RETURNS: UGL_CB_LIST_ID or UGL_NULL
- */
-
-UGL_CB_LIST_ID uglCbListCreate (
-    const  UGL_CB_ITEM  *pCbArray
-    ) {
-    UGL_CB_LIST  *pCbList;
-
-    pCbList = (UGL_CB_LIST *) UGL_CALLOC(1, sizeof(UGL_CB_LIST));
-    if (pCbList != UGL_NULL) {
-        if (uglCbAddArray(pCbList, pCbArray) != UGL_STATUS_OK) {
-            UGL_FREE(pCbList);
-            pCbList = UGL_NULL;
-        }
-    }
-
-    return pCbList;
-}
-
-/******************************************************************************
- *
- * uglCbListDestroy - Destroy callback list
+ * uglCbRemove - Remove callback from list
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
  */
 
-UGL_STATUS uglCbListDestroy (
-    UGL_CB_LIST_ID  cbListId
+UGL_STATUS uglCbRemove (
+    UGL_CB_LIST_ID  cbListId,
+    UGL_CB         *pCallback
     ) {
     UGL_STATUS  status;
+    UGL_ORD     i;
+    UGL_ORD     index = -1;
 
     if (cbListId == UGL_NULL) {
         status = UGL_STATUS_ERROR;
     }
     else {
-        if (cbListId->arraySize > 0) {
-            UGL_FREE(cbListId->pCbArray);
+        if (cbListId->pCbArray != UGL_NULL) {
+
+            /* Find callback in list */
+            for (i = 0; i < cbListId->numCallbacks; i++) {
+                if (cbListId->pCbArray[i].pCallback == pCallback) {
+
+                    index = i;
+                    break;
+                }
+            }
         }
 
-        UGL_FREE(cbListId);
-        status = UGL_STATUS_OK;
+        if (index == -1) {
+            status = UGL_STATUS_ERROR;
+        }
+        else {
+            memmove(&cbListId->pCbArray[index],
+                    &cbListId->pCbArray[index + 1],
+                    (cbListId->numCallbacks - index - 1) * sizeof(UGL_CB_ITEM));
+            cbListId->numCallbacks--;
+            status = UGL_STATUS_OK;
+        }
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * uglCbRemoveArray - Remove array of callbacks from list
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglCbRemoveArray (
+    UGL_CB_LIST_ID     cbListId,
+    const UGL_CB_ITEM *pCbArray
+    ) {
+    UGL_STATUS  status;
+    UGL_ORD     i;
+    UGL_ORD     index = -1;
+
+    if (cbListId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        if (cbListId->pCbArray != UGL_NULL) {
+
+            /* Find array in callback list */
+            for (i= 0; i < cbListId->numCallbacks; i++) {
+                if (cbListId->pCbArray[i].pCallback == UGL_NULL &&
+                    cbListId->pCbArray[i].pParam == pCbArray) {
+
+                    index = i;
+                    break;
+                }
+            }
+        }
+
+        if (index == -1) {
+            status = UGL_STATUS_ERROR;
+        }
+        else {
+            memmove(&cbListId->pCbArray[index],
+                    &cbListId->pCbArray[index + 1],
+                    (cbListId->numCallbacks - index - 1) * sizeof(UGL_CB_ITEM));
+            cbListId->numCallbacks--;
+            status = UGL_STATUS_OK;
+        }
     }
 
     return status;

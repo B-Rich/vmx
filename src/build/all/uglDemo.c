@@ -3188,6 +3188,7 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_uglRegistryRemove", uglRegistryRemove, 0, N_TEXT | N_EXT},
   {NULL, "_uglRegistryFind", uglRegistryFind, 0, N_TEXT | N_EXT},
   {NULL, "_uglRegistryFindNext", uglRegistryFindNext, 0, N_TEXT | N_EXT},
+  {NULL, "_uglOSTimeStamp", uglOSTimeStamp, 0, N_TEXT | N_EXT},
   {NULL, "_uglOSMsgQCreate", uglOSMsgQCreate, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseInit", uglMouseInit, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseLog", uglMouseLog, 0, N_TEXT | N_EXT}

@@ -24,6 +24,7 @@
 #define _uglinput_h
 
 #include "uglMsg.h"
+#include "uglKbdMap.h"
 
 /* Basic settings */
 #define UGL_MAX_INPUT_DEVICES            10
@@ -91,9 +92,17 @@ typedef struct ugl_input_drv {
         );
 } UGL_INPUT_DRV;
 
+typedef UGL_STATUS  (UGL_INPUT_CB) (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_MSG              *pMsg,
+    UGL_MSG_Q_ID         *pQId,
+    void                 *pParam
+    );
+
 typedef struct {
     UGL_UINT32    filterMin;
     UGL_UINT32    filterMax;
+    UGL_INPUT_CB *pCallback;
     void         *pParam;
 } UGL_INPUT_CB_ITEM;
 
@@ -157,6 +166,57 @@ UGL_STATUS uglInputDevControl (
     UGL_INPUT_DEV_ID  devId,
     UGL_DEVICE_REQ    request,
     void             *pArg
+    );
+
+/******************************************************************************
+ *
+ * uglInputCbAdd - Add callback to input service
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputCbAdd (
+    UGL_INPUT_SERVICE_ID srvId,
+    UGL_INT32            filterMin,
+    UGL_INT32            filterMax,
+    UGL_INPUT_CB        *pCallback,
+    void                *pParam
+    );
+
+/******************************************************************************
+ *
+ * uglInputCbAddArray - Add array of callbacks to input service
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputCbAddArray (
+    UGL_INPUT_SERVICE_ID     srvId,
+    const UGL_INPUT_CB_ITEM *pCbArray
+    );
+
+/******************************************************************************
+ *
+ * uglInputCbRemoveArray - Remove array of callbacks from input service
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputCbRemoveArray (
+    UGL_INPUT_SERVICE_ID     srvId,
+    const UGL_INPUT_CB_ITEM *pCbArray
+    );
+
+/******************************************************************************
+ *
+ * uglInputCbRemove - Remove callback from input service
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputCbRemove (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_INPUT_CB         *pCallback
     );
 
 /******************************************************************************
