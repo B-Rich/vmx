@@ -34,6 +34,25 @@
 #define UGL_PTR_BUTTON_MASK    0x000000ff
 #define UGL_PTR_MOD_MASK       0x000000ff
 
+/* Keyboard */
+#define UGL_KBD_KEYDOWN        0x00010000
+#define UGL_KBD_LEFT_ALT       0x00020000
+#define UGL_KBD_RIGHT_ALT      0x00040000
+#define UGL_KBD_ALT            0x00060000
+#define UGL_KBD_LEFT_SHIFT     0x00080000
+#define UGL_KBD_RIGHT_SHIFT    0x00100000
+#define UGL_KBD_SHIFT          0x00180000
+#define UGL_KBD_LEFT_CTRL      0x00200000
+#define UGL_KBD_RIGHT_CTRL     0x00400000
+#define UGL_KBD_CTRL           0x00600000
+#define UGL_KBD_NUM_LOCK       0x00800000
+#define UGL_KBD_SCROLL_LOCK    0x01000000
+#define UGL_KBD_CAPS_LOCK      0x02000000
+#define UGL_KBD_EXTENDED_KEY   0x04000000
+#define UGL_KBD_NUM_PAD        0x08000000
+#define UGL_KBD_MOD_MASK       0xffff0000
+#define UGL_KBD_KEY_MASK       0x0000ffff
+
 #ifndef _ASMLANGUAGE
 
 #ifdef __cplusplus
@@ -53,6 +72,17 @@ typedef struct ugl_raw_ptr_data {
     } pos;
 } UGL_RAW_PTR_DATA;
 
+typedef struct ugl_raw_kbd_data {
+    struct ugl_input_dev  *deviceId;
+    UGL_BOOL               isKeyDown;
+    UGL_BOOL               isExtended;
+    UGL_BOOL               isKeyCode;
+    union {
+        UGL_UINT32         scanCode;
+        UGL_UINT32         keyCode;
+    } value;
+} UGL_RAW_KBD_DATA;
+
 typedef struct ugl_ptr_data {
     UGL_RAW_PTR_DATA    rawPtr;
     UGL_TIMESTAMP       timeStamp;
@@ -62,12 +92,22 @@ typedef struct ugl_ptr_data {
     UGL_UINT32          buttonChange;
 } UGL_POINTER_DATA;
 
+typedef struct ugl_keyboard_data {
+    UGL_RAW_KBD_DATA    rawKbd;
+    UGL_TIMESTAMP       timeStamp;
+    UGL_WCHAR           key;
+    UGL_POINT           ptrPos;
+    UGL_UINT32          modifiers;
+} UGL_KEYBOARD_DATA;
+
 /* Message data */
 typedef UGL_UINT32 UGL_MSG_TYPE;
 
 typedef union ugl_msg_data {
     UGL_POINTER_DATA    pointer;
+    UGL_KEYBOARD_DATA   keyboard;
     UGL_RAW_PTR_DATA    rawPtr;
+    UGL_RAW_KBD_DATA    rawKbd;
 } UGL_MSG_DATA;
 
 /* Messages */

@@ -80,6 +80,11 @@ UGL_LOCAL UGL_STATUS uglPtrMsgMap (
     UGL_MSG              *pMsg
     );
 
+UGL_LOCAL UGL_STATUS uglKbdMsgMap (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_MSG              *pMsg
+    );
+
 /******************************************************************************
  *
  * uglInputDevAdd - Add input device to input system
@@ -412,6 +417,31 @@ UGL_STATUS uglInputCbRemoveArray (
 
 /******************************************************************************
  *
+ * uglInputKbdMapSet - Set keyboard map for input service
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputKbdMapSet (
+    UGL_INPUT_SERVICE_ID srvId,
+    UGL_INPUT_DEV_ID     devId,
+    UGL_KBD_MAP         *pKbdMap
+    ) {
+    UGL_STATUS  status;
+
+    if (srvId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+       srvId->pKbdMap = pKbdMap;
+       status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * uglInputMsgPost - Post message to input queue
  *
  * RETURNS: UGL_STATUS_OK or error code
@@ -427,11 +457,11 @@ UGL_STATUS uglInputMsgPost (
         status = UGL_STATUS_ERROR;
     }
     else {
-        if (pMsg->type == MSG_RAW_KBD) {
-            /* TODO */
-        }
-        else if (pMsg->type == MSG_RAW_PTR) {
+        if (pMsg->type == MSG_RAW_PTR) {
             uglPtrMsgMap(srvId, pMsg);
+        }
+        else if (pMsg->type == MSG_RAW_KBD) {
+            uglKbdMsgMap(srvId, pMsg);
         }
 
         status = uglMsgQPost(srvId->pInputQ, pMsg, UGL_NO_WAIT);
@@ -832,3 +862,147 @@ UGL_LOCAL UGL_STATUS uglPtrMsgMap (
 
     return status;
 }
+
+/******************************************************************************
+ *
+ * uglKbdMsgMap - Map raw keyboard messages
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_LOCAL UGL_STATUS uglKbdMsgMap (
+    UGL_INPUT_SERVICE_ID  srvId,
+    UGL_MSG              *pMsg
+    ) {
+    UGL_STATUS        status;
+    UGL_UINT32        modifiers;
+    UGL_KBD_MODIFIER *pModifier;
+    UGL_KBD_KEYMAP   *pKeyMap;
+    UGL_KBD_FILTER   *pFilter;
+    UGL_KBD_MAP      *pKbdMap = srvId->pKbdMap;
+
+    if (pMsg->type != MSG_RAW_KBD ||
+        (pMsg->data.rawKbd.isKeyCode == UGL_FALSE && pKbdMap == UGL_NULL)) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        modifiers = srvId->modifiers;
+
+        if (pMsg->data.rawKbd.isKeyCode == UGL_TRUE) {
+           modifiers &= ~UGL_KBD_MOD_MASK;
+           modifiers |= pMsg->data.rawKbd.value.keyCode & UGL_KBD_MOD_MASK;
+
+           if (pMsg->data.rawKbd.isKeyDown == UGL_TRUE) {
+              modifiers |= UGL_KBD_KEYDOWN;
+           }
+
+           if (pMsg->data.rawKbd.isExtended == UGL_TRUE) {
+              modifiers |= UGL_KBD_EXTENDED_KEY;
+           }
+        }
+        else if (pKbdMap->pModifiers != UGL_NULL) {
+
+            for  (pModifier = pKbdMap->pModifiers;
+                  pModifier->value != 0;
+                  pModifier++) {
+
+               if (pModifier->scancode == pMsg->data.rawKbd.value.scanCode &&
+                   pModifier->extended == pMsg->data.rawKbd.isExtended) {
+
+                   if (pModifier->toggle == UGL_TRUE) {
+                       if (pMsg->data.rawKbd.isKeyDown == UGL_TRUE) {
+                           modifiers ^= pModifier->value;
+                       }
+
+                       if (srvId->autoLedControl == UGL_TRUE) {
+                           if ((modifiers & pModifier->value) != 0x00) {
+                               uglInputDevControl(
+                                   pMsg->data.rawKbd.deviceId,
+                                   ICR_SET_LED,
+                                   &pModifier->value
+                                   );
+                           }
+                           else {
+                               uglInputDevControl(
+                                   pMsg->data.rawKbd.deviceId,
+                                   ICR_CLEAR_LED,
+                                   &pModifier->value
+                                   );
+                           }
+                       }
+                   }
+                   else if (pMsg->data.rawKbd.isKeyDown == UGL_TRUE) {
+                       modifiers |= pModifier->value;
+                   }
+                   else {
+                      modifiers &= ~pModifier->value;
+                   }
+
+                   /* Break out of for loop */
+                   break;
+               }
+            }
+        }
+
+        srvId->modifiers = modifiers;
+
+        /* Convert from raw keyboard to keyboard message */
+        pMsg->type                    = MSG_KEYBOARD;
+        pMsg->data.keyboard.timeStamp = uglOSTimeStamp();
+        pMsg->data.keyboard.ptrPos.x  = srvId->position.x;
+        pMsg->data.keyboard.ptrPos.y  = srvId->position.y;
+
+        if (pMsg->data.rawKbd.isKeyDown == UGL_TRUE) {
+            modifiers |= UGL_KBD_KEYDOWN;
+        }
+
+        if (pMsg->data.rawKbd.isExtended == UGL_TRUE) {
+            modifiers |= UGL_KBD_EXTENDED_KEY;
+        }
+
+        /* Store modifiers */
+        pMsg->data.keyboard.modifiers = modifiers;
+
+        if (pMsg->data.rawKbd.isKeyCode == UGL_TRUE) {
+            pMsg->data.keyboard.key =
+                (UGL_WCHAR) (pMsg->data.rawKbd.value.keyCode & UGL_KBD_KEY_MASK);
+        }
+        else if (pMsg->data.rawKbd.value.scanCode <
+                 (UGL_UINT32) pKbdMap->numKeyMaps) {
+
+            pKeyMap = &pKbdMap->pKeyMaps[pMsg->data.rawKbd.value.scanCode];
+            modifiers &= pKeyMap->mapMask;
+
+            if (pKbdMap->pFilters != UGL_NULL) {
+                for (pFilter = pKbdMap->pFilters;
+                     pFilter->onMask != 0x00;
+                     pFilter++) {
+
+                    if ((modifiers & pFilter->onMask) != 0x00 &&
+                        (modifiers & pFilter->offMask) == 0x00) {
+                        break;
+                    }
+                }
+
+                pMsg->data.keyboard.key = pKeyMap->keyValue[pFilter->index];
+            }
+            else {
+                pMsg->data.keyboard.key = pKeyMap->keyValue[0];
+            }
+
+            /* Extra modifiers */
+            if (((pMsg->data.keyboard.modifiers & UGL_KBD_EXTENDED_KEY) ^
+                 (pKeyMap->extraModifiers & UGL_KBD_EXTENDED_KEY)) == 0x00) {
+                pMsg->data.keyboard.modifiers |= pKeyMap->extraModifiers;
+            }
+        }
+        else {
+            pMsg->data.keyboard.key = 0;
+        }
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+

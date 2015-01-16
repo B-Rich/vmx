@@ -221,6 +221,19 @@ UGL_STATUS uglInputCbRemove (
 
 /******************************************************************************
  *
+ * uglInputKbdMapSet - Set keyboard map for input service
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglInputKbdMapSet (
+    UGL_INPUT_SERVICE_ID srvId,
+    UGL_INPUT_DEV_ID     devId,
+    UGL_KBD_MAP         *pKbdMap
+    );
+
+/******************************************************************************
+ *
  * uglInputMsgPost - Post message to input queue
  *
  * RETURNS: UGL_STATUS_OK or error code
