@@ -1035,6 +1035,31 @@ UGL_STATUS uglRegistryRemove (
     UGL_REG_DATA  *pData
     );
 
+/******************************************************************************
+ *
+ * uglRegistryFind - Find entry in registry
+ *
+ * RETURNS: Pointer to registry data or UGL_NULL
+ */
+
+UGL_REG_DATA* uglRegistryFind (
+    UGL_UINT32  type,
+    UGL_ARG    *pData,
+    UGL_UINT32  id,
+    UGL_CHAR   *name
+    );
+
+/******************************************************************************
+ *
+ * uglRegistryFindNext - Find next entry in registry
+ *
+ * RETURNS: Pointer to registry data or UGL_NULL
+ */
+
+UGL_REG_DATA* uglRegistryFindNext (
+    UGL_REG_DATA *pData
+    );
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

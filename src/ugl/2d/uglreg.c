@@ -32,9 +32,7 @@
 #define UGL_REG_SEARCH_DATA    0x04
 #define UGL_REG_SEARCH_NAME    0x08
 
-/* Macros */
-
-#define UGL_REG_NODE_EMPTY        ((UGL_REG_NODE *) (-1))
+#define UGL_REG_NODE_AVAILABLE ((UGL_REG_NODE *) (-1))
 
 /* Types */
 
@@ -49,9 +47,17 @@ UGL_LOCK_ID uglRegistryLock = UGL_NULL;
 
 /* Locals */
 
-UGL_LOCAL UGL_REG_NODE  *pRegistryList = UGL_NULL;
+UGL_LOCAL UGL_REG_NODE *pRegistryList = UGL_NULL;
 UGL_LOCAL UGL_REG_NODE  registryHeap[UGL_REG_MAX_ENTRIES];
 UGL_LOCAL UGL_ORD       nodeCount = 0;
+UGL_LOCAL UGL_UINT32    uglRegistrySearchFields = 0;
+UGL_LOCAL UGL_REG_DATA  uglRegistrySearchData;
+
+UGL_LOCAL UGL_BOOL uglRegistryCompare (
+    UGL_REG_NODE *pNode,
+    UGL_REG_DATA *pData,
+    UGL_UINT32    searchFields
+    );
 
 /******************************************************************************
  *
@@ -122,7 +128,7 @@ UGL_STATUS uglRegistryAdd (
     /* Initialize if no nodes yet */
     if (nodeCount == 0) {
         for (i = 0; i < UGL_REG_MAX_ENTRIES; i++) {
-            registryHeap[i].pNext = UGL_REG_NODE_EMPTY;
+            registryHeap[i].pNext = UGL_REG_NODE_AVAILABLE;
         }
     }
 
@@ -134,7 +140,7 @@ UGL_STATUS uglRegistryAdd (
 
         /* Find first free slot */
         for (i = 0; i < UGL_REG_MAX_ENTRIES; i++) {
-            if (registryHeap[i].pNext == UGL_REG_NODE_EMPTY) {
+            if (registryHeap[i].pNext == UGL_REG_NODE_AVAILABLE) {
                 pNode = &registryHeap[i];
                 break;
             }
@@ -169,7 +175,7 @@ UGL_STATUS uglRegistryAdd (
             /* Add new node to head of list */
             pNode->pNext = pRegistryList;
             pRegistryList = pNode;
-            status = UGL_STATUS_ERROR;
+            status = UGL_STATUS_OK;
         }
     }
 
@@ -202,7 +208,7 @@ UGL_STATUS uglRegistryRemove (
         /* Check if head node matches */
         if (pCurrNode == pNode) {
             pRegistryList = pNode->pNext;
-            pNode->pNext = UGL_REG_NODE_EMPTY;
+            pNode->pNext = UGL_REG_NODE_AVAILABLE;
             nodeCount--;
             status = UGL_STATUS_OK;
         }
@@ -214,7 +220,7 @@ UGL_STATUS uglRegistryRemove (
                 /* Check for node */
                 if (pCurrNode->pNext == pNode) {
                     pCurrNode->pNext = pNode->pNext;
-                    pNode->pNext = UGL_REG_NODE_EMPTY;
+                    pNode->pNext = UGL_REG_NODE_AVAILABLE;
                     nodeCount--;
                     status = UGL_STATUS_OK;
                     break;
@@ -229,5 +235,147 @@ UGL_STATUS uglRegistryRemove (
     }
 
     return status;
+}
+
+/******************************************************************************
+ *
+ * uglRegistryFind - Find entry in registry
+ *
+ * RETURNS: Pointer to registry data or UGL_NULL
+ */
+
+UGL_REG_DATA* uglRegistryFind (
+    UGL_UINT32  type,
+    UGL_ARG    *pData,
+    UGL_UINT32  id,
+    UGL_CHAR   *name
+    ) {
+    UGL_REG_NODE  *pNode = pRegistryList;
+
+    uglOSLock(uglRegistryLock);
+
+    uglRegistrySearchFields = 0x00;
+
+    if (type != 0) {
+        uglRegistrySearchFields    |= UGL_REG_SEARCH_TYPE;
+        uglRegistrySearchData.type  = type;
+    }
+
+    if (id != 0) {
+        uglRegistrySearchFields  |= UGL_REG_SEARCH_ID;
+        uglRegistrySearchData.id  = id;
+    }
+
+    if (pData != UGL_NULL) {
+        uglRegistrySearchFields    |= UGL_REG_SEARCH_DATA;
+        uglRegistrySearchData.data  = *pData;
+    }
+
+    if (name != UGL_NULL) {
+        uglRegistrySearchFields |= UGL_REG_SEARCH_NAME;
+        strncpy(uglRegistrySearchData.name, name, UGL_REG_MAX_NAME_LENGTH);
+    }
+
+    /* Search for node */
+    while (pNode != UGL_NULL) {
+
+        if (uglRegistryCompare(
+                pNode,
+                &uglRegistrySearchData,
+                uglRegistrySearchFields
+                ) == UGL_TRUE) {
+            break;
+        }
+
+        /* Advance */
+        pNode = pNode->pNext;
+    }
+
+    uglOSUnlock(uglRegistryLock);
+
+    return (UGL_REG_DATA *) pNode;
+}
+
+/******************************************************************************
+ *
+ * uglRegistryFindNext - Find next entry in registry
+ *
+ * RETURNS: Pointer to registry data or UGL_NULL
+ */
+
+UGL_REG_DATA* uglRegistryFindNext (
+    UGL_REG_DATA *pData
+    ) {
+    UGL_BOOL      found = UGL_FALSE;
+    UGL_REG_NODE *pNode = (UGL_REG_NODE *) pData;
+
+    if (pNode != UGL_NULL) {
+
+        uglOSLock(uglRegistryLock);
+
+        while (pNode->pNext != UGL_NULL) {
+            pNode = pNode->pNext;
+
+            if (uglRegistryCompare(
+                    pNode,
+                    &uglRegistrySearchData,
+                    uglRegistrySearchFields
+                    ) == UGL_TRUE) {
+
+                found = UGL_TRUE;
+                break;
+            }
+        }
+
+        uglOSUnlock(uglRegistryLock);
+    }
+
+    if (found != UGL_TRUE) {
+        pNode = UGL_NULL;
+    }
+
+    return (UGL_REG_DATA *) pNode;
+}
+
+/******************************************************************************
+ *
+ * uglRegistryCompare - Compare registry nodes
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_LOCAL UGL_BOOL uglRegistryCompare (
+    UGL_REG_NODE *pNode,
+    UGL_REG_DATA *pData,
+    UGL_UINT32    searchFields
+    ) {
+    UGL_BOOL      result = UGL_TRUE;
+    UGL_REG_DATA *pCurrData = (UGL_REG_DATA *) pNode;
+
+    if ((searchFields & UGL_REG_SEARCH_TYPE) != 0x00) {
+        if (pCurrData->type != pData->type) {
+            result = UGL_FALSE;
+        }
+    }
+
+    if ((searchFields & UGL_REG_SEARCH_ID) != 0x00) {
+        if (pCurrData->id != pData->id) {
+            result = UGL_FALSE;
+        }
+    }
+
+    if ((searchFields & UGL_REG_SEARCH_DATA) != 0x00) {
+        if (pCurrData->data != pData->data) {
+            result = UGL_FALSE;
+        }
+    }
+
+    if ((searchFields & UGL_REG_SEARCH_NAME) != 0x00) {
+        if (strcmp(pCurrData->name, pData->name) != 0) {
+            result = UGL_FALSE;
+        }
+    }
+
+    return result;
 }
 
