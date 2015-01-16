@@ -782,7 +782,7 @@ UGL_LOCAL UGL_STATUS uglPtrMsgMap (
         pMsg->data.pointer.timeStamp = uglOSTimeStamp();
 
         /* Convert coordinates */
-        if (pMsg->data.rawPtr.isAbsolute) {
+        if (pMsg->data.rawPtr.isAbsolute == UGL_TRUE) {
             memcpy(&pMsg->data.pointer.position,
                    &pMsg->data.rawPtr.pos.absolute,
                    sizeof(UGL_POINT));

@@ -97,6 +97,10 @@ typedef UGL_STATUS (*UGL_FPTR) (void);
 /* Registry */
 #define UGL_REG_MAX_NAME_LENGTH    64
 
+#define UGL_INPUT_SERVICE_TYPE      1
+#define UGL_KBD_TYPE                2
+#define UGL_PTR_TYPE                3
+
 /* Complex types */
 typedef struct ugl_range {
     UGL_ORD  min;

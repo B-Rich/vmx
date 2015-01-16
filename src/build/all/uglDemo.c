@@ -3076,11 +3076,11 @@ IMPORT UGL_INPUT_DRV uglPs2PtrDriver;
 UGL_INPUT_CB_ITEM cbList[] = {
     { 0, 0, UGL_NULL }
 };
-UGL_INPUT_SERVICE_ID inputSrvId;
-UGL_INPUT_DEV_ID     inputDevId;
 
 int uglMouseInit(void)
 {
+  UGL_INPUT_SERVICE_ID inputSrvId;
+  UGL_INPUT_DEV_ID inputDevId;
   UGL_RECT rect;
   UGL_STATUS status;
 
@@ -3097,11 +3097,13 @@ int uglMouseInit(void)
     status = UGL_STATUS_ERROR;
   }
   else {
+    uglRegistryAdd(UGL_INPUT_SERVICE_TYPE, inputSrvId, 0, UGL_NULL);
     inputDevId = uglInputDevOpen("/mouse", &uglPs2PtrDriver);
     if (inputDevId == UGL_NULL) {
       status = UGL_STATUS_ERROR;
     }
     else {
+      uglRegistryAdd(UGL_PTR_TYPE, inputDevId, 0, UGL_NULL);
       status = uglInputDevAdd(inputSrvId, inputDevId);
     }
   }
@@ -3111,19 +3113,41 @@ int uglMouseInit(void)
 
 int uglMouseLogger(void)
 {
+  UGL_REG_DATA *pData;
+  UGL_INPUT_SERVICE_ID inputSrvId;
   UGL_STATUS status;
   UGL_MSG msg;
+
+  pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    return 1;
+  }
+
+  inputSrvId = (UGL_INPUT_SERVICE_ID) pData->data;
+  if (inputSrvId == UGL_NULL) {
+    return 1;
+  }
 
   while (1) {
     status = uglInputMsgGet(inputSrvId, &msg, UGL_WAIT_FOREVER);
     if (status == UGL_STATUS_OK) {
       switch(msg.type) {
         case MSG_RAW_PTR:
-          printf("Pointer input message: %x, %d, %d\n",
+          printf("Raw pointer input message: %x, %d, %d\n",
                  msg.data.rawPtr.buttonState,
                  msg.data.rawPtr.pos.relative.x,
                  msg.data.rawPtr.pos.relative.y);
           break;
+
+        case MSG_POINTER:
+            printf("Pointer input message: %d, %d -(%d, %d): %x -(%x)\n",
+                   msg.data.pointer.position.x,
+                   msg.data.pointer.position.y,
+                   msg.data.pointer.delta.x,
+                   msg.data.pointer.delta.y,
+                   msg.data.pointer.buttonState,
+                   msg.data.pointer.buttonChange);
+            break;
 
         default:
           printf("Got input message of type: %d\n", msg.type);
