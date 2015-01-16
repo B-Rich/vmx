@@ -817,11 +817,15 @@ UGL_LOCAL UGL_STATUS uglPtrMsgMap (
         pMsg->data.pointer.delta.y =
             pMsg->data.pointer.position.y - srvId->position.y;
 
+        /* Store latest coordinates to input service */
+        srvId->position.x = pMsg->data.pointer.position.x;
+        srvId->position.y = pMsg->data.pointer.position.y;
+
         /* Determine button state change */
-       pMsg->data.pointer.buttonChange = pMsg->data.rawPtr.buttonState ^
-          (srvId->modifiers & UGL_PTR_MOD_MASK);
-       pMsg->data.pointer.buttonState =
-           srvId->modifiers ^= pMsg->data.pointer.buttonChange;
+        pMsg->data.pointer.buttonChange = pMsg->data.rawPtr.buttonState ^
+            (srvId->modifiers & UGL_PTR_MOD_MASK);
+        pMsg->data.pointer.buttonState =
+            srvId->modifiers ^= pMsg->data.pointer.buttonChange;
 
         status = UGL_STATUS_OK;
     }
