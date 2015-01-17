@@ -22,19 +22,12 @@
 
 #include <string.h>
 #include "ugl.h"
-#include "uglMsg.h"
 #include "uglinput.h"
+#include "uglMsg.h"
+#include "private/uglMsgP.h"
 
 #define UGL_CB_ARRAY_START_SIZE         4
 #define UGL_CB_ARRAY_SIZE_DELTA(_sz)    ((_sz) = (_sz) * 3 / 2)
-
-/* Types */
-
-typedef struct ugl_cb_list {
-    UGL_SIZE             arraySize;
-    UGL_SIZE             numCallbacks;
-    struct ugl_cb_item  *pCbArray;
-} UGL_CB_LIST;
 
 /* Locals */
 

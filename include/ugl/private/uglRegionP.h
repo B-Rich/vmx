@@ -18,9 +18,44 @@
  *   along with Real VMX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* winWindow.c - Universal graphics library window library */
+/* uglRegionP.h - Private header for regions */
 
-#include <string.h>
-#include "winWindow.h"
-#include "private/uglWinP.h"
+#ifndef _uglRegionP_h
+#define _uglRegionP_h
+
+#ifndef _ASMLANGUAGE
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Types */
+
+typedef struct ugl_region_rect {
+    UGL_RECT                 rect;
+    struct ugl_region_rect * pNextTL2BR;
+    struct ugl_region_rect * pPrevTL2BR;
+    struct ugl_region_rect * pNextTR2BL;
+    struct ugl_region_rect * pPrevTR2BL;
+} UGL_REGION_RECT;
+
+typedef struct ugl_region_block {
+    UGL_REGION_RECT *         pRectBlock;
+    struct ugl_region_block * pNextBlock;
+} UGL_REGION_BLOCK;
+
+typedef struct ugl_region {
+    UGL_REGION_RECT * pFirstTL2BR;
+    UGL_REGION_RECT * pLastTL2BR;
+    UGL_REGION_RECT * pFirstTR2BL;
+    UGL_REGION_RECT * pLastTR2BL;
+} UGL_REGION;
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* _ASMLANGUAGE */
+
+#endif /* _uglRegionP_h */
 

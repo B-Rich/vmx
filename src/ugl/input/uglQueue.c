@@ -24,13 +24,7 @@
 #include "ugl.h"
 #include "uglos.h"
 #include "uglMsg.h"
-
-/* Types */
-typedef struct ugl_msg_queue {
-    UGL_OS_MSG_Q_ID     osQId;
-    UGL_MSG             peekMsg;
-    UGL_UINT32          useCount;
-} UGL_MSG_QUEUE;
+#include "private/uglMsgP.h"
 
 /******************************************************************************
  *

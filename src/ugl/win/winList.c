@@ -22,7 +22,7 @@
 
 #include <string.h>
 #include "uglmem.h"
-#include "winList.h"
+#include "private/winListP.h"
 
 /******************************************************************************
  *

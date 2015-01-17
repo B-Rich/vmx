@@ -24,32 +24,12 @@
 #include <stdlib.h>
 
 #include "ugl.h"
+#include "uglregn.h"
+#include "private/uglRegionP.h"
 
 /* Defines */
 
 #define UGL_REGION_RECTS_IN_BLOCK       50
-
-/* Types */
-
-typedef struct ugl_region_rect {
-    UGL_RECT                 rect;
-    struct ugl_region_rect * pNextTL2BR;
-    struct ugl_region_rect * pPrevTL2BR;
-    struct ugl_region_rect * pNextTR2BL;
-    struct ugl_region_rect * pPrevTR2BL;
-} UGL_REGION_RECT;
-
-typedef struct ugl_region {
-    UGL_REGION_RECT * pFirstTL2BR;
-    UGL_REGION_RECT * pLastTL2BR;
-    UGL_REGION_RECT * pFirstTR2BL;
-    UGL_REGION_RECT * pLastTR2BL;
-} UGL_REGION;
-
-typedef struct ugl_region_block {
-    UGL_REGION_RECT *         pRectBlock;
-    struct ugl_region_block * pNextBlock;
-} UGL_REGION_BLOCK;
 
 /* Locals */
 

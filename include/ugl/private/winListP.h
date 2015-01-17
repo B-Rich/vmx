@@ -18,10 +18,10 @@
  *   along with Real VMX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* winList.h - Linked list for windows */
+/* winListP.h - Private linked list for windows */
 
-#ifndef _winList_h
-#define _winList_h
+#ifndef _winListP_h
+#define _winListP_h
 
 #include "ugl.h"
 
@@ -174,5 +174,5 @@ WIN_NODE * winListPrev (
 
 #endif /* _ASMLANGUAGE */
 
-#endif /* _winList_h */
+#endif /* _winListP_h */
 

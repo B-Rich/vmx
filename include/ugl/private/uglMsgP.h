@@ -18,10 +18,10 @@
  *   along with Real VMX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* win.h - Private window header for universal graphics library */
+/* uglMsgP.h - Private header for message queue */
 
-#ifndef _win_h
-#define _win_h
+#ifndef _uglMsgP_h
+#define _uglMsgP_h
 
 #ifndef _ASMLANGUAGE
 
@@ -29,8 +29,19 @@
 extern "C" {
 #endif
 
-typedef struct win_class {
-} WIN_CLASS;
+/* Types */
+
+typedef struct ugl_msg_queue {
+    UGL_OS_MSG_Q_ID     osQId;
+    UGL_MSG             peekMsg;
+    UGL_UINT32          useCount;
+} UGL_MSG_QUEUE;
+
+typedef struct ugl_cb_list {
+    UGL_SIZE             arraySize;
+    UGL_SIZE             numCallbacks;
+    struct ugl_cb_item  *pCbArray;
+} UGL_CB_LIST;
 
 #ifdef __cplusplus
 }
@@ -38,5 +49,5 @@ typedef struct win_class {
 
 #endif /* _ASMLANGUAGE */
 
-#endif /* _win_h */
+#endif /* _uglMsgP_h */
 
