@@ -18,34 +18,11 @@
  *   along with Real VMX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* winWindow.c - Universal graphics library window library */
+/* winManage.c - Universal graphics library window manager */
 
-#include <string.h>
+#include "ugl.h"
 #include "uglWin.h"
 #include "private/uglWinP.h"
 
-/******************************************************************************
- *
- * winCreate - Create window
- *
- * RETURNS: WIN_ID or UGL_NULL
- */
-
-WIN_ID  winCreate (
-    WIN_APP_ID           appId,
-    WIN_CLASS_ID         classId,
-    UGL_UINT32           attributes,
-    UGL_POS              x,
-    UGL_POS              y,
-    UGL_SIZE             width,
-    UGL_SIZE             height,
-    void *               pAppData,
-    UGL_SIZE             appDataSize,
-    const WIN_CB_ITEM *  pCallbackArray
-    ) {
-
-    /* TODO */
-
-    return UGL_NULL;
-}
+const UGL_CHAR  winRootClassName[] = "WIN_ROOT_CLASS";
 

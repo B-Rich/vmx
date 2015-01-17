@@ -33,6 +33,7 @@
 
 #include "ugl.h"
 #include "uglinput.h"
+#include "uglWin.h"
 #include "driver/graphics/vga/udvga.h"
 #include "driver/graphics/vga/udvgamode.h"
 #include "driver/graphics/generic/udgen.h"
@@ -3214,6 +3215,9 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_uglRegistryFindNext", uglRegistryFindNext, 0, N_TEXT | N_EXT},
   {NULL, "_uglOSTimeStamp", uglOSTimeStamp, 0, N_TEXT | N_EXT},
   {NULL, "_uglOSMsgQCreate", uglOSMsgQCreate, 0, N_TEXT | N_EXT},
+  {NULL, "_winClassCreate", winClassCreate, 0, N_TEXT | N_EXT},
+  {NULL, "_winClassDestroy", winClassDestroy, 0, N_TEXT | N_EXT},
+  {NULL, "_winClassLookup", winClassLookup, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseInit", uglMouseInit, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseLog", uglMouseLog, 0, N_TEXT | N_EXT}
 };

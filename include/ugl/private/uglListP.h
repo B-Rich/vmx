@@ -42,14 +42,16 @@ typedef struct ugl_list {
     UGL_SIZE    count;
 } UGL_LIST;
 
+typedef UGL_LIST *  UGL_LIST_ID;
+
 /******************************************************************************
  *
  * uglListCreate - Create window list
  *
- * RETURNS: Pointer to list or UGL_NULL
+ * RETURNS: List id or UGL_NULL
  */
 
-UGL_LIST * uglListCreate (
+UGL_LIST_ID uglListCreate (
     void
     );
 
@@ -61,7 +63,18 @@ UGL_LIST * uglListCreate (
  */
 
 STATUS uglListInit (
-    UGL_LIST *  pList
+    UGL_LIST_ID  listId
+    );
+
+/******************************************************************************
+ *
+ * uglListDestroy - Destroy window list
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglListDestroy (
+    UGL_LIST_ID  listId
     );
 
 /******************************************************************************
@@ -72,9 +85,9 @@ STATUS uglListInit (
  */
 
 UGL_STATUS uglListInsert (
-    UGL_LIST *  pList,
-    UGL_NODE *  pNode,
-    UGL_NODE *  pNextNode
+    UGL_LIST_ID  listId,
+    UGL_NODE *   pNode,
+    UGL_NODE *   pNextNode
     );
 
 /******************************************************************************
@@ -85,8 +98,8 @@ UGL_STATUS uglListInsert (
  */
 
 UGL_STATUS uglListAdd (
-    UGL_LIST *  pList,
-    UGL_NODE *  pNode
+    UGL_LIST_ID  listId,
+    UGL_NODE *   pNode
     );
 
 /******************************************************************************
@@ -97,8 +110,8 @@ UGL_STATUS uglListAdd (
  */
 
 UGL_STATUS uglListRemove (
-    UGL_LIST *  pList,
-    UGL_NODE *  pNode
+    UGL_LIST_ID  listId,
+    UGL_NODE *   pNode
     );
 
 /******************************************************************************
@@ -109,7 +122,7 @@ UGL_STATUS uglListRemove (
  */
 
 UGL_SIZE uglListCount (
-    UGL_LIST *  pList
+    UGL_LIST_ID  listId
     );
 
 /******************************************************************************
@@ -120,7 +133,7 @@ UGL_SIZE uglListCount (
  */
 
 UGL_NODE * uglListFirst (
-    UGL_LIST *  pList
+    UGL_LIST_ID  listId
     );
 
 /******************************************************************************
@@ -131,7 +144,7 @@ UGL_NODE * uglListFirst (
  */
 
 UGL_NODE * uglListLast (
-    UGL_LIST *  pList
+    UGL_LIST_ID  listId
     );
 
 /******************************************************************************
@@ -142,8 +155,8 @@ UGL_NODE * uglListLast (
  */
 
 UGL_NODE * uglListNth (
-    UGL_LIST *  pList,
-    UGL_ORD     n
+    UGL_LIST_ID  listId,
+    UGL_ORD      n
     );
 
 /******************************************************************************

@@ -28,10 +28,10 @@
  *
  * uglListCreate - Create window list
  *
- * RETURNS: Pointer to list or UGL_NULL
+ * RETURNS: List id or UGL_NULL
  */
 
-UGL_LIST * uglListCreate (
+UGL_LIST_ID uglListCreate (
     void
     ) {
     UGL_LIST *  pList;
@@ -49,15 +49,15 @@ UGL_LIST * uglListCreate (
  */
 
 STATUS uglListInit (
-    UGL_LIST *  pList
+    UGL_LIST_ID  listId
     ) {
     UGL_STATUS  status;
 
-    if (pList == UGL_NULL) {
+    if (listId == UGL_NULL) {
         status = UGL_STATUS_ERROR;
     }
     else {
-        memset(&pList, 0, sizeof(UGL_LIST));
+        memset(listId, 0, sizeof(UGL_LIST));
         status = UGL_STATUS_OK;
     }
 
@@ -72,17 +72,17 @@ STATUS uglListInit (
  */
 
 UGL_STATUS uglListDestroy (
-    UGL_LIST *  pList
+    UGL_LIST_ID  listId
     ) {
     UGL_STATUS  status;
     UGL_NODE *  pNode;
     UGL_NODE *  pNextNode;
 
-    if (pList == UGL_NULL) {
+    if (listId == UGL_NULL) {
         status = UGL_STATUS_ERROR;
     }
     else {
-        pNode = pList->pFirst;
+        pNode = listId->pFirst;
 
         /* Free all nodes */
         while (pNode != UGL_NULL) {
@@ -95,7 +95,7 @@ UGL_STATUS uglListDestroy (
         status = UGL_STATUS_OK;
     }
 
-    UGL_FREE(pList);
+    UGL_FREE(listId);
 
     return status;
 }
@@ -108,25 +108,25 @@ UGL_STATUS uglListDestroy (
  */
 
 UGL_STATUS uglListInsert (
-    UGL_LIST *  pList,
-    UGL_NODE *  pNode,
-    UGL_NODE *  pNextNode
+    UGL_LIST_ID  listId,
+    UGL_NODE *   pNode,
+    UGL_NODE *   pNextNode
     ) {
     UGL_STATUS  status;
   
-    if (pList == UGL_NULL) {
+    if (listId == UGL_NULL) {
         status = UGL_STATUS_ERROR;
     }
     else {
-        if (pList->count == 0 || pNextNode == UGL_NULL) {
-            status = uglListAdd(pList, pNode);
+        if (listId->count == 0 || pNextNode == UGL_NULL) {
+            status = uglListAdd(listId, pNode);
         }
-        else if (pNextNode == pList->pFirst) {
-            pNode->pNext = pList->pFirst;
+        else if (pNextNode == listId->pFirst) {
+            pNode->pNext = listId->pFirst;
             pNode->pPrev = UGL_NULL;
 
-            pList->pFirst->pPrev = pNode;
-            pList->pFirst        = pNode;
+            listId->pFirst->pPrev = pNode;
+            listId->pFirst        = pNode;
         }
         else {
             pNode->pNext = pNextNode;
@@ -137,7 +137,7 @@ UGL_STATUS uglListInsert (
             pNode->pPrev->pNext = pNode;
         }
 
-        pList->count++;
+        listId->count++;
         status = UGL_STATUS_OK;
     }
 
@@ -152,31 +152,31 @@ UGL_STATUS uglListInsert (
  */
 
 UGL_STATUS uglListAdd (
-    UGL_LIST *  pList,
-    UGL_NODE *  pNode
+    UGL_LIST_ID  listId,
+    UGL_NODE *   pNode
     ) {
     UGL_STATUS  status;
 
-    if (pList == UGL_NULL) {
+    if (listId == UGL_NULL) {
         status = UGL_STATUS_ERROR;
     }
     else {
-        if (pList->count == 0) {
-            pList->pFirst = pNode;
-            pList->pLast  = pNode;
+        if (listId->count == 0) {
+            listId->pFirst = pNode;
+            listId->pLast  = pNode;
 
             pNode->pNext = UGL_NULL;
             pNode->pPrev = UGL_NULL;
         }
         else {
-            pNode->pPrev = pList->pLast;
+            pNode->pPrev = listId->pLast;
             pNode->pNext = UGL_NULL;
 
-            pList->pLast->pNext = pNode;
-            pList->pLast        = pNode;
+            listId->pLast->pNext = pNode;
+            listId->pLast        = pNode;
         }
 
-        pList->count++;
+        listId->count++;
         status = UGL_STATUS_OK;
     }
 
@@ -191,28 +191,28 @@ UGL_STATUS uglListAdd (
  */
 
 UGL_STATUS uglListRemove (
-    UGL_LIST *  pList,
-    UGL_NODE *  pNode
+    UGL_LIST_ID  listId,
+    UGL_NODE *   pNode
     ) {
     UGL_STATUS  status;
 
-    if (pList == UGL_NULL || pList->count == 0) {
+    if (listId == UGL_NULL || listId->count == 0) {
         status = UGL_STATUS_ERROR;
     }
     else {
-        pList->count--;
+        listId->count--;
 
-        if (pList->count == 0) {
-            pList->pFirst = UGL_NULL;
-            pList->pLast  = UGL_NULL;
+        if (listId->count == 0) {
+            listId->pFirst = UGL_NULL;
+            listId->pLast  = UGL_NULL;
         }
-        else if (pNode == pList->pFirst) {
-            pList->pFirst        = pNode->pNext;
-            pList->pFirst->pPrev = UGL_NULL;
+        else if (pNode == listId->pFirst) {
+            listId->pFirst        = pNode->pNext;
+            listId->pFirst->pPrev = UGL_NULL;
         }
-        else if (pNode == pList->pLast) {
-            pList->pLast        = pNode->pPrev;
-            pList->pLast->pNext = UGL_NULL;
+        else if (pNode == listId->pLast) {
+            listId->pLast        = pNode->pPrev;
+            listId->pLast->pNext = UGL_NULL;
         }
         else {
             pNode->pNext->pPrev = pNode->pPrev;
@@ -236,15 +236,15 @@ UGL_STATUS uglListRemove (
  */
 
 UGL_SIZE uglListCount (
-    UGL_LIST *  pList
+    UGL_LIST_ID  listId
     ) {
     UGL_SIZE  count;
 
-    if (pList == NULL) {
+    if (listId == NULL) {
         count = 0;
     }
     else {
-        count = pList->count;
+        count = listId->count;
     }
 
     return count;
@@ -258,15 +258,15 @@ UGL_SIZE uglListCount (
  */
 
 UGL_NODE * uglListFirst (
-    UGL_LIST *  pList
+    UGL_LIST_ID  listId
     ) {
     UGL_NODE *  pNode;
 
-    if (pList == UGL_NULL) {
+    if (listId == UGL_NULL) {
         pNode = UGL_NULL;
     }
     else {
-        pNode = pList->pFirst;
+        pNode = listId->pFirst;
     }
 
     return pNode;
@@ -280,15 +280,15 @@ UGL_NODE * uglListFirst (
  */
 
 UGL_NODE * uglListLast (
-    UGL_LIST *  pList
+    UGL_LIST_ID  listId
     ) {
     UGL_NODE *  pNode;
 
-    if (pList == UGL_NULL) {
+    if (listId == UGL_NULL) {
         pNode = UGL_NULL;
     }
     else {
-        pNode = pList->pLast;
+        pNode = listId->pLast;
     }
 
     return pNode;
@@ -302,22 +302,22 @@ UGL_NODE * uglListLast (
  */
 
 UGL_NODE * uglListNth (
-    UGL_LIST *  pList,
-    UGL_ORD     n
+    UGL_LIST_ID  listId,
+    UGL_ORD      n
     ) {
     UGL_NODE *  pNode;
 
-    if (pList == UGL_NULL) {
+    if (listId == UGL_NULL) {
         pNode = UGL_NULL;
     }
     else {
         if (n >= 0) {
-            for (pNode = pList->pFirst;
+            for (pNode = listId->pFirst;
                  n > 0 && pNode != UGL_NULL;
                  n--, pNode = pNode->pNext);
         }
         else {
-            for (pNode = pList->pLast;
+            for (pNode = listId->pLast;
                  n < -1 && pNode != UGL_NULL;
                  n++, pNode = pNode->pPrev);
         }

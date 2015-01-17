@@ -38,6 +38,43 @@ typedef UGL_STATUS  (WIN_MSG_HANDLER) (
     void *        pClassData
     );
 
+/******************************************************************************
+ *
+ * winClassCreate - Create new window class
+ *
+ * RETURNS: Window class id or UGL_NULL
+ */
+
+WIN_CLASS_ID  winClassCreate (
+    const UGL_CHAR *   pName,
+    const UGL_CHAR *   pParentName,
+    WIN_MSG_HANDLER *  pMsgHandler,
+    UGL_SIZE           dataSize,
+    void *             pDefaultData
+    );
+
+/******************************************************************************
+ *
+ * winClassDestroy - Destroy window class
+ * 
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+ 
+UGL_STATUS  winClassDestroy (
+    WIN_CLASS_ID  classId
+    );
+
+/******************************************************************************
+ *
+ * winClassLookup - Lookup window class
+ *
+ * RETURNS: Window class id or UGL_NULL
+ */
+
+WIN_CLASS_ID  winClassLookup (
+    const UGL_CHAR *  pClassName
+    );
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

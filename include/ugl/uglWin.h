@@ -18,34 +18,28 @@
  *   along with Real VMX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* winWindow.c - Universal graphics library window library */
+/* uglWin.h - Universal graphics library windowing system */
 
-#include <string.h>
-#include "uglWin.h"
-#include "private/uglWinP.h"
+#ifndef _uglWin_h
+#define _uglWin_h
 
-/******************************************************************************
- *
- * winCreate - Create window
- *
- * RETURNS: WIN_ID or UGL_NULL
- */
+#include "ugl.h"
+#include "winTypes.h"
+#include "winMsg.h"
+#include "winClass.h"
+#include "winWindow.h"
 
-WIN_ID  winCreate (
-    WIN_APP_ID           appId,
-    WIN_CLASS_ID         classId,
-    UGL_UINT32           attributes,
-    UGL_POS              x,
-    UGL_POS              y,
-    UGL_SIZE             width,
-    UGL_SIZE             height,
-    void *               pAppData,
-    UGL_SIZE             appDataSize,
-    const WIN_CB_ITEM *  pCallbackArray
-    ) {
+#ifndef _ASMLANGUAGE
 
-    /* TODO */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    return UGL_NULL;
+#ifdef __cplusplus
 }
+#endif /* __cplusplus */
+
+#endif /* _ASMLANGUAGE */
+
+#endif /* _uglWin_h */
 
