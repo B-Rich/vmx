@@ -18,10 +18,10 @@
  *   along with Real VMX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* winListP.h - Private linked list for windows */
+/* uglListP.h - Private linked list for windows */
 
-#ifndef _winListP_h
-#define _winListP_h
+#ifndef _uglListP_h
+#define _uglListP_h
 
 #include "ugl.h"
 
@@ -31,141 +31,141 @@
 extern "C" {
 #endif
 
-typedef struct win_node {
-    struct win_node *  pNext;
-    struct win_node *  pPrev;
-} WIN_NODE;
+typedef struct ugl_node {
+    struct ugl_node *  pNext;
+    struct ugl_node *  pPrev;
+} UGL_NODE;
 
-typedef struct win_list {
-    WIN_NODE *  pFirst;
-    WIN_NODE *  pLast;
+typedef struct ugl_list {
+    UGL_NODE *  pFirst;
+    UGL_NODE *  pLast;
     UGL_SIZE    count;
-} WIN_LIST;
+} UGL_LIST;
 
 /******************************************************************************
  *
- * winListCreate - Create window list
+ * uglListCreate - Create window list
  *
  * RETURNS: Pointer to list or UGL_NULL
  */
 
-WIN_LIST * winListCreate (
+UGL_LIST * uglListCreate (
     void
     );
 
 /******************************************************************************
  *
- * winListInit - Initialize linked list datastruct
+ * uglListInit - Initialize linked list datastruct
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
  */
 
-STATUS winListInit (
-    WIN_LIST *  pList
+STATUS uglListInit (
+    UGL_LIST *  pList
     );
 
 /******************************************************************************
  *
- * winListInsert - Insert element in list
+ * uglListInsert - Insert element in list
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
  */
 
-UGL_STATUS winListInsert (
-    WIN_LIST *  pList,
-    WIN_NODE *  pNode,
-    WIN_NODE *  pNextNode
+UGL_STATUS uglListInsert (
+    UGL_LIST *  pList,
+    UGL_NODE *  pNode,
+    UGL_NODE *  pNextNode
     );
 
 /******************************************************************************
  *
- * winListAdd - Add an element to the list
+ * uglListAdd - Add an element to the list
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
  */
 
-UGL_STATUS winListAdd (
-    WIN_LIST *  pList,
-    WIN_NODE *  pNode
+UGL_STATUS uglListAdd (
+    UGL_LIST *  pList,
+    UGL_NODE *  pNode
     );
 
 /******************************************************************************
  *
- * winListRemove - Remove an element from the list
+ * uglListRemove - Remove an element from the list
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
  */
 
-UGL_STATUS winListRemove (
-    WIN_LIST *  pList,
-    WIN_NODE *  pNode
+UGL_STATUS uglListRemove (
+    UGL_LIST *  pList,
+    UGL_NODE *  pNode
     );
 
 /******************************************************************************
  *
- * winListCount - Get number of elements in list
+ * uglListCount - Get number of elements in list
  *
  * RETURNS: Number of list elements
  */
 
-UGL_SIZE winListCount (
-    WIN_LIST *  pList
+UGL_SIZE uglListCount (
+    UGL_LIST *  pList
     );
 
 /******************************************************************************
  *
- * winListFirst - Get first node on list
+ * uglListFirst - Get first node on list
  *
  * RETURNS: Pointer to node or UGL_NULL
  */
 
-WIN_NODE * winListFirst (
-    WIN_LIST *  pList
+UGL_NODE * uglListFirst (
+    UGL_LIST *  pList
     );
 
 /******************************************************************************
  *
- * winListLast - Get last node on list
+ * uglListLast - Get last node on list
  *
  * RETURNS: Pointer to node or UGL_NULL
  */
 
-WIN_NODE * winListLast (
-    WIN_LIST *  pList
+UGL_NODE * uglListLast (
+    UGL_LIST *  pList
     );
 
 /******************************************************************************
  *
- * winListNth - Get n-th node on list
+ * uglListNth - Get n-th node on list
  *
  * RETURNS: Pointer to list node or UGL_NULL
  */
 
-WIN_NODE * winListNth (
-    WIN_LIST *  pList,
+UGL_NODE * uglListNth (
+    UGL_LIST *  pList,
     UGL_ORD     n
     );
 
 /******************************************************************************
  *
- * winListNext - Get next node on list
+ * uglListNext - Get next node on list
  *
  * RETURNS: Pointer to node or UGL_NULL
  */
 
-WIN_NODE * winListNext (
-    WIN_NODE *  pNode
+UGL_NODE * uglListNext (
+    UGL_NODE *  pNode
     );
 
 /******************************************************************************
  *
- * winListPrev - Get previous node on list
+ * uglListPrev - Get previous node on list
  *
  * RETURNS: Pointer to node or UGL_NULL
  */
 
-WIN_NODE * winListPrev (
-    WIN_NODE *  pNode
+UGL_NODE * uglListPrev (
+    UGL_NODE *  pNode
     );
 
 #ifdef __cplusplus
@@ -174,5 +174,5 @@ WIN_NODE * winListPrev (
 
 #endif /* _ASMLANGUAGE */
 
-#endif /* _winListP_h */
+#endif /* _uglListP_h */
 

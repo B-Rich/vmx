@@ -24,3 +24,28 @@
 #include "winWindow.h"
 #include "private/uglWinP.h"
 
+/******************************************************************************
+ *
+ * winCreate - Create window
+ *
+ * RETURNS: WIN_ID or UGL_NULL
+ */
+
+WIN_ID winCreate (
+    WIN_APP_ID           appId,
+    WIN_CLASS_ID         classId,
+    UGL_UINT32           attributes,
+    UGL_POS              x,
+    UGL_POS              y,
+    UGL_SIZE             width,
+    UGL_SIZE             height,
+    void *               pAppData,
+    UGL_SIZE             appDataSize,
+    const WIN_CB_ITEM *  pCallbackArray
+    ) {
+
+    /* TODO */
+
+    return UGL_NULL;
+}
+

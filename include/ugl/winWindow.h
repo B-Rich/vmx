@@ -34,6 +34,22 @@
 extern "C" {
 #endif
 
+/* Types */
+
+typedef UGL_STATUS  (WIN_CB) (
+    WIN_ID     winId,
+    WIN_MSG *  pMsg,
+    void *     pData,
+    void *     pParam
+    );
+
+typedef struct win_cb_item {
+    UGL_UINT32  filterMin;
+    UGL_UINT32  filterMax;
+    WIN_CB *    pCallback;
+    void *      pParam;
+} WIN_CB_ITEM;
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
