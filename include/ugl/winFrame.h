@@ -18,18 +18,10 @@
  *   along with Real VMX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* uglWin.h - Universal graphics library windowing system */
+/* winFrame.h - Universal graphics library window frame header */
 
-#ifndef _uglWin_h
-#define _uglWin_h
-
-#include "ugl.h"
-#include "winTypes.h"
-#include "winMsg.h"
-#include "winClass.h"
-#include "winApp.h"
-#include "winWindow.h"
-#include "winFrame.h"
+#ifndef _winFrame_h
+#define _winFrame_h
 
 #ifndef _ASMLANGUAGE
 
@@ -37,11 +29,23 @@
 extern "C" {
 #endif
 
+/******************************************************************************
+ *
+ * winFrameCaptionSet - Set window frame caption
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winFrameCaptionSet (
+    WIN_ID      winId,
+    UGL_CHAR *  pCaption
+    );
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
 #endif /* _ASMLANGUAGE */
 
-#endif /* _uglWin_h */
+#endif /* _winFrame_h */
 

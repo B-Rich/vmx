@@ -31,6 +31,13 @@
 #define UGL_STATUS_Q_ACTIVE             -4
 #define UGL_STATUS_Q_EMPTY              -5
 #define UGL_STATUS_Q_FULL               -6
+#define UGL_STATUS_BATCH_ERROR          -7
+#define UGL_STATUS_MEMORY_ERROR         -8
+#define UGL_STATUS_TRUE_COLOR_SYSTEM    -9
+#define UGL_STATUS_RESOURCES_EXHAUSED   -10
+#define UGL_STATUS_RESOURCES_UNRESERVED -11
+#define UGL_STATUS_TIMEOUT              -12
+#define UGL_STATUS_PERMISSION_DENIED    -13
 
 /* UGL_RASTER_OP */
 #define UGL_RASTER_OP_COPY              0x02020101

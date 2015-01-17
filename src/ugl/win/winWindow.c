@@ -57,6 +57,7 @@ WIN_ID  winCreate (
     WIN_CLASS *   pClass;
     UGL_WINDOW *  pWindow;
     UGL_SIZE      sz;
+    WIN_ID        frameId;
 
     if (classId == UGL_NULL) {
         pClass = winClassLookup(winRootClassName);
@@ -132,11 +133,213 @@ WIN_ID  winCreate (
         /* Create window frame */
         if ((attributes & WIN_ATTRIB_FRAMED) != 0x00) {
 
-            /* TODO */
+            if (appId->pWinMgr->pFrameClass != UGL_NULL) {
+                pWindow->attributes |= WIN_ATTRIB_VISIBLE;
+
+                /* Setup attributes for frame window */
+                attributes |= (WIN_ATTRIB_FRAME | WIN_ATTRIB_CLIP_CHILDREN);
+                attributes &= ~(WIN_ATTRIB_FRAMED | WIN_ATTRIB_DOUBLE_BUFFER |
+                                WIN_ATTRIB_OFF_SCREEN | WIN_ATTRIB_NO_POINTER);
+
+                /* Create window for frame and attach content window */
+                frameId = winCreate (
+                    appId->pWinMgr->pRootWindow->pApp,
+                    appId->pWinMgr->pFrameClass,
+                    attributes,
+                    x,
+                    y,
+                    0,
+                    0,
+                    UGL_NULL,
+                    0,
+                    UGL_NULL
+                    );
+
+                /* TODO: winAttach(pWindow, frameId, UGL_NULL); */
+
+                winFrameCaptionSet(frameId, appId->pName);
+
+                /* TODO: winSizeSet(pWindow, width, height); */
+            }
+            else {
+                pWindow->attributes &= ~WIN_ATTRIB_FRAME;
+            }
         }
     }
 
     return pWindow;
+}
+
+/******************************************************************************
+ *
+ * winActivate - Activate window
+ *
+ * RETURNS: UGL_STATUS_OK, UGL_STATUS_PERMISSION_DENIED or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winActivate (
+    WIN_ID  winId
+    ) {
+    UGL_STATUS    status;
+    UGL_WINDOW *  pWindow;
+    UGL_WINDOW *  pOldWindow;
+    UGL_WINDOW *  pDeactivateWindow;
+    UGL_WINDOW *  pParent = winId->pParent;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+        goto activateRet;
+    }
+
+    if ((winId->attributes & WIN_ATTRIB_NO_ACTIVATE) != 0x00) {
+        status = UGL_STATUS_PERMISSION_DENIED;
+        goto activateRet;
+    }
+
+    if ((winId->state & WIN_STATE_ACTIVE) != 0x00) {
+        status = UGL_STATUS_OK;
+        goto activateRet;
+    }
+
+    if (pParent == UGL_NULL) {
+        status = UGL_STATUS_OK;
+        goto activateRet;
+    }
+    else {
+        status = winActivate(pParent);
+        if (status != UGL_STATUS_OK ||
+            (winId->state & WIN_STATE_ACTIVE) != 0x00) {
+            goto activateRet;
+        }
+    }
+
+    if ((winId->state | WIN_STATE_MANAGED) != 0x00) {
+
+        if (pParent->pActiveChild != UGL_NULL &&
+            pParent->pActiveChild != winId &&
+            (pParent->pActiveChild->state & WIN_STATE_ACTIVE) != 0x00) {
+
+            pOldWindow = pParent->pActiveChild;
+            while (pOldWindow->pActiveChild != UGL_NULL &&
+                   (pOldWindow->pActiveChild->state &
+                    WIN_STATE_ACTIVE) != 0x00) {
+
+                pOldWindow = pOldWindow->pActiveChild;
+            }
+
+            pDeactivateWindow = pOldWindow;
+            while(pDeactivateWindow != pParent) {
+
+                if ((pDeactivateWindow->state & WIN_STATE_ACTIVE) != 0x00) {
+
+                    pDeactivateWindow->state &= ~WIN_STATE_ACTIVE;
+                    status = winSend(
+                        pDeactivateWindow,
+                        MSG_DEACTIVATE,
+                        &winId,
+                        sizeof(WIN_ID)
+                        );
+                    if (status != UGL_STATUS_OK) {
+
+                        pWindow = pDeactivateWindow;
+
+                        pDeactivateWindow->state |= WIN_STATE_ACTIVE;
+                        while (pDeactivateWindow->pActiveChild != UGL_NULL) {
+
+                            pDeactivateWindow = pDeactivateWindow->pActiveChild;
+
+                            pDeactivateWindow->state |= WIN_STATE_ACTIVE;
+                            winSend(
+                                pDeactivateWindow,
+                                MSG_DEACTIVATE,
+                                &pWindow,
+                                sizeof(WIN_ID)
+                                );
+                        }
+
+                        goto activateRet;
+                    }
+                }
+
+               /* Advance */
+               pDeactivateWindow = pDeactivateWindow->pParent;
+            }
+
+            /* Deactivate old app and activate new app */
+            if (pOldWindow->pApp != winId->pApp) {
+                winAppPost(
+                    pOldWindow->pApp,
+                    MSG_APP_DEACTIVATE,
+                    UGL_NULL,
+                    0,
+                    UGL_NO_WAIT
+                    );
+
+                winAppPost(
+                    winId->pApp,
+                    MSG_APP_ACTIVATE,
+                    UGL_NULL,
+                    0,
+                    UGL_NO_WAIT
+                    );
+            }
+        }
+
+        /* Activate new window */
+        winId->state |= WIN_STATE_ACTIVE;
+        pParent->pActiveChild = winId;
+        status = winSend(winId, MSG_ACTIVATE, &winId, sizeof(WIN_ID));
+
+        if (winId->pActiveChild != UGL_NULL) {
+
+            pWindow = winId->pActiveChild;
+            while (pWindow != UGL_NULL) {
+
+                pWindow->state |= WIN_STATE_ACTIVE;
+                status = winSend(
+                    pWindow,
+                    MSG_ACTIVATE,
+                    &pWindow,
+                    sizeof(WIN_ID)
+                    );
+                if (status != UGL_STATUS_OK) {
+                    goto activateRet;
+                }
+
+                /* Advance */
+                pWindow = pWindow->pActiveChild;
+            }
+        }
+    }
+    else {
+        pParent->pActiveChild = winId;
+    }
+
+activateRet:
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * winIsActive - Check if a window is active
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_BOOL  winIsActive (
+    WIN_ID  winId
+    ) {
+    UGL_BOOL  result;
+
+    if (winId == UGL_NULL || (winId->state & WIN_STATE_ACTIVE) == 0x00) {
+        result = UGL_FALSE;
+    }
+    else {
+        result = UGL_TRUE;
+    }
+
+    return result;
 }
 
 /******************************************************************************

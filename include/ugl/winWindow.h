@@ -48,6 +48,17 @@
 #define WIN_ATTRIB_OFF_SCREEN       0x00004000
 #define WIN_ATTRIB_TOPMOST          0x00008000
 #define WIN_ATTRIB_TRANSPARENT      0x00010000
+#define WIN_ATTRIB_TRI_CLICK        (0x00020000 | WIN_ATTRIB_DBL_CLICK)
+#define WIN_ATTRIB_VISIBLE          0x00040000
+#define WIN_ATTRIB_NO_INPUT         (WIN_ATTRIB_NO_KEYBOARD | \
+                                     WIN_ATTRIB_NO_POINTER)
+#define WIN_DYNAMIC_ATTRIBUTES      (WIN_ATTRIB_DBL_CLICK | \
+                                     WIN_ATTRIB_DISABLED | \
+                                     WIN_ATTRIB_KBD_INPUT | \
+                                     WIN_ATTRIB_NO_ACTIVATE | \
+                                     WIN_ATTRIB_NO_INPUT | \
+                                     WIN_ATTRIB_TOPMOST | \
+                                     WIN_ATTRIB_TRI_CLICK)
 
 /* Window states */
 #define WIN_STATE_ACTIVE            0x00000001
@@ -97,6 +108,28 @@ WIN_ID  winCreate (
     void *               pAppData,
     UGL_SIZE             appDataSize,
     const WIN_CB_ITEM *  pCallbackArray
+    );
+
+/******************************************************************************
+ *
+ * winActivate - Activate window
+ *
+ * RETURNS: UGL_STATUS_OK, UGL_STATUS_PERMISSION_DENIED or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winActivate (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winIsActive - Check if a window is active
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_BOOL  winIsActive (
+    WIN_ID  winId
     );
 
 /******************************************************************************
