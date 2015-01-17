@@ -20,6 +20,7 @@
 
 /* winClass.c - Window class for universal graphics library */
 
+#include <stdlib.h>
 #include <string.h>
 #include "uglWin.h"
 #include "private/uglWinP.h"
@@ -156,6 +157,45 @@ UGL_STATUS  winClassDestroy (
     return status;
 }
 
+/******************************************************************************
+ *
+ * winClassDataSet - Set data for class
+ *
+ * RETURNS: Pointer to default data or UGL_NULL
+ */
+
+void *  winClassDataSet (
+    WIN_CLASS_ID  classId,
+    void *        pData,
+    UGL_SIZE      dataSize
+    ) {
+
+    if (pData != UGL_NULL) {
+        memcpy(classId->pDefaultData, pData, min(dataSize, classId->dataSize));
+    }
+
+    return classId->pDefaultData;
+}
+
+/******************************************************************************
+ *
+ * winClassDataGet - Get data for class
+ *
+ * RETURNS: Pointer to default data or UGL_NULL
+ */
+
+void *  winClassDataGet (
+    WIN_CLASS_ID  classId,
+    void *        pData,
+    UGL_SIZE      dataSize
+    ) {
+
+    if (pData != UGL_NULL) {
+        memcpy(pData, classId->pDefaultData, min(dataSize, classId->dataSize));
+    }
+
+    return classId->pDefaultData;
+}
 
 /******************************************************************************
  *

@@ -66,6 +66,32 @@ UGL_STATUS  winClassDestroy (
 
 /******************************************************************************
  *
+ * winClassDataSet - Set data for class
+ *
+ * RETURNS: Pointer to default data or UGL_NULL
+ */
+
+void *  winClassDataSet (
+    WIN_CLASS_ID  classId,
+    void *        pData,
+    UGL_SIZE      dataSize
+    );
+
+/******************************************************************************
+ *
+ * winClassDataGet - Get data for class
+ *
+ * RETURNS: Pointer to default data or UGL_NULL
+ */
+
+void *  winClassDataGet (
+    WIN_CLASS_ID  classId,
+    void *        pData,
+    UGL_SIZE      dataSize
+    );
+
+/******************************************************************************
+ *
  * winClassLookup - Lookup window class
  *
  * RETURNS: Window class id or UGL_NULL
