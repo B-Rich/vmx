@@ -131,6 +131,10 @@ typedef struct win_mgr {
     UGL_LIST                    appList;
 } WIN_MGR;
 
+/* Imports */
+
+extern const UGL_CHAR  winRootClassName[];
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

@@ -25,6 +25,9 @@
 
 #include "uglMsgTypes.h"
 
+/* Message size */
+#define UGL_MAX_MSG_SIZE       64
+
 /* Pointer buttons */
 #define UGL_PTR_BUTTON1        0x00000001
 #define UGL_PTR_BUTTON2        0x00000002
@@ -108,6 +111,10 @@ typedef union ugl_msg_data {
     UGL_KEYBOARD_DATA   keyboard;
     UGL_RAW_PTR_DATA    rawPtr;
     UGL_RAW_KBD_DATA    rawKbd;
+    UGL_CHAR            reserved[
+                            UGL_MAX_MSG_SIZE -
+                            sizeof(UGL_MSG_TYPE) -
+                            sizeof(UGL_ID)];
 } UGL_MSG_DATA;
 
 /* Messages */

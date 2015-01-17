@@ -31,10 +31,6 @@
 
 UGL_LIST_ID  classListId = UGL_NULL;
 
-/* Imports */
-
-extern UGL_CHAR  winRootClassName[];
-
 /* Locals */
 
 UGL_LOCAL UGL_STATUS  winClassRegister(

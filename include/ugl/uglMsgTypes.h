@@ -78,6 +78,24 @@
 
 #define MSG_PTR_LAST           (MSG_PTR_FIRST + 199)
 
+#define MSG_WIN_FIRST          1000
+
+#define MSG_CREATE             (MSG_WIN_FIRST + 0)
+#define MSG_DESTROY            (MSG_WIN_FIRST + 1)
+#define MSG_MANAGE             (MSG_WIN_FIRST + 2)
+#define MSG_UNMANAGE           (MSG_WIN_FIRST + 3)
+#define MSG_ATTACH             (MSG_WIN_FIRST + 4)
+#define MSG_DETACH             (MSG_WIN_FIRST + 5)
+#define MSG_ACTIVATE           (MSG_WIN_FIRST + 6)
+#define MSG_DEACTIVATE         (MSG_WIN_FIRST + 7)
+#define MSG_CLOSE              (MSG_WIN_FIRST + 8)
+#define MSG_CLASS_INIT         (MSG_WIN_FIRST + 50)
+#define MSG_CLASS_DEINIT       (MSG_WIN_FIRST + 51)
+#define MSG_HIDE               (MSG_WIN_FIRST + 52)
+#define MSG_SHOW               (MSG_WIN_FIRST + 53)
+
+#define MSG_WIN_LAST           (MSG_WIN_FIRST + 999)
+
 #ifndef _ASMLANGUAGE
 
 #ifdef __cplusplus
