@@ -20,6 +20,7 @@
 
 /* winList.c - List for windows */
 
+#include <string.h>
 #include "uglmem.h"
 #include "winList.h"
 
@@ -56,9 +57,7 @@ STATUS winListInit (
         status = UGL_STATUS_ERROR;
     }
     else {
-        pList->pFirst  = UGL_NULL;
-        pList->pLast   = UGL_NULL;
-        pList->count   = 0;
+        memset(&pList, 0, sizeof(WIN_LIST));
         status = UGL_STATUS_OK;
     }
 
@@ -97,6 +96,7 @@ UGL_STATUS winListDestroy (
     }
 
     UGL_FREE(pList);
+
     return status;
 }
 
@@ -196,26 +196,32 @@ UGL_STATUS winListRemove (
     ) {
     UGL_STATUS  status;
 
-    if (pList == UGL_NULL || pNode == UGL_NULL) {
+    if (pList == UGL_NULL || pList->count == 0) {
         status = UGL_STATUS_ERROR;
     }
     else {
+        pList->count--;
 
-        if (pNode->pPrev == UGL_NULL) {
-            pList->pFirst = pNode->pNext;
+        if (pList->count == 0) {
+            pList->pFirst = UGL_NULL;
+            pList->pLast  = UGL_NULL;
         }
-        else {
-            pNode->pPrev->pNext = pNode->pNext;
+        else if (pNode == pList->pFirst) {
+            pList->pFirst        = pNode->pNext;
+            pList->pFirst->pPrev = UGL_NULL;
         }
-
-        if (pNode->pNext == UGL_NULL) {
-            pList->pLast = pNode->pPrev;
+        else if (pNode == pList->pLast) {
+            pList->pLast        = pNode->pPrev;
+            pList->pLast->pNext = UGL_NULL;
         }
         else {
             pNode->pNext->pPrev = pNode->pPrev;
+            pNode->pPrev->pNext = pNode->pNext;
         }
 
-        pList->count--;
+        pNode->pNext = UGL_NULL;
+        pNode->pPrev = UGL_NULL;
+
         status = UGL_STATUS_OK;
     }
 
@@ -290,38 +296,6 @@ WIN_NODE * winListLast (
 
 /******************************************************************************
  *
- * winListGet - Get Node from list
- *
- * RETURNS: Pointer to list node or UGL_NULL
- */
-
-WIN_NODE * winListGet (
-    WIN_LIST *  pList
-    ) {
-    WIN_NODE *  pNode = UGL_NULL;
-
-    if (pList != UGL_NULL) {
-        pNode = pList->pFirst;
-
-        if (pNode != UGL_NULL) {
-            pList->pFirst = pNode->pNext;
-
-            if (pNode->pNext == UGL_NULL) {
-                pList->pLast = UGL_NULL;
-            }
-            else {
-                pNode->pNext->pPrev = UGL_NULL;
-            }
-
-            pList->count--;
-        }
-    }
-
-    return pNode;
-}
-
-/******************************************************************************
- *
  * winListNth - Get n-th node on list
  *
  * RETURNS: Pointer to list node or UGL_NULL
@@ -345,7 +319,7 @@ WIN_NODE * winListNth (
         else {
             for (pNode = pList->pLast;
                  n < -1 && pNode != UGL_NULL;
-                 pNode = pNode->pPrev);
+                 n++, pNode = pNode->pPrev);
         }
     }
 

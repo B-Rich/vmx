@@ -136,17 +136,6 @@ WIN_NODE * winListLast (
 
 /******************************************************************************
  *
- * winListGet - Get Node from list
- *
- * RETURNS: Pointer to list node or UGL_NULL
- */
-
-WIN_NODE * winListGet (
-    WIN_LIST *  pList
-    );
-
-/******************************************************************************
- *
  * winListNth - Get n-th node on list
  *
  * RETURNS: Pointer to list node or UGL_NULL
