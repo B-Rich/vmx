@@ -2,7 +2,7 @@
 #
 
 OBJS =
-SUBDIRS = 2d os driver input win winMgr fonts
-LIB_TGT =
+SUBDIRS = wwm
+LIB_TGT = ugl-winMgr
 
 include $(VMX_BASE)/include/make/build.defaults

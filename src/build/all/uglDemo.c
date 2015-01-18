@@ -57,7 +57,8 @@
 #define MAX_FONTS              32
 
 /* Imports */
-IMPORT SYMTAB_ID sysSymTable;
+IMPORT SYMTAB_ID         sysSymTable;
+IMPORT WIN_MGR_ENGINE *  wwmEngineId;
 
 /* Exports */
 const UGL_BMF_FONT_DESC * uglBMFFontData[] = {
