@@ -178,12 +178,45 @@ WIN_ID  winDeadGet (
 
 /******************************************************************************
  *
+ * winCount - Get number of child windows
+ *
+ * RETURNS: Number of child windows or 0
+ */
+
+UGL_SIZE  winCount (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winFirst - Get window first child
  *
  * RETURNS: Window id or UGL_NULL
  */
 
 WIN_ID  winFirst (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winLast - Get window last child
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winLast (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winMgrGet - Get window manager for window
+ *
+ * RETURNS: Pointer to window manager or UGL_NULL
+ */
+
+WIN_MGR_ID  winMgrGet (
     WIN_ID  winId
     );
 

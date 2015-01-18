@@ -549,6 +549,28 @@ WIN_ID  winDeadGet (
 
 /******************************************************************************
  *
+ * winCount - Get number of child windows
+ *
+ * RETURNS: Number of child windows or 0
+ */
+
+UGL_SIZE  winCount (
+    WIN_ID  winId
+    ) {
+    UGL_SIZE  count;
+
+    if (winId == UGL_NULL) {
+        count = 0;
+    }
+    else {
+        uglListCount(&winId->childList);
+    }
+
+    return count;
+}
+
+/******************************************************************************
+ *
  * winFirst - Get window first child
  *
  * RETURNS: Window id or UGL_NULL
@@ -567,6 +589,50 @@ WIN_ID  winFirst (
     }
 
     return pWindow;
+}
+
+/******************************************************************************
+ *
+ * winLast - Get window last child
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winLast (
+    WIN_ID  winId
+    ) {
+    UGL_WINDOW *  pWindow;
+
+    if (winId == UGL_NULL) {
+        pWindow = UGL_NULL;
+    }
+    else {
+        pWindow = (UGL_WINDOW *) uglListLast(&winId->childList);
+    }
+
+    return pWindow;
+}
+
+/******************************************************************************
+ *
+ * winMgrGet - Get window manager for window
+ *
+ * RETURNS: Pointer to window manager or UGL_NULL
+ */
+
+WIN_MGR_ID  winMgrGet (
+    WIN_ID  winId
+    ) {
+    WIN_MGR_ID  winMgrId;
+
+    if (winId == UGL_NULL || (winId->state & WIN_STATE_MANAGED) == 0x00) {
+        winMgrId = UGL_NULL;
+    }
+    else {
+        winMgrId = winId->pApp->pWinMgr;
+    }
+
+    return winMgrId;
 }
 
 /******************************************************************************
