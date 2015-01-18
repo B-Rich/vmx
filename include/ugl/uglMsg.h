@@ -156,6 +156,17 @@ UGL_MSG_Q_ID uglMsgQCreate (
 
 /******************************************************************************
  *
+ * uglCbListDeinit - Deinitialize callback list
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglCbListDeinit (
+    UGL_CB_LIST_ID  cbListId
+    );
+
+/******************************************************************************
+ *
  * uglMsgQDestroy - Destroy message queue
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR

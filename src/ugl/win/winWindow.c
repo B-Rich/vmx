@@ -26,13 +26,17 @@
 
 /* Locals */
 
+UGL_LOCAL UGL_VOID  winClassInit (
+    UGL_WINDOW *  pWindow
+    );
+
+UGL_LOCAL UGL_VOID  winClassDeinit (
+    WIN_ID  winId
+    );
+
 UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
     WIN_ID     winId,
     WIN_MSG *  pMsg
-    );
-
-UGL_LOCAL UGL_VOID  winClassInit (
-    UGL_WINDOW *  pWindow
     );
 
 /******************************************************************************
@@ -168,6 +172,60 @@ WIN_ID  winCreate (
     }
 
     return pWindow;
+}
+
+/******************************************************************************
+ *
+ * winFree - Free resources used by window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winFree (
+    WIN_ID  winId
+    ) {
+    UGL_STATUS  status;
+    WIN_MSG     msg;
+    WIN_APP *   pApp = winId->pApp;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        winSend(winId, MSG_DESTROY, UGL_NULL, 0);
+
+        /* Remove from resource list */
+        uglOSLock(pApp->lockId);
+        uglListRemove(&pApp->resourceList, &winId->resource.node);
+        uglOSUnlock(pApp->lockId);
+
+        if (uglListCount(&pApp->resourceList) == 0) {
+            msg.type  = MSG_APP_NO_WINDOWS;
+            msg.winId = UGL_NULL;
+
+            uglOSMsgQPost(
+                pApp->pQueue->osQId,
+                UGL_NO_WAIT,
+                &msg,
+                sizeof(WIN_MSG)
+                );
+        }
+
+        winClassDeinit(winId);
+
+        uglCbListDeinit(&winId->callbackList);
+
+        /* Deinit regions */
+        uglRegionDeinit(&winId->paintersRegion);
+        uglRegionDeinit(&winId->visibleRegion);
+        uglRegionDeinit(&winId->dirtyRegion);
+
+        UGL_FREE(winId);
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
 }
 
 /******************************************************************************
@@ -452,7 +510,7 @@ UGL_LOCAL UGL_VOID  winClassInit (
             winClassInit(pWindow->pParent);
         }
 
-        if (pClass->useCount == 0) {
+        if (pClass->useCount++ == 0) {
             msg.type  = MSG_CLASS_INIT;
             msg.winId = pWindow;
 
@@ -463,11 +521,42 @@ UGL_LOCAL UGL_VOID  winClassInit (
                 (UGL_INT8 *) pWindow->pClassData + pClass->dataOffset
                 );
         }
-
-        pClass->useCount++;
     }
 }
  
+/******************************************************************************
+ *
+ * winClassDeinit - Deinitialize class hierarcy for window
+ *
+ * RETURNS: N/A
+ */
+
+UGL_LOCAL UGL_VOID  winClassDeinit (
+    WIN_ID  winId
+    ) {
+    WIN_MSG      msg;
+    WIN_CLASS *  pClass = winId->pClass;
+
+    if (pClass != UGL_NULL) {
+
+        if (winId->pParent != UGL_NULL) {
+            winClassDeinit(winId->pParent);
+        }
+
+        if (--pClass->useCount == 0) {
+            msg.type  = MSG_CLASS_DEINIT;
+            msg.winId = winId;
+
+            (*pClass->pMsgHandler) (
+                winId,
+                pClass,
+                &msg,
+                (UGL_INT32 *) winId->pClassData + pClass->dataOffset
+                );
+        }
+    }
+}
+
 /******************************************************************************
  *
  * winDefaultMsgHandler - Window default message handler

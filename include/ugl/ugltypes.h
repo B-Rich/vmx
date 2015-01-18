@@ -107,6 +107,13 @@ typedef UGL_STATUS (*UGL_FPTR) (void);
 #define UGL_INPUT_SERVICE_TYPE      1
 #define UGL_KBD_TYPE                2
 #define UGL_PTR_TYPE                3
+#define UGL_DISPLAY_TYPE            4
+#define UGL_PRINTER_TYPE            5
+#define UGL_SOUND_TYPE              6
+#define UGL_FRAME_GRABBER_TYPE      7
+#define UGL_FONT_ENGINE_TYPE        8
+#define UGL_WIN_MGR_TYPE            9
+#define UGL_WIN_MGR_ENG_TYPE       10
 
 /* Complex types */
 typedef struct ugl_range {

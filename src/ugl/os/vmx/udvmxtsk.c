@@ -112,3 +112,17 @@ UGL_STATUS uglOSTaskUnlock (
     return (UGL_STATUS_OK);
 }
 
+/******************************************************************************
+ *
+ * uglOSGetTaskIdSelf - Get task id for current task
+ *
+ * RETURNS: Task id
+ */
+
+UGL_TASK_ID uglOSGetTaskIdSelf (
+    void
+    ) {
+
+    return taskIdSelf();
+}
+

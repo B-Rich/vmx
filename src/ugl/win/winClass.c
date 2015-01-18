@@ -65,7 +65,7 @@ WIN_CLASS_ID  winClassCreate (
        if (pName == UGL_NULL) {
 
            /* Create root class */
-           pName = winRootClassName;
+           pName = (UGL_CHAR *) winRootClassName;
            pParent = UGL_NULL;
        }
        else {

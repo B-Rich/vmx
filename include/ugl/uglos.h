@@ -230,6 +230,17 @@ UGL_STATUS uglOSTaskUnlock (
 
 /******************************************************************************
  *
+ * uglOSGetTaskIdSelf - Get task id for current task
+ *
+ * RETURNS: Task id
+ */
+
+UGL_TASK_ID uglOSGetTaskIdSelf (
+    void
+    );
+
+/******************************************************************************
+ *
  * uglOSMsgQCreate - Create message queue
  *
  * RETURNS: UGL_OS_MSG_Q_ID or UGL_NULL

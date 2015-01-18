@@ -60,6 +60,33 @@ UGL_CB_LIST_ID uglCbListCreate (
 
 /******************************************************************************
  *
+ * uglCbListDeinit - Deinitialize callback list
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglCbListDeinit (
+    UGL_CB_LIST_ID  cbListId
+    ) {
+    UGL_STATUS  status;
+
+    if (cbListId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        if (cbListId->arraySize > 0) {
+            cbListId->arraySize = 0;
+            UGL_FREE(cbListId->pCbArray);
+        }
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * uglCbListDestroy - Destroy callback list
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -74,12 +101,10 @@ UGL_STATUS uglCbListDestroy (
         status = UGL_STATUS_ERROR;
     }
     else {
-        if (cbListId->arraySize > 0) {
-            UGL_FREE(cbListId->pCbArray);
+        status = uglCbListDeinit(cbListId);
+        if (status == UGL_STATUS_OK) {
+            UGL_FREE(cbListId);
         }
-
-        UGL_FREE(cbListId);
-        status = UGL_STATUS_OK;
     }
 
     return status;

@@ -112,6 +112,17 @@ WIN_ID  winCreate (
 
 /******************************************************************************
  *
+ * winFree - Free resources used by window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winFree (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winActivate - Activate window
  *
  * RETURNS: UGL_STATUS_OK, UGL_STATUS_PERMISSION_DENIED or UGL_STATUS_ERROR

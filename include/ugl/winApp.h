@@ -23,11 +23,50 @@
 #ifndef _winApp_h
 #define _winApp_h
 
+/* Defines */
+
+#define WIN_APP_DEF_PRIORITY        100
+#define WIN_APP_DEF_STACK_SIZE    10000
+#define WIN_APP_DEF_QUEUE_SIZE       32
+
 #ifndef _ASMLANGUAGE
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Types */
+
+typedef UGL_STATUS  (WIN_APP_CB) (
+    WIN_APP_ID appId,
+    WIN_MSG *  pMsg,
+    void *     pData,
+    void *     pParam
+    );
+
+typedef struct win_app_cb_item {
+    UGL_UINT32    filterMin;
+    UGL_UINT32    filterMax;
+    WIN_APP_CB *  pCallback;
+    void *        pParam;
+} WIN_APP_CB_ITEM;
+
+/* Functions */
+
+/******************************************************************************
+ *
+ * winAppCreate - Create application context
+ *
+ * RETURNS: Application id or UGL_NULL
+ */
+
+WIN_APP_ID  winAppCreate (
+    UGL_CHAR *               pName,
+    UGL_UINT32               priority,
+    UGL_SIZE                 stackSize,
+    UGL_SIZE                 qSize,
+    const WIN_APP_CB_ITEM *  pCallbackArray
+    );
 
 /******************************************************************************
  *
