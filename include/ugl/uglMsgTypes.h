@@ -122,7 +122,7 @@
 #define MSG_APP_ACTIVATE              (MSG_APP_FIRST + 4)
 #define MSG_APP_DEACTIVATE            (MSG_APP_FIRST + 5)
 
-#define MSG_APP_LST                   (MSG_APP_FIRST + 999)
+#define MSG_APP_LAST                  (MSG_APP_FIRST + 999)
 
 #ifndef _ASMLANGUAGE
 

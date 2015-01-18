@@ -134,6 +134,7 @@ typedef struct win_mgr {
 /* Imports */
 
 extern const UGL_CHAR  winRootClassName[];
+extern WIN_MGR *       pDefaultWinMgr;
 
 #ifdef __cplusplus
 }

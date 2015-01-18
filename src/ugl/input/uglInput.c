@@ -328,8 +328,8 @@ UGL_STATUS uglInputDevControl (
 
 UGL_STATUS uglInputCbAdd (
     UGL_INPUT_SERVICE_ID srvId,
-    UGL_INT32            filterMin,
-    UGL_INT32            filterMax,
+    UGL_UINT32           filterMin,
+    UGL_UINT32           filterMax,
     UGL_INPUT_CB        *pCallback,
     void                *pParam
     ) {

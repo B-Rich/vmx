@@ -3223,6 +3223,7 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_winClassDataGet", winClassDataGet, 0, N_TEXT | N_EXT},
   {NULL, "_winClassLookup", winClassLookup, 0, N_TEXT | N_EXT},
   {NULL, "_winCreate", winCreate, 0, N_TEXT | N_EXT},
+  {NULL, "_winMgrCreate", winMgrCreate, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseInit", uglMouseInit, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseLog", uglMouseLog, 0, N_TEXT | N_EXT}
 };

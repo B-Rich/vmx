@@ -81,6 +81,21 @@ UGL_STATUS  winAppDestroy (
 
 /******************************************************************************
  *
+ * winAppCbAdd - Add message callback to application
+ *
+ * RETURNS: UGL_STATUS_OK or error code
+ */
+
+UGL_STATUS  winAppCbAdd (
+    WIN_APP_ID    appId,
+    UGL_UINT32    filterMin,
+    UGL_UINT32    filterMax,
+    WIN_APP_CB *  pCallback,
+    void *        pParam
+    );
+
+/******************************************************************************
+ *
  * winAppMsgPost - Post message to application queue
  *
  * RETURNS: UGL_STATUS_OK or error code

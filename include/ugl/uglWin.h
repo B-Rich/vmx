@@ -30,6 +30,7 @@
 #include "winApp.h"
 #include "winWindow.h"
 #include "winFrame.h"
+#include "winManage.h"
 
 #ifndef _ASMLANGUAGE
 

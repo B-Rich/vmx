@@ -24,5 +24,123 @@
 #include "uglWin.h"
 #include "private/uglWinP.h"
 
-const UGL_CHAR  winRootClassName[] = "WIN_ROOT_CLASS";
+/* Globals */
+
+const UGL_CHAR  winRootClassName[]  = "WIN_ROOT_CLASS";
+WIN_MGR *       pDefaultWinMgr      = UGL_NULL;
+
+/* Locals */
+UGL_LOCAL UGL_STATUS  winManageCbMsgRoute (
+    UGL_INPUT_SERVICE_ID  inputServiceId,
+    UGL_MSG *             pMsg,
+    UGL_MSG_Q_ID *        pQueueId,
+    WIN_MGR_ID            winMgrId
+    );
+
+UGL_LOCAL UGL_STATUS  winManageCallback (
+    WIN_APP_ID  appId,
+    WIN_MSG *   pMsg,
+    void *      pData,
+    WIN_MGR *   pWinMgr
+    );
+
+/******************************************************************************
+ *
+ * winMgrCreate - Create window manager
+ *
+ * RETURNS: Window manager id or UGL_NULL
+ */
+
+WIN_MGR_ID  winMgrCreate (
+    UGL_DEVICE_ID         displayId,
+    UGL_INPUT_SERVICE_ID  inputServiceId,
+    WIN_MGR_ENGINE *      pEngine
+    ) {
+    WIN_MGR *  pWinMgr;
+
+    pWinMgr = UGL_CALLOC(1, sizeof(WIN_MGR));
+    if (pWinMgr != UGL_NULL) {
+
+        pWinMgr->lockId = uglOSLockCreate();
+        if (pWinMgr->lockId == UGL_NULL) {
+            UGL_FREE(pWinMgr);
+            pWinMgr = UGL_NULL;
+        }
+
+        /* Initialize window manager stuct */
+        pWinMgr->pDisplay      = (UGL_UGI_DRIVER *) displayId;
+        pWinMgr->pInputService = inputServiceId;
+        pWinMgr->pEngine       = pEngine;
+
+        /* Add input callbacks */
+        uglInputCbAdd(
+            pWinMgr->pInputService,
+            MSG_INPUT_FIRST,
+            MSG_INPUT_LAST,
+            (UGL_INPUT_CB *) winManageCbMsgRoute,
+            pWinMgr
+            );
+
+        /* Register window manager */
+        uglRegistryAdd(UGL_WIN_MGR_TYPE, (UGL_ARG) pWinMgr, 0, UGL_NULL);
+        if (pDefaultWinMgr == UGL_NULL) {
+            pDefaultWinMgr = pWinMgr;
+        }
+
+        /* Call engine create method */
+        pWinMgr->pEngineData = (*pEngine->pCreateFunc) (
+            pWinMgr,
+            displayId,
+            inputServiceId
+            );
+
+        /* Add application callbacks */
+        winAppCbAdd(
+            (WIN_APP_ID) uglListFirst(&pWinMgr->appList),
+            MSG_APP_FIRST,
+            MSG_APP_LAST,
+            (WIN_APP_CB *) winManageCallback,
+            pWinMgr);
+    }
+
+    return pWinMgr;
+}
+
+/******************************************************************************
+ *
+ * winManageCbMsgRoute - Route messages
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_LOCAL UGL_STATUS  winManageCbMsgRoute (
+    UGL_INPUT_SERVICE_ID  inputServiceId,
+    UGL_MSG *             pMsg,
+    UGL_MSG_Q_ID *        pQueueId,
+    WIN_MGR_ID            winMgrId
+    ) {
+
+    /* TODO */
+
+    return UGL_STATUS_ERROR;
+}
+
+/******************************************************************************
+ *
+ * winManageCallback - Window manager callback method
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_LOCAL UGL_STATUS  winManageCallback (
+    WIN_APP_ID  appId,
+    WIN_MSG *   pMsg,
+    void *      pData,
+    WIN_MGR *   pWinMgr
+    ) {
+
+    /* TODO */
+
+    return UGL_STATUS_ERROR;
+}
 
