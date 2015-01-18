@@ -34,7 +34,7 @@ DFLAGS = -DCPU=$(CPU) \
 	 -DCOMPILE_DATE=\"`date +%d_%B_%Y.%H:%M`\"
 LIBS = -lvmx -larch -los -lstdc -lutil -lfs -lostool -lusr -lgcc \
        -lnet -lnetinet \
-       -lugl-2d -lugl-os -lugl-driver -lugl-input -lugl-win -ugl-wwm -lugl-fonts
+       -lugl-2d -lugl-os -lugl-driver -lugl-input -lugl-win -lugl-wwm -lugl-fonts
 LDFLAGS = -T $(VMX_BASE)/include/make/i386/link.ld -m elf_i386
 INCFLAGS = -I./ -I../all -I$(VMX_BASE)/include -I$(VMX_BASE)/src -I$(VMX_BASE)/include/ugl
 LD_LIBRARY_PATH = -L$(VMX_BASE)/lib/$(CPU)/

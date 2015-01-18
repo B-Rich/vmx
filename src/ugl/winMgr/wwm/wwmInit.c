@@ -36,7 +36,7 @@ UGL_LOCAL UGL_STATUS wwmDestroy (
     void *      pData
     );
 
-LOCAL WIN_MGR_ENGINE  wwmEngine = {
+UGL_LOCAL WIN_MGR_ENGINE  wwmEngine = {
     wwmCreate,
     wwmDestroy,
     UGL_NULL

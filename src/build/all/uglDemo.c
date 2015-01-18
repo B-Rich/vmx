@@ -3081,36 +3081,31 @@ UGL_INPUT_CB_ITEM cbList[] = {
 
 int uglMouseInit(void)
 {
+  UGL_REG_DATA *pData;
   UGL_INPUT_SERVICE_ID inputSrvId;
   UGL_INPUT_DEV_ID inputDevId;
-  UGL_RECT rect;
-  UGL_STATUS status;
 
   i8042MseDrvInit();
   i8042MseDevCreate("/mouse");
 
-  rect.left   = 0;
-  rect.right  = 640;
-  rect.top    = 0;
-  rect.bottom = 480;
+  pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    return UGL_STATUS_ERROR;
+  }
 
-  inputSrvId = uglInputServiceCreate(&rect, cbList);
+  inputSrvId = (UGL_INPUT_SERVICE_ID) pData->data;
   if (inputSrvId == UGL_NULL) {
-    status = UGL_STATUS_ERROR;
-  }
-  else {
-    uglRegistryAdd(UGL_INPUT_SERVICE_TYPE, inputSrvId, 0, UGL_NULL);
-    inputDevId = uglInputDevOpen("/mouse", &uglPs2PtrDriver);
-    if (inputDevId == UGL_NULL) {
-      status = UGL_STATUS_ERROR;
-    }
-    else {
-      uglRegistryAdd(UGL_PTR_TYPE, inputDevId, 0, UGL_NULL);
-      status = uglInputDevAdd(inputSrvId, inputDevId);
-    }
+    return UGL_STATUS_ERROR;
   }
 
-  return status;
+  inputDevId = uglInputDevOpen("/mouse", &uglPs2PtrDriver);
+  if (inputDevId == UGL_NULL) {
+    return UGL_STATUS_ERROR;
+  }
+
+  uglRegistryAdd(UGL_PTR_TYPE, inputDevId, 0, UGL_NULL);
+
+  return uglInputDevAdd(inputSrvId, inputDevId);
 }
 
 int uglMouseLogger(void)
@@ -3170,6 +3165,48 @@ int uglMouseLog(void)
                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
+int uglWinInit(void)
+{
+  UGL_REG_DATA *pData;
+  UGL_INPUT_SERVICE_ID inputSrvId;
+  UGL_INPUT_DEV_ID inputDevId;
+  WIN_MGR_ID winMgrId;
+
+  pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    printf("Input service not started.\n");
+    return 1;
+  }
+
+  inputSrvId = (UGL_INPUT_SERVICE_ID) pData->data;
+  if (inputSrvId == UGL_NULL) {
+    printf("Null input service.\n");
+    return 1;
+  }
+
+#if 0
+  pData = uglRegistryFind(UGL_PTR_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    printf("No pointer device found.\n");
+    return 1;
+  }
+
+  inputDevId = (UGL_INPUT_DEV_ID) pData->data;
+  if (inputDevId == UGL_NULL) {
+    printf("Null input device.\n");
+    return 1;
+  }
+#endif
+
+  winMgrId = winMgrCreate(gfxDevId, inputSrvId, wwmEngineId);
+  if (winMgrId == UGL_NULL) {
+    printf("Unable to create instance of window manager.\n");
+    return 1;
+  }
+
+  return 0;
+}
+
 int uglDemoInit(void)
 {
 static SYMBOL symTableUglDemo[] = {
@@ -3226,10 +3263,13 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_winCreate", winCreate, 0, N_TEXT | N_EXT},
   {NULL, "_winMgrCreate", winMgrCreate, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseInit", uglMouseInit, 0, N_TEXT | N_EXT},
-  {NULL, "_uglMouseLog", uglMouseLog, 0, N_TEXT | N_EXT}
+  {NULL, "_uglMouseLog", uglMouseLog, 0, N_TEXT | N_EXT},
+  {NULL, "_uglWinInit", uglWinInit, 0, N_TEXT | N_EXT}
 };
 
     int i;
+    UGL_RECT rect;
+    UGL_INPUT_SERVICE_ID inputSrvId;
 
     gfxPartId = memSysPartId;
     uglBMFGlyphCachePoolId = memSysPartId;
@@ -3246,6 +3286,19 @@ static SYMBOL symTableUglDemo[] = {
       printf("Unable to create font driver for graphics device.\n");
       return 1;
     }
+
+    rect.left   = 0;
+    rect.right  = 640;
+    rect.top    = 0;
+    rect.bottom = 480;
+
+    inputSrvId = uglInputServiceCreate(&rect, cbList);
+    if (inputSrvId == UGL_NULL) {
+      printf("Unable to create input service.\n");
+      return 1;
+    }
+
+    uglRegistryAdd(UGL_INPUT_SERVICE_TYPE, inputSrvId, 0, UGL_NULL);
 
     for (i = 0; i < NELEMENTS(symTableUglDemo); i++)
     {
