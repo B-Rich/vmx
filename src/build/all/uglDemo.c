@@ -3204,6 +3204,8 @@ int uglWinInit(void)
     return 1;
   }
 
+  uglRegistryAdd(UGL_WIN_MGR_TYPE, winMgrId, 0, UGL_NULL);
+
   return 0;
 }
 
@@ -3281,11 +3283,15 @@ static SYMBOL symTableUglDemo[] = {
       return 1;
     }
 
+    uglRegistryAdd(UGL_DISPLAY_TYPE, gfxDevId, 0, UGL_NULL);
+
     fntDrvId = UGL_FONT_DRIVER_CREATE (gfxDevId);
     if (fntDrvId == UGL_NULL) {
       printf("Unable to create font driver for graphics device.\n");
       return 1;
     }
+
+    uglRegistryAdd(UGL_FONT_ENGINE_TYPE, fntDrvId, 0, UGL_NULL);
 
     rect.left   = 0;
     rect.right  = 640;
