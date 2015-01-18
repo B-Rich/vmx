@@ -70,6 +70,17 @@ WIN_APP_ID  winAppCreate (
 
 /******************************************************************************
  *
+ * winAppDestroy - Destroy application context
+ *
+ * RETURNS: UGL_STATUS_OK or error code
+ */
+
+UGL_STATUS  winAppDestroy (
+    WIN_APP_ID  appId
+    );
+
+/******************************************************************************
+ *
  * winAppMsgPost - Post message to application queue
  *
  * RETURNS: UGL_STATUS_OK or error code

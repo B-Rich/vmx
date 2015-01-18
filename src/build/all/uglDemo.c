@@ -3216,6 +3216,7 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_uglOSTimeStamp", uglOSTimeStamp, 0, N_TEXT | N_EXT},
   {NULL, "_uglOSMsgQCreate", uglOSMsgQCreate, 0, N_TEXT | N_EXT},
   {NULL, "_winAppCreate", winAppCreate, 0, N_TEXT | N_EXT},
+  {NULL, "_winAppDestroy", winAppDestroy, 0, N_TEXT | N_EXT},
   {NULL, "_winClassCreate", winClassCreate, 0, N_TEXT | N_EXT},
   {NULL, "_winClassDestroy", winClassDestroy, 0, N_TEXT | N_EXT},
   {NULL, "_winClassDataSet", winClassDataSet, 0, N_TEXT | N_EXT},

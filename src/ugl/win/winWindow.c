@@ -26,6 +26,14 @@
 
 /* Locals */
 
+UGL_LOCAL UGL_VOID  winWakeUp (
+    WIN_APP_ID  appId
+    );
+
+UGL_LOCAL UGL_VOID  winDirtyClear (
+    UGL_WINDOW *  pWindow
+    );
+
 UGL_LOCAL UGL_VOID  winClassInit (
     UGL_WINDOW *  pWindow
     );
@@ -172,6 +180,71 @@ WIN_ID  winCreate (
     }
 
     return pWindow;
+}
+
+/******************************************************************************
+ *
+ * winDestroy - Destroy window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winDestroy (
+    WIN_ID  winId
+    ) {
+    UGL_STATUS    status;
+    WIN_APP *     pApp;
+    UGL_WINDOW *  pWindow;
+    WIN_ID        childId;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        pApp = winId->pApp;
+
+        if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00 &&
+            winId->pParent != UGL_NULL) {
+            pWindow = winId->pParent;
+        }
+        else {
+            pWindow = winId;
+        }
+
+        winLock(pWindow);
+
+#ifdef TODO
+        if (pWindow->pParent != UGL_NULL) {
+            winDetach(pWindow);
+        }
+#endif
+
+        while ((childId = winFirst(pWindow)) != UGL_NULL) {
+            uglListRemove(&pWindow->childList, (UGL_NODE *) childId);
+            childId->pParent = UGL_NULL;
+            winDestroy(childId);
+        }
+
+        winUnlock(pWindow);
+
+        /* Mark as destroyed */
+        uglOSLock(pApp->lockId);
+
+        pWindow->state &= ~WIN_STATE_DIRTY;
+        pWindow->state |= WIN_STATE_DEAD;
+
+        /* Move to end of resource list */
+        uglListRemove(&pApp->resourceList, &pWindow->resource.node);
+        uglListAdd(&pApp->resourceList, &pWindow->resource.node);
+
+        uglOSUnlock(pApp->lockId);
+
+        winWakeUp(pApp);
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
 }
 
 /******************************************************************************
@@ -402,6 +475,146 @@ UGL_BOOL  winIsActive (
 
 /******************************************************************************
  *
+ * winDirtyGet - Get next window on dirty list
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winDirtyGet (
+    WIN_APP_ID  appId
+    ) {
+    UGL_WINDOW *  pWindow;
+
+    if (uglListFirst(&appId->resourceList) == UGL_NULL) {
+        pWindow = UGL_NULL;
+    }
+    else {
+        uglOSLock(appId->lockId);
+
+        pWindow = (UGL_WINDOW *)
+            ((WIN_RESOURCE *) uglListFirst(&appId->resourceList))->id;
+        while ((pWindow->state & WIN_STATE_DIRTY) != 0x00 &&
+               pWindow->dirtyRegion.pFirstTL2BR == UGL_NULL) {
+
+            winDirtyClear(pWindow);
+
+            pWindow = (UGL_WINDOW *)
+                ((WIN_RESOURCE *) uglListFirst(&appId->resourceList))->id;
+        }
+
+        uglOSUnlock(appId->lockId);
+
+        if ((pWindow->state & WIN_STATE_DIRTY) == 0x00) {
+            pWindow = UGL_NULL;
+        }
+    }
+
+    return pWindow;
+}
+
+/******************************************************************************
+ *
+ * winDeadGet - Get next window on destroy list
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winDeadGet (
+    WIN_APP_ID  appId
+    ) {
+    UGL_WINDOW *    pWindow;
+    WIN_RESOURCE *  pResource;
+
+    if (uglListLast(&appId->resourceList) == UGL_NULL) {
+        pWindow = UGL_NULL;
+    }
+    else {
+        uglOSLock(appId->lockId);
+
+        for (pResource = (WIN_RESOURCE *) uglListLast(&appId->resourceList);
+             pResource != UGL_NULL;
+             pResource = (WIN_RESOURCE *) uglListPrev(&pResource->node)) {
+
+            pWindow = (UGL_WINDOW *) pResource->id;
+            if ((pWindow->state & WIN_STATE_DEAD) != 0x00) {
+                break;
+            }
+        }
+
+        uglOSUnlock(appId->lockId);
+    }
+
+    return pWindow;
+}
+
+/******************************************************************************
+ *
+ * winFirst - Get window first child
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winFirst (
+    WIN_ID  winId
+    ) {
+    UGL_WINDOW *  pWindow;
+
+    if (winId == UGL_NULL) {
+        pWindow = UGL_NULL;
+    }
+    else {
+        pWindow = (UGL_WINDOW *) uglListFirst(&winId->childList);
+    }
+
+    return pWindow;
+}
+
+/******************************************************************************
+ *
+ * winLock - Get excluse access to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winLock (
+    WIN_ID  winId
+    ) {
+    UGL_STATUS  status;
+
+    if (winId == UGL_NULL) {
+       status = UGL_STATUS_ERROR;
+    }
+    else {
+        status = uglOSLock(winId->pApp->pWinMgr->lockId);
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * winUnlock - Give up excluse access to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winUnlock (
+    WIN_ID  winId
+    ) {
+    UGL_STATUS  status;
+
+    if (winId == UGL_NULL) {
+       status = UGL_STATUS_ERROR;
+    }
+    else {
+        status = uglOSUnlock(winId->pApp->pWinMgr->lockId);
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winSend - Prepare and send message to window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -489,6 +702,54 @@ UGL_STATUS  winMsgHandle (
     }
 
     return status;
+}
+
+/******************************************************************************
+ *
+ * winWakeUp - Wake up application window
+ *
+ * RETURNS: N/A
+ */
+
+UGL_LOCAL UGL_VOID  winWakeUp (
+    WIN_APP_ID  appId
+    ) {
+    UGL_MSG  msg;
+
+    if ((appId->state & WIN_APP_STATE_PENDING) != 0x00) {
+        msg.type = WIN_MSG_TYPE_WAKE_UP;
+        uglOSMsgQPost(
+            appId->pQueue->osQId,
+            UGL_NO_WAIT,
+            &msg,
+            sizeof(UGL_MSG)
+            );
+    }
+}
+
+/******************************************************************************
+ *
+ * winDirtyClear - Clear window dirty attribute
+ *
+ * RETURNS: N/A
+ */
+
+UGL_LOCAL UGL_VOID  winDirtyClear (
+    UGL_WINDOW *  pWindow
+    ) {
+    WIN_APP *  pApp = pWindow->pApp;
+
+    if ((pWindow->state & WIN_STATE_DIRTY) != 0x00) {
+        uglOSLock(pApp->lockId);
+
+        /* Move to end of list */
+        uglListRemove(&pApp->resourceList, &pWindow->resource.node);
+        uglListAdd(&pApp->resourceList, &pWindow->resource.node);
+
+        pWindow->state &= ~WIN_STATE_DIRTY;
+
+        uglOSUnlock(pApp->lockId);
+    }
 }
 
 /******************************************************************************

@@ -112,6 +112,17 @@ WIN_ID  winCreate (
 
 /******************************************************************************
  *
+ * winDestroy - Destroy window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winDestroy (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winFree - Free resources used by window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -140,6 +151,61 @@ UGL_STATUS  winActivate (
  */
 
 UGL_BOOL  winIsActive (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winDirtyGet - Get next window on dirty list
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winDirtyGet (
+    WIN_APP_ID  appId
+    );
+
+/******************************************************************************
+ *
+ * winDeadGet - Get next window on destroy list
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winDeadGet (
+    WIN_APP_ID  appId
+    );
+
+/******************************************************************************
+ *
+ * winFirst - Get window first child
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winFirst (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winLock - Get excluse access to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winLock (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winUnlock - Give up excluse access to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winUnlock (
     WIN_ID  winId
     );
 

@@ -94,6 +94,11 @@
 #define MSG_HIDE                      (MSG_WIN_FIRST + 52)
 #define MSG_SHOW                      (MSG_WIN_FIRST + 53)
 
+#define MSG_DRAW_FIRST                (MSG_WIN_FIRST + 100)
+#define MSG_EXPOSE                    (MSG_WIN_FIRST + 100)
+#define MSG_DRAW                      (MSG_WIN_FIRST + 101)
+#define MSG_DRAW_LAST                 (MSG_WIN_FIRST + 199)
+
 #define MSG_FRAME_FIRST               (MSG_WIN_FIRST + 400)
 #define MSG_FRAME_CAPTION_GET         (MSG_WIN_FIRST + 400)
 #define MSG_FRAME_CAPTION_SET         (MSG_WIN_FIRST + 401)
