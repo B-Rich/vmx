@@ -156,6 +156,17 @@ UGL_BOOL  winIsActive (
 
 /******************************************************************************
  *
+ * winDirtySet - Mark window as dirty
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winDirtySet (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winDirtyGet - Get next window on dirty list
  *
  * RETURNS: Window id or UGL_NULL

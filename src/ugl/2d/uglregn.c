@@ -657,6 +657,30 @@ UGL_STATUS uglRegionRectExclude (
 
 /******************************************************************************
  *
+ * uglRegionExclude - Exclude one region from another region
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglRegionExclude (
+    UGL_REGION_ID  regionId,
+    UGL_REGION_ID  excludeRegionId
+    ) {
+    const UGL_RECT * pRegionRect = UGL_NULL;
+
+    if (regionId == UGL_NULL || excludeRegionId == UGL_NULL) {
+        return (UGL_STATUS_ERROR);
+    }
+
+    while (uglRegionRectGet(excludeRegionId, &pRegionRect) == UGL_STATUS_OK) {
+        uglRegionRectExclude(regionId, pRegionRect);
+    }
+
+    return (UGL_STATUS_OK);
+}
+
+/******************************************************************************
+ *
  * uglRegionIntersect - Calculate intersection between two regions
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -741,6 +765,77 @@ UGL_STATUS uglRegionIntersect (
     uglRegionDeinit (&region);
 
     return (UGL_STATUS_OK);
+}
+
+/******************************************************************************
+ *
+ * uglRegionRectUnion - Create union between two regions
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglRegionUnion(
+    UGL_REGION_ID  regionAId,
+    UGL_REGION_ID  regionBId,
+    UGL_REGION_ID  unionRegionId
+    ) {
+    const UGL_RECT * pRect = UGL_NULL;
+
+    if (regionAId == UGL_NULL || regionBId == UGL_NULL ||
+        unionRegionId == UGL_NULL) {
+        return (UGL_STATUS_ERROR);
+    }
+
+    if (unionRegionId != regionAId && unionRegionId != regionBId) {
+        uglRegionEmpty(unionRegionId);
+    }
+
+    if (unionRegionId != regionAId) {
+        while (uglRegionRectGet(regionAId, &pRect) == UGL_STATUS_OK) {
+            uglRegionRectInclude(unionRegionId, pRect);
+        }
+    }
+
+    if (unionRegionId != regionBId) {
+        while (uglRegionRectGet(regionBId, &pRect) == UGL_STATUS_OK) {
+            uglRegionRectInclude(unionRegionId, pRect);
+        }
+    }
+
+    return (UGL_STATUS_OK);
+}
+
+/******************************************************************************
+ *
+ * uglRegionClipToRect - Clip region to rectangle
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglRegionClipToRect (
+    UGL_REGION_ID    regionId,
+    const UGL_RECT * pClipRect
+    ) {
+    UGL_STATUS  status;
+    UGL_REGION  region;
+
+    if (regionId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else if (UGL_RECT_WIDTH(*pClipRect) <= 0 ||
+             UGL_RECT_HEIGHT(*pClipRect)  <= 0) {
+        status = uglRegionEmpty(regionId);
+    }
+    else {
+        uglRegionInit(&region);
+        status = uglRegionRectInclude(&region, pClipRect);
+        if (status == UGL_STATUS_OK) {
+            status = uglRegionIntersect(regionId, &region, regionId);
+            uglRegionDeinit(&region);
+        }
+    }
+
+    return (status);
 }
 
 /******************************************************************************
@@ -834,6 +929,21 @@ UGL_STATUS uglRegionRectSortedGet (
     }
 
     return (UGL_STATUS_OK);
+}
+
+/******************************************************************************
+ *
+ * uglRegionRectGet - Get rectangles from region
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglRegionRectGet (
+    UGL_REGION_ID     regionId,
+    const UGL_RECT ** ppRect
+    ) {
+
+    return (uglRegionRectSortedGet(regionId, ppRect, UGL_TL2BR));
 }
 
 /******************************************************************************

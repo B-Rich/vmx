@@ -34,6 +34,12 @@ UGL_LOCAL UGL_VOID  winDirtyClear (
     UGL_WINDOW *  pWindow
     );
 
+UGL_LOCAL UGL_STATUS winRegionExpose (
+    WIN_ID              winId,
+    const UGL_REGION_ID regionId,
+    const UGL_RECT *    pRect
+    );
+
 UGL_LOCAL UGL_VOID  winClassInit (
     UGL_WINDOW *  pWindow
     );
@@ -475,6 +481,61 @@ UGL_BOOL  winIsActive (
 
 /******************************************************************************
  *
+ * winDirtySet - Mark window as dirty
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winDirtySet (
+    WIN_ID  winId
+    ) {
+    UGL_STATUS      status;
+    WIN_RESOURCE *  pResource;
+    UGL_WINDOW *    pWindow;
+    WIN_APP *       pApp = winId->pApp;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        if ((winId->state & WIN_STATE_DIRTY) == 0x00) {
+
+            uglOSLock(pApp->lockId);
+            winId->state |= WIN_STATE_DIRTY;
+            uglListRemove(&pApp->resourceList, &winId->resource.node);
+
+            /* Insert window after other dirty windows */
+            pResource = (WIN_RESOURCE *) uglListFirst(&pApp->resourceList);
+            while (pResource != NULL) {
+
+                pWindow = (UGL_WINDOW *) pResource->id;
+                if ((pWindow->state & WIN_STATE_DIRTY) == 0x00) {
+                    break;
+                }
+
+                /* Advance */
+                pResource = (WIN_RESOURCE *) uglListNext(&pResource->node);
+            }
+
+            uglListInsert(
+                &pApp->resourceList,
+                &winId->resource.node, 
+                &pResource->node
+                );
+
+            uglOSUnlock(pApp->lockId);
+
+            winWakeUp(pApp);
+        }
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winDirtyGet - Get next window on dirty list
  *
  * RETURNS: Window id or UGL_NULL
@@ -816,6 +877,110 @@ UGL_LOCAL UGL_VOID  winDirtyClear (
 
         uglOSUnlock(pApp->lockId);
     }
+}
+
+/******************************************************************************
+ *
+ * winRegionExpose - Expose region of a window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_LOCAL UGL_STATUS winRegionExpose (
+    WIN_ID              winId,
+    const UGL_REGION_ID regionId,
+    const UGL_RECT *    pRect
+    ) {
+    UGL_STATUS    status;
+    UGL_REGION    exposeRegion;
+    UGL_RECT      exposeRect;
+    UGL_RECT      intersectRect;
+    UGL_WINDOW *  pChild;
+
+    if (winId == UGL_NULL || pRect == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        uglRegionInit(&exposeRegion);
+
+        if (regionId != UGL_NULL) {
+            uglRegionCopy(regionId, &exposeRegion);
+        }
+        else {
+            uglRegionRectInclude(&exposeRegion, pRect);
+        }
+
+        uglRegionClipToRect(&exposeRegion, &winId->rect);
+        uglRegionMove(&exposeRegion, -winId->rect.left, -winId->rect.top);
+        uglRegionExclude(&exposeRegion, &winId->paintersRegion);
+
+        /* Ensure that expose region is non-empty */
+        if (exposeRegion.pFirstTL2BR != UGL_NULL) {
+            memcpy(&exposeRect, pRect, sizeof(UGL_RECT));
+
+            /* Expose rectangle relative to window */
+            UGL_RECT_INTERSECT(exposeRect, winId->rect, exposeRect);
+            UGL_RECT_MOVE(exposeRect, -winId->rect.left, -winId->rect.top);
+
+            /* Expose window */
+            uglRegionUnion(
+                &winId->paintersRegion,
+                &exposeRegion,
+                &winId->paintersRegion
+                );
+
+            if ((winId->attributes & WIN_ATTRIB_CLIP_CHILDREN) == 0x00) {
+                uglRegionUnion(
+                    &winId->dirtyRegion,
+                    &exposeRegion,
+                    &winId->dirtyRegion
+                    );
+
+                winDirtySet(winId);
+            }
+
+            /* Expose child windows */
+            pChild = winLast(winId);
+            while (pChild != UGL_NULL && exposeRegion.pFirstTL2BR != UGL_NULL) {
+
+                if ((pChild->state & WIN_STATE_HIDDEN) == 0x00) {
+                    UGL_RECT_INTERSECT(pChild->rect, exposeRect, intersectRect);
+                }
+
+                if (intersectRect.right >= intersectRect.left &&
+                    intersectRect.bottom >= intersectRect.top) {
+
+                    winRegionExpose(pChild, &exposeRegion, &intersectRect);
+                    uglRegionRectExclude(&exposeRegion, &intersectRect);
+                }
+
+                /* Advance */
+                pChild = (UGL_WINDOW *) uglListPrev(&pChild->node);
+            }
+
+            if ((winId->attributes & WIN_ATTRIB_CLIP_CHILDREN) != 0x00 &&
+                exposeRegion.pFirstTL2BR != UGL_NULL) {
+
+                uglRegionUnion(
+                    &winId->visibleRegion,
+                    &exposeRegion,
+                    &winId->visibleRegion
+                    );
+                uglRegionUnion(
+                    &winId->dirtyRegion,
+                    &exposeRegion,
+                    &winId->dirtyRegion
+                    );
+
+                winDirtySet(winId);
+            }
+        }
+
+        uglRegionDeinit(&exposeRegion);
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
 }
 
 /******************************************************************************

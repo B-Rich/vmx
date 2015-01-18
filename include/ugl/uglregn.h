@@ -174,6 +174,18 @@ UGL_STATUS uglRegionRectExclude (
 
 /******************************************************************************
  *
+ * uglRegionExclude - Exclude one region from another region
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglRegionExclude (
+    UGL_REGION_ID  regionId,
+    UGL_REGION_ID  excludeRegionId
+    );
+
+/******************************************************************************
+ *
  * uglRegionIntersect - Calculate intersection between two regions
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -187,6 +199,31 @@ UGL_STATUS uglRegionIntersect (
 
 /******************************************************************************
  *
+ * uglRegionRectUnion - Create union between two regions
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglRegionUnion(
+    UGL_REGION_ID  regionAId,
+    UGL_REGION_ID  regionBId,
+    UGL_REGION_ID  unionRegionId
+    );
+
+/******************************************************************************
+ *
+ * uglRegionClipToRect - Clip region to rectangle
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglRegionClipToRect (
+    UGL_REGION_ID    regionId,
+    const UGL_RECT * pClipRect
+    );
+
+/******************************************************************************
+ *
  * uglRegionRectSortedGet - Get sorted list of rectangles from region
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -196,6 +233,18 @@ UGL_STATUS uglRegionRectSortedGet (
     UGL_REGION_ID     regionId,
     const UGL_RECT ** ppRect,
     UGL_BLT_DIR       rectOrder
+    );
+
+/******************************************************************************
+ *
+ * uglRegionRectGet - Get rectangles from region
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglRegionRectGet (
+    UGL_REGION_ID     regionId,
+    const UGL_RECT ** ppRect
     );
 
 /******************************************************************************
