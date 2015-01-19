@@ -168,6 +168,29 @@ UGL_BOOL  winIsActive (
 
 /******************************************************************************
  *
+ * winInvalidate - Invalidate window and children
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS winInvalidate(
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winRectInvalidate - Invalidate rectangle of window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winRectInvalidate (
+    WIN_ID            winId,
+    const UGL_RECT *  pRect
+    );
+
+/******************************************************************************
+ *
  * winDirtySet - Mark window as dirty
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
