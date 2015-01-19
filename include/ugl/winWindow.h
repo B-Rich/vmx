@@ -134,6 +134,18 @@ UGL_STATUS  winFree (
 
 /******************************************************************************
  *
+ * winRectSet - Set dimensions of a window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winRectSet (
+    WIN_ID            winId,
+    const UGL_RECT *  pRect
+    );
+
+/******************************************************************************
+ *
  * winActivate - Activate window
  *
  * RETURNS: UGL_STATUS_OK, UGL_STATUS_PERMISSION_DENIED or UGL_STATUS_ERROR
