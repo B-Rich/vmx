@@ -35,9 +35,9 @@ UGL_LOCAL UGL_VOID  winDirtyClear (
     );
 
 UGL_LOCAL UGL_STATUS winRegionExpose (
-    WIN_ID              winId,
-    const UGL_REGION_ID regionId,
-    const UGL_RECT *    pRect
+    WIN_ID               winId,
+    const UGL_REGION_ID  regionId,
+    const UGL_RECT *     pRect
     );
 
 UGL_LOCAL UGL_VOID  winClassInit (
@@ -302,6 +302,191 @@ UGL_STATUS  winFree (
         UGL_FREE(winId);
 
         status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * winRectSet - Set dimensions of a window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winRectSet (
+    WIN_ID            winId,
+    const UGL_RECT *  pRect
+    ) {
+    UGL_STATUS         status;
+    WIN_MSG            msg;
+    UGL_RECT           rect;
+    UGL_RECT           oldRect;
+    UGL_RECT           newRect;
+    UGL_RECT           intersectRect;
+    UGL_REGION         region;
+    UGL_REGION_RECT *  pRegionRect;
+    UGL_WINDOW *       pSibling;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else if (pRect != UGL_NULL &&
+             (winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
+            status = winSend(
+                winId->pParent,
+                MSG_FRAME_CONTENT_RECT_SET,
+                pRect,
+                sizeof(UGL_RECT)
+                );
+    }
+    else {
+        if (pRect == UGL_NULL) {
+            pRect = &winId->rect;
+        }
+
+        /* Send change message to parent if needed */
+        if (winId->pParent != UGL_NULL) {
+            msg.type = MSG_RECT_CHILD_CHANGING;
+            msg.data.rectChildChanging.childId = winId;
+            memcpy(
+                &msg.data.rectChildChanging.newRect,
+                pRect,
+                sizeof(UGL_RECT)
+                );
+            memcpy(
+                &msg.data.rectChildChanging.oldRect,
+                &winId->rect,
+                sizeof(UGL_RECT)
+                );
+            winMsgSend(winId->pParent, &msg);
+            memcpy(
+                &newRect,
+                &msg.data.rectChildChanging.newRect,
+                sizeof(UGL_RECT)
+                );
+        }
+        else {
+            memcpy(&newRect, pRect, sizeof(UGL_RECT));
+        }
+
+        memcpy(&oldRect, &winId->rect, sizeof(UGL_RECT));
+
+        /* Check that new rectangle is different from the current rectangle */
+        if (newRect.left != oldRect.left ||
+            newRect.top != oldRect.top ||
+            newRect.right != oldRect.right ||
+            newRect.bottom != oldRect.bottom) {
+
+            if ((winId->state & WIN_STATE_HIDDEN) == 0x00) {
+                uglRegionInit(&region);
+
+                winLock(winId);
+
+                if (UGL_RECT_WIDTH(newRect) != UGL_RECT_WIDTH(oldRect) ||
+                    UGL_RECT_HEIGHT(newRect) != UGL_RECT_HEIGHT(oldRect)) {
+
+                    /* Obscure portion of the window */
+                    memcpy(&rect, &newRect, sizeof(UGL_RECT));
+                    UGL_RECT_MOVE_TO(rect, oldRect.left, oldRect.top);
+                    uglRegionRectInclude(&region, &oldRect);
+                    uglRegionRectExclude(&region, &rect);
+
+                    for (pRegionRect = region.pFirstTL2BR;
+                         pRegionRect != UGL_NULL;
+                         pRegionRect = pRegionRect->pNextTL2BR) {
+
+#ifdef TODO
+                        winRegionObscure(winId, UGL_NULL, &pRegionRect->rect);
+#endif
+                    }
+
+                    uglRegionEmpty(&region);
+
+                    memcpy(&winId->rect, &newRect, sizeof(UGL_RECT));
+
+                    /* Expose portion of the window */
+                    memcpy(&rect, &oldRect, sizeof(UGL_RECT));
+                    UGL_RECT_MOVE_TO(rect, newRect.left, newRect.top);
+                    uglRegionRectInclude(&region, &newRect);
+                    uglRegionRectExclude(&region, &rect);
+
+                    for (pRegionRect = region.pFirstTL2BR;
+                         pRegionRect != UGL_NULL;
+                         pRegionRect = pRegionRect->pNextTL2BR) {
+
+                        winRegionExpose(winId, UGL_NULL, &pRegionRect->rect);
+                    }
+
+                    uglRegionEmpty(&region);
+                }
+
+#ifdef TODO
+                if (newRect.left != oldRect.left ||
+                    newRect.top != oldRect.top) {
+
+                    winInvalidate(winId);
+                }
+#endif
+
+                memcpy(&winId->rect, &oldRect, sizeof(UGL_RECT));
+
+                /* Expose parent and siblings */
+                uglRegionRectInclude(&region, &oldRect);
+                uglRegionIntersect(
+                    &region,
+                    &winId->pParent->paintersRegion,
+                    &region
+                    );
+                uglRegionRectExclude(&region, &newRect);
+
+                pSibling = (UGL_WINDOW *) uglListNext(&winId->node);
+                while (pSibling != UGL_NULL && region.pFirstTL2BR != UGL_NULL) {
+
+                    if ((pSibling->state & WIN_STATE_HIDDEN) == 0x00) {
+
+                        UGL_RECT_INTERSECT(
+                            winId->rect,
+                            pSibling->rect,
+                            intersectRect
+                            );
+
+                        if (intersectRect.right >= intersectRect.left &&
+                            intersectRect.bottom >= intersectRect.top) {
+
+                            uglRegionRectExclude(&region, &intersectRect);
+                            if ((pSibling->attributes &
+                                 WIN_ATTRIB_TRANSPARENT) != 0x00) {
+
+                                UGL_RECT_MOVE(
+                                    intersectRect,
+                                    -pSibling->rect.left,
+                                    -pSibling->rect.top
+                                    );
+
+#ifdef TODO
+                                winRectInvalidate(pSibling, &intersectRect);
+#endif
+                            }
+                        }
+                    }
+
+                    /* Advance */
+                    pSibling = (UGL_WINDOW *) uglListNext(&pSibling->node);
+                }
+
+                if (region.pFirstTL2BR != UGL_NULL) {
+
+#ifdef TODO
+                    winConceal(winId, &region);
+#endif
+
+                    uglRegionEmpty(&region);
+                }
+
+                /* TODO: This functions is not ready yet */
+            }
+        }
     }
 
     return status;
@@ -887,9 +1072,9 @@ UGL_LOCAL UGL_VOID  winDirtyClear (
  */
 
 UGL_LOCAL UGL_STATUS winRegionExpose (
-    WIN_ID              winId,
-    const UGL_REGION_ID regionId,
-    const UGL_RECT *    pRect
+    WIN_ID               winId,
+    const UGL_REGION_ID  regionId,
+    const UGL_RECT *     pRect
     ) {
     UGL_STATUS    status;
     UGL_REGION    exposeRegion;

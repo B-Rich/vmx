@@ -103,27 +103,27 @@ typedef struct win_frame_caption_data {
 } WIN_FRAME_CAPTION_DATA;
 
 typedef union win_msg_data {
-    UGL_MSG_DATA              uglData;
-    UGL_POINTER_DATA          ptr;
-    UGL_KEYBOARD_DATA         kbd;
-    WIN_DRAW_DATA             draw;
-    WIN_HIT_TEST_DATA         hitTest;
-    WIN_RECT_DATA             rect;
-    WIN_RECT_CHANGED_DATA     rectChanged;
-    WIN_RECT_CHANGING_DATA    rectChanging;
-    WIN_ZPOS_DATA             zPos;
-    WIN_ID                    attachId;
-    WIN_ID                    detachId;
-    WIN_ID                    activateId;
-    WIN_MAXIMIZED_DATA        maximized;
-    WIN_MINIMIZED_DATA        minimized;
-    WIN_RESTORED_DATA         restored;
-    UGL_CHAR *                frameCaption;
-    WIN_FRAME_CAPTION_DATA    frameCaptionData;
-    UGL_RECT                  frameContentRect;
-    UGL_BITMAP_ID             frameImageId;
-    UGL_BOOL                  frameResizable;
-    UGL_UINT32                appExitTimeout;
+    UGL_MSG_DATA                    uglData;
+    UGL_POINTER_DATA                ptr;
+    UGL_KEYBOARD_DATA               kbd;
+    WIN_DRAW_DATA                   draw;
+    WIN_HIT_TEST_DATA               hitTest;
+    WIN_RECT_DATA                   rect;
+    WIN_RECT_CHANGED_DATA           rectChanged;
+    WIN_RECT_CHILD_CHANGING_DATA    rectChildChanging;
+    WIN_ZPOS_DATA                   zPos;
+    WIN_ID                          attachId;
+    WIN_ID                          detachId;
+    WIN_ID                          activateId;
+    WIN_MAXIMIZED_DATA              maximized;
+    WIN_MINIMIZED_DATA              minimized;
+    WIN_RESTORED_DATA               restored;
+    UGL_CHAR *                      frameCaption;
+    WIN_FRAME_CAPTION_DATA          frameCaptionData;
+    UGL_RECT                        frameContentRect;
+    UGL_BITMAP_ID                   frameImageId;
+    UGL_BOOL                        frameResizable;
+    UGL_UINT32                      appExitTimeout;
 } WIN_MSG_DATA;
 
 typedef struct win_msg {
