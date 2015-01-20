@@ -25,6 +25,8 @@
 #include "uglWin.h"
 #include "private/uglWinP.h"
 
+#define GFX_MODE
+
 /* Locals */
 
 UGL_LOCAL UGL_VOID  winWakeUp (
@@ -71,11 +73,6 @@ UGL_LOCAL UGL_VOID  winClassInit (
 
 UGL_LOCAL UGL_VOID  winClassDeinit (
     WIN_ID  winId
-    );
-
-UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
-    WIN_ID     winId,
-    WIN_MSG *  pMsg
     );
 
 /******************************************************************************
@@ -365,7 +362,6 @@ UGL_STATUS  winSizeSet (
     return status;
 }
 
-#define GFX_MODE
 /******************************************************************************
  *
  * winRectSet - Set dimensions of a window
@@ -1319,6 +1315,99 @@ UGL_STATUS  winAttach (
 
 /******************************************************************************
  *
+ * winDrawEnd - End window drawing
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winDrawEnd (
+    WIN_ID     winId,
+    UGL_GC_ID  gcId,
+    UGL_BOOL   clearDirty
+    ) {
+    UGL_STATUS     status;
+    UGL_POINT      winPoint;
+    UGL_RECT       winRect;
+    UGL_BITMAP_ID  bmpId;
+
+    if (winId == UGL_NULL || gcId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        uglBatchEnd(gcId);
+
+        if ((winId->attributes & WIN_ATTRIB_OFF_SCREEN) != 0x00 ||
+            ((winId->attributes & WIN_ATTRIB_TRANSPARENT) != 0x00 &&
+            clearDirty == UGL_TRUE)) {
+
+            memcpy(&winRect, &winId->rect, sizeof(UGL_RECT));
+            winPoint.x = winRect.left;
+            winPoint.y = winRect.top;
+#ifdef GFX_MODE
+            uglDefaultBitmapGet(gcId, &bmpId);
+            winWindowToScreen(winId->pParent, &winPoint, 2);
+            uglViewPortSet(
+                gcId,
+                winRect.left,
+                winRect.top,
+                winRect.right,
+                winRect.bottom
+                );
+            if (clearDirty == UGL_TRUE) {
+                uglClipRegionSet(gcId, &winId->dirtyRegion);
+            }
+            else if ((winId->attributes & WIN_ATTRIB_CLIP_CHILDREN) != 0x00) {
+                uglClipRegionSet(gcId, &winId->visibleRegion);
+            }
+            else {
+                uglClipRegionSet(gcId, &winId->paintersRegion);
+            }
+
+            /* Copy window to display */
+            if ((winId->attributes & WIN_ATTRIB_DOUBLE_BUFFER) != 0x00) {
+                uglBitmapBlt(
+                    gcId,
+                    bmpId,
+                    0,
+                    0,
+                    UGL_RECT_WIDTH(winId->rect) - 1,
+                    UGL_RECT_HEIGHT(winId->rect) - 1,
+                    UGL_DEFAULT_ID,
+                    0,
+                    0
+                    );
+            }
+            else {
+                uglBitmapBlt(
+                    gcId,
+                    bmpId,
+                    winRect.left,
+                    winRect.top,
+                    winRect.right,
+                    winRect.bottom,
+                    UGL_DEFAULT_ID,
+                    0,
+                    0
+                    );
+            }
+#endif
+        }
+
+        if (clearDirty == UGL_TRUE) {
+            uglRegionEmpty(&winId->dirtyRegion);
+            winDirtyClear(winId);
+        }
+
+        winUnlock(winId);
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winInvalidate - Invalidate window and children
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -1564,296 +1653,6 @@ WIN_ID  winDeadGet (
     }
 
     return pWindow;
-}
-
-/******************************************************************************
- *
- * winCount - Get number of child windows
- *
- * RETURNS: Number of child windows or 0
- */
-
-UGL_SIZE  winCount (
-    WIN_ID  winId
-    ) {
-    UGL_SIZE  count;
-
-    if (winId == UGL_NULL) {
-        count = 0;
-    }
-    else {
-        count = uglListCount(&winId->childList);
-    }
-
-    return count;
-}
-
-/******************************************************************************
- *
- * winFirst - Get window first child
- *
- * RETURNS: Window id or UGL_NULL
- */
-
-WIN_ID  winFirst (
-    WIN_ID  winId
-    ) {
-    UGL_WINDOW *  pWindow;
-
-    if (winId == UGL_NULL) {
-        pWindow = UGL_NULL;
-    }
-    else {
-        pWindow = (UGL_WINDOW *) uglListFirst(&winId->childList);
-    }
-
-    return pWindow;
-}
-
-/******************************************************************************
- *
- * winLast - Get window last child
- *
- * RETURNS: Window id or UGL_NULL
- */
-
-WIN_ID  winLast (
-    WIN_ID  winId
-    ) {
-    UGL_WINDOW *  pWindow;
-
-    if (winId == UGL_NULL) {
-        pWindow = UGL_NULL;
-    }
-    else {
-        pWindow = (UGL_WINDOW *) uglListLast(&winId->childList);
-    }
-
-    return pWindow;
-}
-
-/******************************************************************************
- *
- * winNext - Get next window
- *
- * RETURNS: Window id or UGL_NULL
- */
-
-WIN_ID  winNext (
-    WIN_ID  winId
-    ) {
-    UGL_WINDOW *  pWindow;
-
-    if (winId == UGL_NULL) {
-        pWindow = UGL_NULL;
-    }
-    else {
-        pWindow = (UGL_WINDOW *) uglListNext(&winId->node);
-    }
-
-    return pWindow;
-}
-
-/******************************************************************************
- *
- * winPrev - Get previous window
- *
- * RETURNS: Window id or UGL_NULL
- */
-
-WIN_ID  winPrev (
-    WIN_ID  winId
-    ) {
-    UGL_WINDOW *  pWindow;
-
-    if (winId == UGL_NULL) {
-        pWindow = UGL_NULL;
-    }
-    else {
-        pWindow = (UGL_WINDOW *) uglListPrev(&winId->node);
-    }
-
-    return pWindow;
-}
-
-/******************************************************************************
- *
- * winNth - Get n:th window
- *
- * RETURNS: Window id or UGL_NULL
- */
-
-WIN_ID  winNth (
-    WIN_ID   winId,
-    UGL_ORD  n
-    ) {
-    UGL_WINDOW *  pWindow;
-
-    if (winId == UGL_NULL) {
-        pWindow = UGL_NULL;
-    }
-    else {
-        pWindow = (UGL_WINDOW *) uglListNth(&winId->childList, n);
-    }
-
-    return pWindow;
-}
-
-/******************************************************************************
- *
- * winMgrGet - Get window manager for window
- *
- * RETURNS: Pointer to window manager or UGL_NULL
- */
-
-WIN_MGR_ID  winMgrGet (
-    WIN_ID  winId
-    ) {
-    WIN_MGR_ID  winMgrId;
-
-    if (winId == UGL_NULL || (winId->state & WIN_STATE_MANAGED) == 0x00) {
-        winMgrId = UGL_NULL;
-    }
-    else {
-        winMgrId = winId->pApp->pWinMgr;
-    }
-
-    return winMgrId;
-}
-
-/******************************************************************************
- *
- * winLock - Get excluse access to window
- *
- * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
- */
-
-UGL_STATUS  winLock (
-    WIN_ID  winId
-    ) {
-    UGL_STATUS  status;
-
-    if (winId == UGL_NULL) {
-       status = UGL_STATUS_ERROR;
-    }
-    else {
-        status = uglOSLock(winId->pApp->pWinMgr->lockId);
-    }
-
-    return status;
-}
-
-/******************************************************************************
- *
- * winUnlock - Give up excluse access to window
- *
- * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
- */
-
-UGL_STATUS  winUnlock (
-    WIN_ID  winId
-    ) {
-    UGL_STATUS  status;
-
-    if (winId == UGL_NULL) {
-       status = UGL_STATUS_ERROR;
-    }
-    else {
-        status = uglOSUnlock(winId->pApp->pWinMgr->lockId);
-    }
-
-    return status;
-}
-
-/******************************************************************************
- *
- * winSend - Prepare and send message to window
- *
- * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
- */
-
-UGL_STATUS  winSend (
-    WIN_ID        winId,
-    UGL_MSG_TYPE  msgType,
-    const void *  pMsgData,
-    UGL_SIZE      dataSize
-    ) {
-    WIN_MSG  msg;
-
-    /* Compile message */
-    msg.type  = msgType;
-    msg.winId = winId;
-    if (pMsgData != UGL_NULL) {
-        memcpy(msg.data.uglData.reserved, pMsgData, dataSize);
-    }
-
-    return winMsgSend(winId, &msg);
-}
-
-/******************************************************************************
- *
- * winMsgSend - Send message to window
- *
- * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
- */
-
-UGL_STATUS  winMsgSend (
-    WIN_ID     winId,
-    WIN_MSG *  pMsg
-    ) {
-    UGL_STATUS  status;
-
-    if (winId == UGL_NULL || pMsg == UGL_NULL) {
-        status = UGL_STATUS_ERROR;
-    }
-    else {
-        pMsg->winId = winId;
-        status = uglCbListExecute(
-            &winId->callbackList,
-            winId,
-            (UGL_MSG *) pMsg,
-            winId->pAppData
-            );
-        if (status == UGL_STATUS_OK) {
-            winMsgHandle(winId, UGL_NULL, pMsg);
-        }
-    }
-
-    return status;
-}
-
-/******************************************************************************
- *
- * winMsgHandle - Handle window message
- *
- * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
- */
-
-UGL_STATUS  winMsgHandle (
-    WIN_ID        winId,
-    WIN_CLASS_ID  classId,
-    WIN_MSG *     pMsg
-    ) {
-    UGL_STATUS status;
-
-    if (winId == UGL_NULL) {
-        status = UGL_STATUS_ERROR;
-    }
-    else {
-        if (classId == UGL_NULL) {
-            status = winDefaultMsgHandler(winId, pMsg);
-        }
-        else {
-            status = (*classId->pMsgHandler) (
-                winId,
-                classId,
-                pMsg,
-                (UGL_INT8 *) winId->pClassData + classId->dataOffset
-                );
-        }
-    }
-
-    return status;
 }
 
 /******************************************************************************
@@ -2471,22 +2270,5 @@ UGL_LOCAL UGL_VOID  winClassDeinit (
                 );
         }
     }
-}
-
-/******************************************************************************
- *
- * winDefaultMsgHandler - Window default message handler
- *
- * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
- */
-
-UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
-    WIN_ID     winId,
-    WIN_MSG *  pMsg
-    ) {
-
-    /* TODO */
-
-    return UGL_STATUS_ERROR;
 }
 
