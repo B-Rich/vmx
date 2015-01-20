@@ -192,6 +192,27 @@ UGL_STATUS uglGcDestroy (
 
 /******************************************************************************
  *
+ * uglDefaultBitmapGet - Get graphics context default bitmap
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglDefaultBitmapGet (
+    UGL_GC_ID    gc,
+    UGL_DDB_ID * pDefaultBitmapId
+    ) {
+
+    if (gc == UGL_NULL) {
+        return (UGL_STATUS_ERROR);
+    }
+
+    *pDefaultBitmapId = gc->pDefaultBitmap;
+
+    return (UGL_STATUS_OK);
+}
+
+/******************************************************************************
+ *
  * uglDefaultBitmapSet - Set graphics context default bitmap
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR

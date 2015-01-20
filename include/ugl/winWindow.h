@@ -68,6 +68,13 @@
 #define WIN_STATE_MAXIMIZED         0x00000010
 #define WIN_STATE_MINIMIZED         0x00000020
 
+/* Colors */
+#define WIN_INDEX_BLACK                      0
+#define WIN_INDEX_WHITE                     15
+
+/* Fonts */
+#define WIN_FONT_INDEX_SYSTEM                0
+
 #ifndef _ASMLANGUAGE
 
 #ifdef __cplusplus
@@ -89,6 +96,170 @@ typedef struct win_cb_item {
     WIN_CB *    pCallback;
     void *      pParam;
 } WIN_CB_ITEM;
+
+/******************************************************************************
+ *
+ * winCount - Get number of child windows
+ *
+ * RETURNS: Number of child windows or 0
+ */
+
+UGL_SIZE  winCount (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winFirst - Get window first child
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winFirst (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winLast - Get window last child
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winLast (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winNext - Get next window
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winNext (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winPrev - Get previous window
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winPrev (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winNth - Get n:th window
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winNth (
+    WIN_ID   winId,
+    UGL_ORD  n
+    );
+
+/******************************************************************************
+ *
+ * winLock - Get excluse access to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winLock (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winUnlock - Give up excluse access to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winUnlock (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winMgrGet - Get window manager for window
+ *
+ * RETURNS: Pointer to window manager or UGL_NULL
+ */
+
+WIN_MGR_ID  winMgrGet (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winWindowToScreen - Convert window coordinates to screen coordinates
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winWindowToScreen (
+    WIN_ID       winId,
+    UGL_POINT *  pPoints,
+    UGL_SIZE     numPoints
+    );
+
+/******************************************************************************
+ *
+ * winDrawRectGet - Get window drawing rectangle
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winDrawRectGet (
+    WIN_ID      winId,
+    UGL_RECT *  pRect
+    );
+
+/******************************************************************************
+ *
+ * winSend - Prepare and send message to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winSend (
+    WIN_ID        winId,
+    UGL_MSG_TYPE  msgType,
+    const void *  pMsgData,
+    UGL_SIZE      dataSize
+    );
+
+/******************************************************************************
+ *
+ * winMsgSend - Send message to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMsgSend (
+    WIN_ID     winId,
+    WIN_MSG *  pMsg
+    );
+
+/******************************************************************************
+ *
+ * winMsgHandle - Handle window message
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMsgHandle (
+    WIN_ID        winId,
+    WIN_CLASS_ID  classId,
+    WIN_MSG *     pMsg
+    );
 
 /******************************************************************************
  *
@@ -134,6 +305,54 @@ UGL_STATUS  winFree (
 
 /******************************************************************************
  *
+ * winSizeSet - Set size of a window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winSizeSet (
+    WIN_ID    winId,
+    UGL_SIZE  width,
+    UGL_SIZE  height
+    );
+
+/******************************************************************************
+ *
+ * winRectSet - Set dimensions of a window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winRectSet (
+    WIN_ID            winId,
+    const UGL_RECT *  pRect
+    );
+
+/******************************************************************************
+ *
+ * winZPosSet - Set window depth position
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winZPosSet (
+    WIN_ID   winId,
+    UGL_ORD  zPos
+    );
+
+/******************************************************************************
+ *
+ * winZPosGet - Get window depth position
+ *
+ * RETURNS: Window z position or 0
+ */
+
+UGL_ORD  winZPosGet (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winActivate - Activate window
  *
  * RETURNS: UGL_STATUS_OK, UGL_STATUS_PERMISSION_DENIED or UGL_STATUS_ERROR
@@ -152,6 +371,68 @@ UGL_STATUS  winActivate (
 
 UGL_BOOL  winIsActive (
     WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winAttach - Attach window to hiearachy
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winAttach (
+    WIN_ID  childId,
+    WIN_ID  parentId,
+    WIN_ID  nextId
+    );
+
+/******************************************************************************
+ *
+ * winDrawStart - Start window drawing
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_GC_ID  winDrawStart (
+    WIN_ID     winId,
+    UGL_GC_ID  gcId,
+    UGL_BOOL   clipToDirty
+    );
+
+/******************************************************************************
+ *
+ * winDrawEnd - End window drawing
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winDrawEnd (
+    WIN_ID     winId,
+    UGL_GC_ID  gcId,
+    UGL_BOOL   clearDirty
+    );
+
+/******************************************************************************
+ *
+ * winInvalidate - Invalidate window and children
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS winInvalidate(
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winRectInvalidate - Invalidate rectangle of window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winRectInvalidate (
+    WIN_ID            winId,
+    const UGL_RECT *  pRect
     );
 
 /******************************************************************************
@@ -185,111 +466,6 @@ WIN_ID  winDirtyGet (
 
 WIN_ID  winDeadGet (
     WIN_APP_ID  appId
-    );
-
-/******************************************************************************
- *
- * winCount - Get number of child windows
- *
- * RETURNS: Number of child windows or 0
- */
-
-UGL_SIZE  winCount (
-    WIN_ID  winId
-    );
-
-/******************************************************************************
- *
- * winFirst - Get window first child
- *
- * RETURNS: Window id or UGL_NULL
- */
-
-WIN_ID  winFirst (
-    WIN_ID  winId
-    );
-
-/******************************************************************************
- *
- * winLast - Get window last child
- *
- * RETURNS: Window id or UGL_NULL
- */
-
-WIN_ID  winLast (
-    WIN_ID  winId
-    );
-
-/******************************************************************************
- *
- * winMgrGet - Get window manager for window
- *
- * RETURNS: Pointer to window manager or UGL_NULL
- */
-
-WIN_MGR_ID  winMgrGet (
-    WIN_ID  winId
-    );
-
-/******************************************************************************
- *
- * winLock - Get excluse access to window
- *
- * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
- */
-
-UGL_STATUS  winLock (
-    WIN_ID  winId
-    );
-
-/******************************************************************************
- *
- * winUnlock - Give up excluse access to window
- *
- * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
- */
-
-UGL_STATUS  winUnlock (
-    WIN_ID  winId
-    );
-
-/******************************************************************************
- *
- * winSend - Prepare and send message to window
- *
- * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
- */
-
-UGL_STATUS  winSend (
-    WIN_ID        winId,
-    UGL_MSG_TYPE  msgType,
-    const void *  pMsgData,
-    UGL_SIZE      dataSize
-    );
-
-/******************************************************************************
- *
- * winMsgSend - Send message to window
- *
- * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
- */
-
-UGL_STATUS  winMsgSend (
-    WIN_ID     winId,
-    WIN_MSG *  pMsg
-    );
-
-/******************************************************************************
- *
- * winMsgHandle - Handle window message
- *
- * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
- */
-
-UGL_STATUS  winMsgHandle (
-    WIN_ID        winId,
-    WIN_CLASS_ID  classId,
-    WIN_MSG *     pMsg
     );
 
 #ifdef __cplusplus

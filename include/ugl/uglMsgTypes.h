@@ -99,6 +99,22 @@
 #define MSG_DRAW                      (MSG_WIN_FIRST + 101)
 #define MSG_DRAW_LAST                 (MSG_WIN_FIRST + 199)
 
+#define MSG_RECT_FIRST                (MSG_WIN_FIRST + 200)
+#define MSG_RECT_CHANGING             (MSG_WIN_FIRST + 200)
+#define MSG_RECT_CHILD_CHANGING       (MSG_WIN_FIRST + 201)
+#define MSG_RECT_CHANGED              (MSG_WIN_FIRST + 202)
+#define MSG_MOVED                     (MSG_WIN_FIRST + 203)
+#define MSG_MAXIMIZED                 (MSG_WIN_FIRST + 204)
+#define MSG_MINIMIZED                 (MSG_WIN_FIRST + 205)
+#define MSG_RESTORED                  (MSG_WIN_FIRST + 206)
+#define MSG_RECT_LAST                 (MSG_WIN_FIRST + 299)
+
+#define MSG_ZPOS_FIRST                (MSG_WIN_FIRST + 300)
+#define MSG_ZPOS_CHANGING             (MSG_WIN_FIRST + 300)
+#define MSG_ZPOS_CHILD_CHANGING       (MSG_WIN_FIRST + 301)
+#define MSG_ZPOS_CHANGED              (MSG_WIN_FIRST + 302)
+#define MSG_ZPOS_LAST                 (MSG_WIN_FIRST + 399)
+
 #define MSG_FRAME_FIRST               (MSG_WIN_FIRST + 400)
 #define MSG_FRAME_CAPTION_GET         (MSG_WIN_FIRST + 400)
 #define MSG_FRAME_CAPTION_SET         (MSG_WIN_FIRST + 401)
