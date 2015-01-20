@@ -204,6 +204,19 @@ UGL_BOOL  winIsActive (
 
 /******************************************************************************
  *
+ * winAttach - Attach window to hiearachy
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winAttach (
+    WIN_ID  childId,
+    WIN_ID  parentId,
+    WIN_ID  nextId
+    );
+
+/******************************************************************************
+ *
  * winInvalidate - Invalidate window and children
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -289,6 +302,40 @@ WIN_ID  winFirst (
 
 WIN_ID  winLast (
     WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winNext - Get next window
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winNext (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winPrev - Get previous window
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winPrev (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winNth - Get n:th window
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winNth (
+    WIN_ID   winId,
+    UGL_ORD  n
     );
 
 /******************************************************************************
