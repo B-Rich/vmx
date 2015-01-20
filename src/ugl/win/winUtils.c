@@ -277,6 +277,32 @@ UGL_STATUS  winWindowToScreen (
 
 /******************************************************************************
  *
+ * winDrawRectGet - Get window drawing rectangle
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winDrawRectGet (
+    WIN_ID      winId,
+    UGL_RECT *  pRect
+    ) {
+    UGL_STATUS  status;
+
+    if (winId == UGL_NULL || pRect == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+       pRect->left   = 0;
+       pRect->top    = 0;
+       pRect->right  = winId->rect.right - winId->rect.left;
+       pRect->bottom = winId->rect.bottom - winId->rect.top;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winSend - Prepare and send message to window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -378,6 +404,7 @@ UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
     WIN_MSG *  pMsg
     ) {
     UGL_STATUS  status;
+    WIN_MSG     msg;
     WIN_MGR *   pWinMgr = winId->pApp->pWinMgr;
 
     /* Execute window manager callback list */
@@ -447,8 +474,14 @@ UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
                 break;
 
             case MSG_EXPOSE:
-                /* TODO */
-                status = UGL_STATUS_ERROR;
+                msg.data.draw.gcId = winDrawStart(winId, UGL_NULL, UGL_TRUE);
+                if ((winId->attributes & WIN_ATTRIB_DOUBLE_BUFFER) == 0x00) {
+                    msg.type = MSG_DRAW;
+                    winDrawRectGet(winId, &msg.data.draw.rect);
+                    msg.data.draw.displayId = winId->pApp->pWinMgr->pDisplay;
+                    winMsgSend(winId, &msg);
+                }
+                status = winDrawEnd(winId, msg.data.draw.gcId, UGL_TRUE);
                 break;
 
             case MSG_RECT_CHANGING:

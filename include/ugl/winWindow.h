@@ -68,6 +68,13 @@
 #define WIN_STATE_MAXIMIZED         0x00000010
 #define WIN_STATE_MINIMIZED         0x00000020
 
+/* Colors */
+#define WIN_INDEX_BLACK                      0
+#define WIN_INDEX_WHITE                     15
+
+/* Fonts */
+#define WIN_FONT_INDEX_SYSTEM                0
+
 #ifndef _ASMLANGUAGE
 
 #ifdef __cplusplus
@@ -201,6 +208,18 @@ UGL_STATUS  winWindowToScreen (
     WIN_ID       winId,
     UGL_POINT *  pPoints,
     UGL_SIZE     numPoints
+    );
+
+/******************************************************************************
+ *
+ * winDrawRectGet - Get window drawing rectangle
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winDrawRectGet (
+    WIN_ID      winId,
+    UGL_RECT *  pRect
     );
 
 /******************************************************************************
@@ -365,6 +384,32 @@ UGL_STATUS  winAttach (
     WIN_ID  childId,
     WIN_ID  parentId,
     WIN_ID  nextId
+    );
+
+/******************************************************************************
+ *
+ * winDrawStart - Start window drawing
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_GC_ID  winDrawStart (
+    WIN_ID     winId,
+    UGL_GC_ID  gcId,
+    UGL_BOOL   clipToDirty
+    );
+
+/******************************************************************************
+ *
+ * winDrawEnd - End window drawing
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winDrawEnd (
+    WIN_ID     winId,
+    UGL_GC_ID  gcId,
+    UGL_BOOL   clearDirty
     );
 
 /******************************************************************************

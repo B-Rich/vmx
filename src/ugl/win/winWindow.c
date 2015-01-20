@@ -67,6 +67,16 @@ UGL_LOCAL UGL_STATUS  winManage (
     WIN_ID  winId
     );
 
+UGL_LOCAL UGL_VOID  winBackgroundDraw (
+    UGL_GC_ID     gcId,
+    WIN_ID        winId,
+    WIN_ID        childId,
+    UGL_RECT *    pViewport,
+    UGL_REGION *  pClipRegion,
+    UGL_ORD       dx,
+    UGL_ORD       dy
+    );
+
 UGL_LOCAL UGL_VOID  winClassInit (
     WIN_ID  winId
     );
@@ -1315,6 +1325,157 @@ UGL_STATUS  winAttach (
 
 /******************************************************************************
  *
+ * winDrawStart - Start window drawing
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_GC_ID  winDrawStart (
+    WIN_ID     winId,
+    UGL_GC_ID  gcId,
+    UGL_BOOL   clipToDirty
+    ) {
+    WIN_MGR *     pWinMgr;
+    UGL_GC *      pGc;
+    UGL_POINT     viewPoint;
+    UGL_POINT     deltaPoint;
+    UGL_RECT      viewportRect;
+    UGL_RECT      rect;
+    UGL_REGION *  pClipRegion;
+    UGL_REGION    clipRegion;
+
+    if (winId == UGL_NULL) {
+        pGc = UGL_NULL;
+    }
+    else {
+        winLock(winId);
+
+        /* Prepare graphics context */
+        if (gcId == UGL_NULL) {
+            pWinMgr = winId->pApp->pWinMgr;
+            pGc = winId->pApp->pGc;
+
+            pGc->rasterOp        = UGL_RASTER_OP_COPY;
+            pGc->backgroundColor = pWinMgr->pColorTable[WIN_INDEX_BLACK];
+            pGc->foregroundColor = pWinMgr->pColorTable[WIN_INDEX_WHITE];
+            if (pWinMgr->pFontTable != UGL_NULL) {
+                pGc->pFont = pWinMgr->pFontTable[WIN_FONT_INDEX_SYSTEM];
+            }
+            else {
+                pGc->pFont = UGL_NULL;
+            }
+            pGc->lineWidth       = 1;
+            pGc->lineStyle       = UGL_LINE_STYLE_SOLID;
+            pGc->pPatternBitmap  = UGL_NULL;
+        }
+        else {
+            pGc = gcId;
+        }
+
+        /* Set default bitmap and view */
+        if ((winId->attributes & WIN_ATTRIB_OFF_SCREEN) != 0x00) {
+            if ((winId->attributes & WIN_ATTRIB_DOUBLE_BUFFER) != 0x00) {
+                uglDefaultBitmapSet(pGc, winId->dblBufBitmapId);
+                viewportRect.left   = 0;
+                viewportRect.top    = 0;
+                viewportRect.right  = UGL_RECT_WIDTH(winId->rect) - 1;
+                viewportRect.bottom = UGL_RECT_HEIGHT(winId->rect) - 1;
+            }
+            else {
+               uglDefaultBitmapSet(
+                   pGc,
+                   winId->pApp->pWinMgr->offScreenBitmapId
+                   );
+               memcpy(&viewportRect, &winId->rect, sizeof(UGL_RECT));
+               viewPoint.x = viewportRect.left;
+               viewPoint.y = viewportRect.top;
+               winWindowToScreen(winId->pParent, &viewPoint, 2);
+               uglViewPortSet(
+                   pGc,
+                   viewportRect.left,
+                   viewportRect.top,
+                   viewportRect.right,
+                   viewportRect.bottom
+                   );
+            }
+        }
+        else {
+            uglDefaultBitmapSet(pGc, UGL_DISPLAY_ID);
+            memcpy(&viewportRect, &winId->rect, sizeof(UGL_RECT));
+            viewPoint.x = viewportRect.left;
+            viewPoint.y = viewportRect.top;
+            winWindowToScreen(winId->pParent, &viewPoint, 2);
+            uglViewPortSet(
+                pGc,
+                viewportRect.left,
+                viewportRect.top,
+                viewportRect.right,
+                viewportRect.bottom
+                );
+        }
+
+        /* Setup clipping region */
+        if (clipToDirty == UGL_TRUE) {
+            pClipRegion = &winId->dirtyRegion;
+        }
+        else if ((winId->attributes & WIN_ATTRIB_DOUBLE_BUFFER) != 0x00) {
+            pClipRegion = UGL_NULL;
+        }
+        else if ((winId->attributes & WIN_ATTRIB_CLIP_CHILDREN) != 0x00) {
+            pClipRegion = &winId->visibleRegion;
+        }
+        else {
+            pClipRegion = &winId->paintersRegion;
+        }
+
+        uglClipRegionSet(pGc, pClipRegion);
+
+        uglBatchStart(pGc);
+
+        /* Draw background behind transparent windows */
+        if ((winId->attributes & WIN_ATTRIB_TRANSPARENT) != 0x00 &&
+            clipToDirty == UGL_TRUE) {
+
+            rect.left   = viewportRect.left;
+            rect.top    = viewportRect.top;
+            rect.right  = rect.left + UGL_RECT_WIDTH(winId->pParent->rect) - 1;
+            rect.bottom = rect.top + UGL_RECT_HEIGHT(winId->pParent->rect) - 1;
+
+            deltaPoint.x = rect.left - winId->rect.left;
+            deltaPoint.y = rect.top - winId->rect.top;
+            UGL_RECT_MOVE(rect, -deltaPoint.x, -deltaPoint.y);
+
+            uglRegionInit(&clipRegion);
+            uglRegionCopy(pClipRegion, &clipRegion);
+            uglRegionMove(&clipRegion, winId->rect.left, winId->rect.top);
+            winBackgroundDraw(
+                pGc,
+                winId->pParent,
+                winPrev(winId),
+                &rect,
+                &clipRegion,
+                deltaPoint.x,
+                deltaPoint.y
+                );
+            uglRegionDeinit(&clipRegion);
+
+            uglViewPortSet(
+                pGc,
+                viewportRect.left,
+                viewportRect.top,
+                viewportRect.right,
+                viewportRect.bottom
+                );
+
+            uglClipRegionSet(pGc, pClipRegion);
+        }
+    }
+
+    return pGc;
+}
+
+/******************************************************************************
+ *
  * winDrawEnd - End window drawing
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -1343,7 +1504,6 @@ UGL_STATUS  winDrawEnd (
             memcpy(&winRect, &winId->rect, sizeof(UGL_RECT));
             winPoint.x = winRect.left;
             winPoint.y = winRect.top;
-#ifdef GFX_MODE
             uglDefaultBitmapGet(gcId, &bmpId);
             winWindowToScreen(winId->pParent, &winPoint, 2);
             uglViewPortSet(
@@ -1390,7 +1550,6 @@ UGL_STATUS  winDrawEnd (
                     0
                     );
             }
-#endif
         }
 
         if (clearDirty == UGL_TRUE) {
@@ -2204,6 +2363,84 @@ UGL_LOCAL UGL_STATUS  winManage (
     }
 
     return status;
+}
+
+/******************************************************************************
+ *
+ * winBackgroundDraw - Draw background for transparent windows
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_LOCAL UGL_VOID  winBackgroundDraw (
+    UGL_GC_ID     gcId,
+    WIN_ID        winId,
+    WIN_ID        childId,
+    UGL_RECT *    pViewport,
+    UGL_REGION *  pClipRegion,
+    UGL_ORD       dx,
+    UGL_ORD       dy
+    ) {
+    UGL_RECT      intersectRect;
+    WIN_MSG       msg;
+    UGL_WINDOW *  pWindow = winId;
+    UGL_WINDOW *  pChild = childId;
+
+    while (pChild != UGL_NULL && pClipRegion->pFirstTL2BR != UGL_NULL) {
+        if ((pChild->state & WIN_STATE_HIDDEN) != 0x00) {
+            memcpy(&intersectRect, &pChild->rect, sizeof(UGL_RECT));
+            UGL_RECT_MOVE(intersectRect, dx, dy);
+            UGL_RECT_INTERSECT(*pViewport, intersectRect, intersectRect);
+
+            if (intersectRect.right >= intersectRect.left &&
+                intersectRect.bottom >= intersectRect.top) {
+
+                UGL_RECT_MOVE(*pViewport, pChild->rect.left, pChild->rect.top);
+                uglRegionMove(
+                    pClipRegion,
+                    -pChild->rect.left,
+                    -pChild->rect.top
+                    );
+                winBackgroundDraw(
+                    gcId,
+                    pChild,
+                    winLast(pChild),
+                    pViewport,
+                    pClipRegion,
+                    dx + pChild->rect.left,
+                    dy + pChild->rect.top
+                    );
+                UGL_RECT_MOVE(intersectRect, -pViewport->left, -pViewport->top);
+                uglRegionRectExclude(pClipRegion, &intersectRect);
+                UGL_RECT_MOVE(
+                    *pViewport,
+                    -pChild->rect.left,
+                    -pChild->rect.top
+                    );
+                uglRegionMove(pClipRegion, pChild->rect.left, pChild->rect.top);
+            }
+        }
+
+        /* Advance */
+        pChild = winPrev(pChild);
+    }
+
+    if (pClipRegion->pFirstTL2BR != UGL_NULL) {
+        uglViewPortSet(
+            gcId,
+            pViewport->left,
+            pViewport->top,
+            pViewport->right,
+            pViewport->bottom
+            );
+        uglClipRegionSet(gcId, pClipRegion);
+
+        msg.type = MSG_DRAW;
+        msg.data.draw.gcId = gcId;
+        memcpy(&msg.data.draw.rect, &pWindow->rect, sizeof(UGL_RECT));
+        msg.data.draw.displayId = pWindow->pApp->pWinMgr->pDisplay;
+        winMsgSend(pWindow, &msg);
+    }
 }
 
 /******************************************************************************
