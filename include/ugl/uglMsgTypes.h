@@ -109,6 +109,12 @@
 #define MSG_RESTORED                  (MSG_WIN_FIRST + 206)
 #define MSG_RECT_LAST                 (MSG_WIN_FIRST + 299)
 
+#define MSG_ZPOS_FIRST                (MSG_WIN_FIRST + 300)
+#define MSG_ZPOS_CHANGING             (MSG_WIN_FIRST + 300)
+#define MSG_ZPOS_CHILD_CHANGING       (MSG_WIN_FIRST + 301)
+#define MSG_ZPOS_CHANGED              (MSG_WIN_FIRST + 302)
+#define MSG_ZPOS_LAST                 (MSG_WIN_FIRST + 399)
+
 #define MSG_FRAME_FIRST               (MSG_WIN_FIRST + 400)
 #define MSG_FRAME_CAPTION_GET         (MSG_WIN_FIRST + 400)
 #define MSG_FRAME_CAPTION_SET         (MSG_WIN_FIRST + 401)

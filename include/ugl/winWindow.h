@@ -134,6 +134,19 @@ UGL_STATUS  winFree (
 
 /******************************************************************************
  *
+ * winSizeSet - Set size of a window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winSizeSet (
+    WIN_ID    winId,
+    UGL_SIZE  width,
+    UGL_SIZE  height
+    );
+
+/******************************************************************************
+ *
  * winRectSet - Set dimensions of a window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -142,6 +155,29 @@ UGL_STATUS  winFree (
 UGL_STATUS  winRectSet (
     WIN_ID            winId,
     const UGL_RECT *  pRect
+    );
+
+/******************************************************************************
+ *
+ * winZPosSet - Set window depth position
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winZPosSet (
+    WIN_ID   winId,
+    UGL_ORD  zPos
+    );
+
+/******************************************************************************
+ *
+ * winZPosGet - Get window depth position
+ *
+ * RETURNS: Window z position or 0
+ */
+
+UGL_ORD  winZPosGet (
+    WIN_ID  winId
     );
 
 /******************************************************************************
