@@ -831,8 +831,8 @@ UGL_STATUS uglRegionClipToRect (
         status = uglRegionRectInclude(&region, pClipRect);
         if (status == UGL_STATUS_OK) {
             status = uglRegionIntersect(regionId, &region, regionId);
-            uglRegionDeinit(&region);
         }
+        uglRegionDeinit(&region);
     }
 
     return (status);

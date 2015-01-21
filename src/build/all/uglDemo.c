@@ -3177,8 +3177,8 @@ UGL_STATUS uglWinHelloDrawCb(
       pMsg->data.draw.gcId,
       pMsg->data.draw.rect.left,
       pMsg->data.draw.rect.top,
-      pMsg->data.draw.rect.left,
-      pMsg->data.draw.rect.bottom
+      pMsg->data.draw.rect.right - 1,
+      pMsg->data.draw.rect.bottom - 1
       );
 
   return UGL_STATUS_OK;
@@ -3232,6 +3232,13 @@ int uglWinInit(void)
   UGL_INPUT_SERVICE_ID inputSrvId;
   UGL_INPUT_DEV_ID inputDevId;
   WIN_MGR_ID winMgrId;
+  struct vgaHWRec oldRegs;
+
+  if (mode4Enter(&oldRegs)) {
+    restoreConsole(&oldRegs);
+    printf("Unable to set graphics mode to 640x480 @60Hz, 16 color.\n");
+    return 1;
+  }
 
   pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
   if (pData == UGL_NULL) {
@@ -3266,6 +3273,8 @@ int uglWinInit(void)
   }
 
   uglRegistryAdd(UGL_WIN_MGR_TYPE, winMgrId, 0, UGL_NULL);
+
+  restoreConsole(&oldRegs);
 
   return 0;
 }
