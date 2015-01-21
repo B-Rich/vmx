@@ -332,6 +332,9 @@ UGL_STATUS uglRegionMove (
     pRegionRect = pRegion->pFirstTL2BR;
     while (pRegionRect != UGL_NULL) {
         UGL_RECT_MOVE (pRegionRect->rect, dx, dy);
+
+        /* Advance */
+        pRegionRect = pRegionRect->pNextTL2BR;
     }
 
     return (UGL_STATUS_OK);
