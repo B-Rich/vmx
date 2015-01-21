@@ -3212,9 +3212,7 @@ int uglWinHello(void)
     return 1;
   }
 
-#ifdef TODO
   winCbAdd(winId, MSG_DRAW, 0, uglWinHelloDrawCb, UGL_NULL);
-#endif
 
   winAttach(winId, UGL_NULL, UGL_NULL);
 
@@ -3320,6 +3318,7 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_uglOSMsgQCreate", uglOSMsgQCreate, 0, N_TEXT | N_EXT},
   {NULL, "_winAppCreate", winAppCreate, 0, N_TEXT | N_EXT},
   {NULL, "_winAppDestroy", winAppDestroy, 0, N_TEXT | N_EXT},
+  {NULL, "_winCbAdd", winCbAdd, 0, N_TEXT | N_EXT},
   {NULL, "_winClassCreate", winClassCreate, 0, N_TEXT | N_EXT},
   {NULL, "_winClassDestroy", winClassDestroy, 0, N_TEXT | N_EXT},
   {NULL, "_winClassDataSet", winClassDataSet, 0, N_TEXT | N_EXT},
