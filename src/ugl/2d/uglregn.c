@@ -922,13 +922,11 @@ UGL_STATUS uglRegionRectSortedGet (
         }
     }
 
+    *ppRect = &pRegionRect->rect;
+
     /* If no more rectangles end list */
     if (pRegionRect == UGL_NULL) {
-        *ppRect = UGL_NULL;
         return (UGL_STATUS_FINISHED);
-    }
-    else {
-        *ppRect = &pRegionRect->rect;
     }
 
     return (UGL_STATUS_OK);
