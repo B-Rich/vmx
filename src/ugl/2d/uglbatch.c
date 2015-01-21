@@ -60,6 +60,7 @@ UGL_STATUS uglBatchStart (
         if (devId->cursorHide != UGL_NULL &&
             gc->pDefaultBitmap == UGL_DISPLAY_ID) {
 
+            pRect = UGL_NULL;
             while (uglClipListGet (gc, &clipRect, &pRect) == UGL_STATUS_OK) {
                 (*devId->cursorHide) (devId, &clipRect);
             }
