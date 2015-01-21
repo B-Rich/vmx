@@ -305,6 +305,21 @@ UGL_STATUS  winFree (
 
 /******************************************************************************
  *
+ * winCbAdd - Add callback to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winCbAdd (
+    WIN_ID      winId,
+    UGL_UINT32  filterMin,
+    UGL_UINT32  filterMax,
+    WIN_CB *    pCallback,
+    void *      pParam
+    );
+
+/******************************************************************************
+ *
  * winSizeSet - Set size of a window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR

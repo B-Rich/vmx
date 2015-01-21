@@ -3165,6 +3165,67 @@ int uglMouseLog(void)
                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
+UGL_STATUS uglWinHelloDrawCb(
+  WIN_ID winId,
+  WIN_MSG *pMsg,
+  void *pData,
+  void *pParam) {
+
+  uglBackgroundColorSet(pMsg->data.draw.gcId, rand() % 16);
+  uglForegroundColorSet(pMsg->data.draw.gcId, rand() % 16);
+  uglRectangle(
+      pMsg->data.draw.gcId,
+      pMsg->data.draw.rect.left,
+      pMsg->data.draw.rect.top,
+      pMsg->data.draw.rect.left,
+      pMsg->data.draw.rect.bottom
+      );
+
+  return UGL_STATUS_OK;
+}
+
+int uglWinHello(void)
+{
+  struct vgaHWRec oldRegs;
+  WIN_APP_ID appId;
+  WIN_ID winId;
+
+  if (mode4Enter(&oldRegs)) {
+    restoreConsole(&oldRegs);
+    printf("Unable to set graphics mode to 640x480 @60Hz, 16 color.\n");
+    return 1;
+  }
+
+  appId = winAppCreate("winHello", 0, 0, 0, UGL_NULL);
+  if (appId == UGL_NULL) {
+    restoreConsole(&oldRegs);
+    printf("Unable to create window application context.\n");
+    return 1;
+  }
+
+  winId = winCreate(appId, UGL_NULL, WIN_ATTRIB_VISIBLE,
+                    100, 100, 200, 160, UGL_NULL, 0, UGL_NULL);
+  if (winId == UGL_NULL) {
+    winAppDestroy(appId);
+    restoreConsole(&oldRegs);
+    printf("Unable to create window .\n");
+    return 1;
+  }
+
+  winCbAdd(winId, MSG_DRAW, 0, uglWinHelloDrawCb, UGL_NULL);
+
+  winAttach(winId, UGL_NULL, UGL_NULL);
+
+  taskDelay(animTreshold);
+
+  winDestroy(winId);
+  winAppDestroy(appId);
+
+  restoreConsole(&oldRegs);
+
+  return 0;
+}
+
 int uglWinInit(void)
 {
   UGL_REG_DATA *pData;
@@ -3257,6 +3318,7 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_uglOSMsgQCreate", uglOSMsgQCreate, 0, N_TEXT | N_EXT},
   {NULL, "_winAppCreate", winAppCreate, 0, N_TEXT | N_EXT},
   {NULL, "_winAppDestroy", winAppDestroy, 0, N_TEXT | N_EXT},
+  {NULL, "_winCbAdd", winCbAdd, 0, N_TEXT | N_EXT},
   {NULL, "_winClassCreate", winClassCreate, 0, N_TEXT | N_EXT},
   {NULL, "_winClassDestroy", winClassDestroy, 0, N_TEXT | N_EXT},
   {NULL, "_winClassDataSet", winClassDataSet, 0, N_TEXT | N_EXT},
@@ -3267,7 +3329,8 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_winMgrCreate", winMgrCreate, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseInit", uglMouseInit, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseLog", uglMouseLog, 0, N_TEXT | N_EXT},
-  {NULL, "_uglWinInit", uglWinInit, 0, N_TEXT | N_EXT}
+  {NULL, "_uglWinInit", uglWinInit, 0, N_TEXT | N_EXT},
+  {NULL, "_uglWinHello", uglWinHello, 0, N_TEXT | N_EXT}
 };
 
     int i;
