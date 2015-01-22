@@ -23,6 +23,11 @@
 #include "ugl.h"
 #include "uglWin.h"
 
+/* Defines */
+
+#define WWM_APP_PRIORITY          (WIN_APP_DEF_PRIORITY - 1)
+#define WWM_APP_STACK_SIZE        20000
+
 /* Locals */
 
 UGL_LOCAL void *  wwmCreate (
@@ -34,6 +39,13 @@ UGL_LOCAL void *  wwmCreate (
 UGL_LOCAL UGL_STATUS wwmDestroy (
     WIN_MGR_ID  winMgrId,
     void *      pData
+    );
+
+UGL_LOCAL UGL_STATUS  wwmRootWinCb (
+    WIN_ID     winId,
+    WIN_MSG *  pMsg,
+    void *     pData,
+    void *     pParam
     );
 
 UGL_LOCAL WIN_MGR_ENGINE  wwmEngine = {
@@ -58,10 +70,46 @@ UGL_LOCAL void *  wwmCreate (
     UGL_DEVICE_ID         displayId,
     UGL_INPUT_SERVICE_ID  inputServiceId 
     ) {
+    void *         pResult;
+    WIN_APP_ID     appId;
+    WIN_ID         rootWinId;
+    UGL_RECT       rootWinRect;
 
-    /* TODO */
+    appId = winAppCreate(
+        "wwm",
+        WWM_APP_PRIORITY,
+        WWM_APP_STACK_SIZE,
+        0,
+        UGL_NULL
+        );
+    if (appId == UGL_NULL) {
+        pResult = UGL_NULL;
+    }
+    else {
+        rootWinId = winCreate(
+            appId,
+            UGL_NULL_ID,
+            WIN_ATTRIB_VISIBLE,
+            0,
+            0,
+            0,
+            0,
+            UGL_NULL,
+            0,
+            UGL_NULL
+            );
+        if (rootWinId == UGL_NULL) {
+            pResult = UGL_NULL;
+        }
+        else {
+            winCbAdd(rootWinId, 0, 0, wwmRootWinCb, UGL_NULL);
+            winMgrRootWinSet(winMgrId, rootWinId);
 
-    return displayId;
+            pResult = displayId;
+        }
+    }
+
+    return pResult;
 }
 
 /******************************************************************************
@@ -79,5 +127,24 @@ UGL_LOCAL UGL_STATUS wwmDestroy (
     /* TODO */
 
     return UGL_STATUS_ERROR;
+}
+
+/******************************************************************************
+ *
+ * wwmRootWinCb - Window manager root window callback
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_LOCAL UGL_STATUS  wwmRootWinCb (
+    WIN_ID     winId,
+    WIN_MSG *  pMsg,
+    void *     pData,
+    void *     pParam
+    ) {
+
+    /* TODO */
+
+    return UGL_STATUS_OK;
 }
 

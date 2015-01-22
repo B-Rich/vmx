@@ -71,6 +71,18 @@ WIN_MGR_ID  winMgrCreate (
     WIN_MGR_ENGINE *      pEngine
     );
 
+/******************************************************************************
+ *
+ * winManageRootWinSet - Set window manager root window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMgrRootWinSet (
+    WIN_MGR_ID  winMgrId,
+    WIN_ID      rootWinId
+    );
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

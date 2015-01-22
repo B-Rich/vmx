@@ -108,6 +108,43 @@ WIN_MGR_ID  winMgrCreate (
 
 /******************************************************************************
  *
+ * winManageRootWinSet - Set window manager root window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMgrRootWinSet (
+    WIN_MGR_ID  winMgrId,
+    WIN_ID      rootWinId
+    ) {
+    UGL_STATUS  status;
+    UGL_RECT    rect;
+
+    if (winMgrId == UGL_NULL && winMgrId->pDisplay != UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        /* Setup display area rectangle */
+        rect.left   = 0;
+        rect.top    = 0;
+        rect.right  = winMgrId->pDisplay->pMode->width - 1;
+        rect.bottom = winMgrId->pDisplay->pMode->height - 1;
+
+        /* Setup root window */
+        winMgrId->pRootWindow = (UGL_WINDOW *) rootWinId;
+        winMgrId->pRootWindow->state |= WIN_ATTRIB_ROOT;
+        winRectSet(winMgrId->pRootWindow, &rect);
+        winManage(winMgrId->pRootWindow);
+        winShow(winMgrId->pRootWindow);
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winManageCbMsgRoute - Route messages
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR

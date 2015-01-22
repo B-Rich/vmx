@@ -416,6 +416,28 @@ UGL_STATUS  winAttach (
 
 /******************************************************************************
  *
+ * winManage - Manage window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winManage (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winShow - Show window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winShow (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winDrawStart - Start window drawing
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
