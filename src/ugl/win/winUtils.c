@@ -277,6 +277,49 @@ UGL_STATUS  winWindowToScreen (
 
 /******************************************************************************
  *
+ * winWindowRectToScreen - Convert window rectangles to screen coordinates
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winWindowRectToScreen (
+    WIN_ID       winId,
+    UGL_RECT *   pRects,
+    UGL_SIZE     numRects
+    ) {
+    UGL_STATUS    status;
+    UGL_WINDOW *  pWindow;
+    UGL_ORD       i;
+    UGL_ORD       dx;
+    UGL_ORD       dy;
+
+    if (winId == UGL_NULL || pRects == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        pWindow = winId;
+        dx = 0;
+        dy = 0;
+
+        while (pWindow != UGL_NULL) {
+            dx += pWindow->rect.left;
+            dy += pWindow->rect.top;
+
+            /* Advance */
+            pWindow = pWindow->pParent;
+        }
+
+        for (i = 0; i < numRects; i++) {
+            UGL_RECT_MOVE(pRects[i], dx, dy);
+        }
+
+        status = UGL_STATUS_ERROR;
+    }
+
+    return status;
+}
+/******************************************************************************
+ *
  * winDrawRectGet - Get window drawing rectangle
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR

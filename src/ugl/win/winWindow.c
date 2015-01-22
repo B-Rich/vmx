@@ -1369,7 +1369,6 @@ UGL_GC_ID  winDrawStart (
     ) {
     WIN_MGR *     pWinMgr;
     UGL_GC *      pGc;
-    UGL_POINT     viewPoint;
     UGL_POINT     deltaPoint;
     UGL_RECT      viewportRect;
     UGL_RECT      rect;
@@ -1419,9 +1418,7 @@ UGL_GC_ID  winDrawStart (
                    winId->pApp->pWinMgr->offScreenBitmapId
                    );
                memcpy(&viewportRect, &winId->rect, sizeof(UGL_RECT));
-               viewPoint.x = viewportRect.left;
-               viewPoint.y = viewportRect.top;
-               winWindowToScreen(winId->pParent, &viewPoint, 2);
+               winWindowRectToScreen(winId->pParent, &viewportRect, 1);
                uglViewPortSet(
                    pGc,
                    viewportRect.left,
@@ -1434,9 +1431,7 @@ UGL_GC_ID  winDrawStart (
         else {
             uglDefaultBitmapSet(pGc, UGL_DISPLAY_ID);
             memcpy(&viewportRect, &winId->rect, sizeof(UGL_RECT));
-            viewPoint.x = viewportRect.left;
-            viewPoint.y = viewportRect.top;
-            winWindowToScreen(winId->pParent, &viewPoint, 2);
+            winWindowRectToScreen(winId->pParent, &viewportRect, 1);
             uglViewPortSet(
                 pGc,
                 viewportRect.left,
@@ -1519,7 +1514,6 @@ UGL_STATUS  winDrawEnd (
     UGL_BOOL   clearDirty
     ) {
     UGL_STATUS     status;
-    UGL_POINT      winPoint;
     UGL_RECT       winRect;
     UGL_BITMAP_ID  bmpId;
 
@@ -1534,10 +1528,8 @@ UGL_STATUS  winDrawEnd (
             clearDirty == UGL_TRUE)) {
 
             memcpy(&winRect, &winId->rect, sizeof(UGL_RECT));
-            winPoint.x = winRect.left;
-            winPoint.y = winRect.top;
             uglDefaultBitmapGet(gcId, &bmpId);
-            winWindowToScreen(winId->pParent, &winPoint, 2);
+            winWindowRectToScreen(winId->pParent, &winRect, 1);
             uglViewPortSet(
                 gcId,
                 winRect.left,
