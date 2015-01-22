@@ -3184,13 +3184,13 @@ UGL_STATUS uglWinHelloDrawCb(
   return UGL_STATUS_OK;
 }
 
-int uglWinHello(void)
+int uglWinHello(int noGfx)
 {
   struct vgaHWRec oldRegs;
   WIN_APP_ID appId;
   WIN_ID winId;
 
-  if (mode4Enter(&oldRegs)) {
+  if (!noGfx && mode4Enter(&oldRegs)) {
     restoreConsole(&oldRegs);
     printf("Unable to set graphics mode to 640x480 @60Hz, 16 color.\n");
     return 1;
@@ -3198,16 +3198,20 @@ int uglWinHello(void)
 
   appId = winAppCreate("winHello", 0, 0, 0, UGL_NULL);
   if (appId == UGL_NULL) {
-    restoreConsole(&oldRegs);
+    if (!noGfx) {
+      restoreConsole(&oldRegs);
+    }
     printf("Unable to create window application context.\n");
     return 1;
   }
 
-  winId = winCreate(appId, UGL_NULL, WIN_ATTRIB_VISIBLE,
+  winId = winCreate(appId, UGL_NULL, WIN_ATTRIB_VISIBLE | WIN_ATTRIB_FRAMED,
                     100, 100, 200, 160, UGL_NULL, 0, UGL_NULL);
   if (winId == UGL_NULL) {
     winAppDestroy(appId);
-    restoreConsole(&oldRegs);
+    if (!noGfx) {
+      restoreConsole(&oldRegs);
+    }
     printf("Unable to create window .\n");
     return 1;
   }
@@ -3221,7 +3225,9 @@ int uglWinHello(void)
   winDestroy(winId);
   winAppDestroy(appId);
 
-  restoreConsole(&oldRegs);
+  if (!noGfx) {
+    restoreConsole(&oldRegs);
+  }
 
   return 0;
 }
