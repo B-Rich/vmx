@@ -269,7 +269,7 @@ UGL_STATUS  winWindowToScreen (
             UGL_POINT_MOVE(pPoints[i], dx, dy);
         }
 
-        status = UGL_STATUS_ERROR;
+        status = UGL_STATUS_OK;
     }
 
     return status;
@@ -313,7 +313,7 @@ UGL_STATUS  winWindowRectToScreen (
             UGL_RECT_MOVE(pRects[i], dx, dy);
         }
 
-        status = UGL_STATUS_ERROR;
+        status = UGL_STATUS_OK;
     }
 
     return status;
