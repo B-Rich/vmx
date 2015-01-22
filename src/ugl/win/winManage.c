@@ -108,7 +108,7 @@ WIN_MGR_ID  winMgrCreate (
 
 /******************************************************************************
  *
- * winManageRootWinSet - Set window manager root window
+ * winMgrRootWinSet - Set window manager root window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
  */
@@ -138,6 +138,56 @@ UGL_STATUS  winMgrRootWinSet (
         winShow(winMgrId->pRootWindow);
 
         status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * winMgrFrameClassSet - Set window manager frame class
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMgrFrameClassSet (
+    WIN_MGR_ID    winMgrId,
+    WIN_CLASS_ID  classId
+    ) {
+    UGL_STATUS  status;
+    WIN_MSG     msg;
+
+    if (winMgrId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        if (classId == UGL_NULL &&
+            winMgrId->pFrameClass != UGL_NULL &&
+            --winMgrId->pFrameClass->useCount == 0) {
+
+           msg.type  = MSG_CLASS_DEINIT;
+           msg.winId = winMgrId->pRootWindow;
+           status = (*winMgrId->pFrameClass->pMsgHandler) (
+               winMgrId->pRootWindow,
+               winMgrId->pFrameClass,
+               &msg,
+               UGL_NULL
+               );
+        }
+        else if (classId != UGL_NULL &&
+                 classId->useCount++ == 0) {
+            msg.type  = MSG_CLASS_INIT;
+            msg.winId = winMgrId->pRootWindow;
+            status = (*classId->pMsgHandler) (
+                winMgrId->pRootWindow,
+                classId,
+                &msg,
+                UGL_NULL
+                );
+        }
+
+        /* Set frame class */
+        winMgrId->pFrameClass = classId;
     }
 
     return status;

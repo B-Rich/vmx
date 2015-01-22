@@ -3,7 +3,7 @@
 
 ADDED_INCFLAGS += -I$(VMX_BASE)/include/ugl
 
-OBJS = wwmInit.o
+OBJS = wwmInit.o wwmFrame.o
 SUBDIRS =
 LIB_TGT = ugl-wwm
 

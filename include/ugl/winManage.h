@@ -73,7 +73,7 @@ WIN_MGR_ID  winMgrCreate (
 
 /******************************************************************************
  *
- * winManageRootWinSet - Set window manager root window
+ * winMgrRootWinSet - Set window manager root window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
  */
@@ -81,6 +81,18 @@ WIN_MGR_ID  winMgrCreate (
 UGL_STATUS  winMgrRootWinSet (
     WIN_MGR_ID  winMgrId,
     WIN_ID      rootWinId
+    );
+
+/******************************************************************************
+ *
+ * winMgrFrameClassSet - Set window manager frame class
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMgrFrameClassSet (
+    WIN_MGR_ID    winMgrId,
+    WIN_CLASS_ID  classId
     );
 
 #ifdef __cplusplus

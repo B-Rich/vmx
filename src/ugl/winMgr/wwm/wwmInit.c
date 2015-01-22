@@ -28,6 +28,9 @@
 #define WWM_APP_PRIORITY          (WIN_APP_DEF_PRIORITY - 1)
 #define WWM_APP_STACK_SIZE        20000
 
+/* Imports */
+extern WIN_CLASS_ID  wwmFrameClassCreate(void);
+
 /* Locals */
 
 UGL_LOCAL void *  wwmCreate (
@@ -86,6 +89,10 @@ UGL_LOCAL void *  wwmCreate (
         pResult = UGL_NULL;
     }
     else {
+        /* Create and set window class for frame */
+        winMgrFrameClassSet(winMgrId, wwmFrameClassCreate());
+
+        /* Create root window */
         rootWinId = winCreate(
             appId,
             UGL_NULL_ID,
@@ -102,6 +109,7 @@ UGL_LOCAL void *  wwmCreate (
             pResult = UGL_NULL;
         }
         else {
+            /* Add root window callback and set root window */
             winCbAdd(rootWinId, 0, 0, wwmRootWinCb, UGL_NULL);
             winMgrRootWinSet(winMgrId, rootWinId);
 
