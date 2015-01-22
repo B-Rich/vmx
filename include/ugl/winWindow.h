@@ -212,6 +212,19 @@ UGL_STATUS  winWindowToScreen (
 
 /******************************************************************************
  *
+ * winWindowRectToScreen - Convert window rectangles to screen coordinates
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winWindowRectToScreen (
+    WIN_ID       winId,
+    UGL_RECT *   pRects,
+    UGL_SIZE     numRects
+    );
+
+/******************************************************************************
+ *
  * winDrawRectGet - Get window drawing rectangle
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
