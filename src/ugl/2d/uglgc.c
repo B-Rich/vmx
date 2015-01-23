@@ -309,7 +309,7 @@ UGL_STATUS uglViewPortGet (
     UGL_POS *  pBottom
     ) {
 
-    if (gc != UGL_NULL) {
+    if (gc == UGL_NULL) {
         return (UGL_STATUS_ERROR);
     }
 
@@ -344,7 +344,7 @@ UGL_STATUS uglViewPortSet (
     UGL_POS    bottom
     ) {
 
-    if (gc != UGL_NULL) {
+    if (gc == UGL_NULL) {
         return (UGL_STATUS_ERROR);
     }
 
@@ -393,7 +393,7 @@ UGL_STATUS uglClipRectSet (
     UGL_DEVICE_ID  devId;
     UGL_RECT       clipRect;
 
-    if (gc != UGL_NULL) {
+    if (gc == UGL_NULL) {
         return (UGL_STATUS_ERROR);
     }
 
