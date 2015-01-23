@@ -127,6 +127,8 @@ UGL_STATUS uglListInsert (
 
             listId->pFirst->pPrev = pNode;
             listId->pFirst        = pNode;
+
+            listId->count++;
         }
         else {
             pNode->pNext = pNextNode;
@@ -135,9 +137,10 @@ UGL_STATUS uglListInsert (
             pNextNode->pPrev = pNode;
 
             pNode->pPrev->pNext = pNode;
+
+            listId->count++;
         }
 
-        listId->count++;
         status = UGL_STATUS_OK;
     }
 
