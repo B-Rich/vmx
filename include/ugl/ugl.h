@@ -130,6 +130,21 @@ UGL_STATUS uglDefaultBitmapSet (
 
 /******************************************************************************
  *
+ * uglViewPortGet - Get graphics context viewport
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS uglViewPortGet (
+    UGL_GC_ID  gc,
+    UGL_POS *  pLeft,
+    UGL_POS *  pTop,
+    UGL_POS *  pRight,
+    UGL_POS *  pBottom
+    );
+
+/******************************************************************************
+ *
  * uglViewPortSet - Set graphics context viewport
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
