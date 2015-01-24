@@ -51,6 +51,8 @@ UGL_STATUS uglGenericRectangle (
     UGL_POINT            topRight;
     UGL_POS              posLeft;
     UGL_RECT             fillRect;
+    UGL_RECT             clipRect;
+    UGL_RECT             intersectRect;
     UGL_INT32            adjust;
 
     /* Get generic driver */
@@ -59,6 +61,10 @@ UGL_STATUS uglGenericRectangle (
     /* Get graphics context */
     gc = pDrv->gc;
 
+    /* Set fill rectangle */
+    UGL_RECT_COPY (&fillRect, pRect);
+
+    /* Draw outline */
     if (gc->foregroundColor != UGL_COLOR_TRANSPARENT && gc->lineWidth > 0) {
 
         /* Top left */
@@ -110,11 +116,8 @@ UGL_STATUS uglGenericRectangle (
                 (*devId->line) (devId, &topRight, &bottomRight);
             }
         }
-    }
 
-    if (gc->backgroundColor != UGL_COLOR_TRANSPARENT) {
-        UGL_RECT_COPY (&fillRect, pRect);
-
+        /* Adjust fill rectangle to inside of border */
         if (gc->foregroundColor != UGL_COLOR_TRANSPARENT && gc->lineWidth > 0) {
             adjust = (gc->lineWidth + 2) / 2;
             fillRect.left += adjust;
@@ -124,10 +127,25 @@ UGL_STATUS uglGenericRectangle (
             fillRect.right  += adjust;
             fillRect.bottom += adjust;
         }
-
-        uglGenericRectFill (devId, &fillRect);
     }
 
+    /* Fill rectangle */
+    if (gc->backgroundColor != UGL_COLOR_TRANSPARENT) {
+
+        UGL_RECT_MOVE(fillRect, gc->viewPort.left, gc->viewPort.top);
+
+        UGL_CLIP_LOOP_START(gc, clipRect)
+
+        UGL_RECT_INTERSECT(fillRect, clipRect, intersectRect);
+
+        if (intersectRect.right >= intersectRect.left &&
+            intersectRect.bottom >= intersectRect.top) {
+
+            uglGenericRectFill (devId, &intersectRect);
+        }
+
+        UGL_CLIP_LOOP_END
+    }
 
     return (UGL_STATUS_OK);
 }
