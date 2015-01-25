@@ -358,6 +358,18 @@ UGL_STATUS  winRectSet (
 
 /******************************************************************************
  *
+ * winRectGet - Get window rectangle
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winRectGet (
+    WIN_ID      winId,
+    UGL_RECT *  pRect
+    );
+
+/******************************************************************************
+ *
  * winZPosSet - Set window depth position
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR

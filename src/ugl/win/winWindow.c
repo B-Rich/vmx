@@ -804,6 +804,40 @@ UGL_STATUS  winRectSet (
 
 /******************************************************************************
  *
+ * winRectGet - Get window rectangle
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winRectGet (
+    WIN_ID      winId,
+    UGL_RECT *  pRect
+    ) {
+    UGL_STATUS  status;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        memcpy(pRect, &winId->rect, sizeof(UGL_RECT));
+
+        /* Adjust for frame */
+        if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
+            UGL_RECT_MOVE(
+                *pRect,
+                winId->pParent->rect.left,
+                winId->pParent->rect.top
+                );
+        }
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winZPosSet - Set window depth position
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR

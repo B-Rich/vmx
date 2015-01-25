@@ -110,6 +110,7 @@ typedef union win_msg_data {
     WIN_HIT_TEST_DATA               hitTest;
     WIN_RECT_DATA                   rect;
     WIN_RECT_CHANGED_DATA           rectChanged;
+    WIN_RECT_CHANGING_DATA          rectChanging;
     WIN_RECT_CHILD_CHANGING_DATA    rectChildChanging;
     WIN_ZPOS_DATA                   zPos;
     WIN_ID                          attachId;
