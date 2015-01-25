@@ -101,21 +101,29 @@ UGL_STATUS  winMsgHandle (
     WIN_CLASS_ID  classId,
     WIN_MSG *     pMsg
     ) {
-    UGL_STATUS status;
+    UGL_STATUS   status;
+    WIN_CLASS *  pClass;
 
     if (winId == UGL_NULL) {
         status = UGL_STATUS_ERROR;
     }
     else {
         if (classId == UGL_NULL) {
+            pClass = winId->pClass;
+        }
+        else {
+            pClass = classId->pParent;
+        }
+
+        if (pClass == UGL_NULL) {
             status = winDefaultMsgHandler(winId, pMsg);
         }
         else {
-            status = (*classId->pMsgHandler) (
+            status = (*pClass->pMsgHandler) (
                 winId,
-                classId,
+                pClass,
                 pMsg,
-                (UGL_INT8 *) winId->pClassData + classId->dataOffset
+                (UGL_INT8 *) winId->pClassData + pClass->dataOffset
                 );
         }
     }
