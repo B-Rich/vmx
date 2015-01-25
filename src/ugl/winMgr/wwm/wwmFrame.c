@@ -189,6 +189,19 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
             pFrameData->captionRect.right = pFrameData->contentRect.right;
             } break;
 
+        case MSG_FRAME_CONTENT_RECT_SET: {
+            UGL_RECT  rect;
+            memcpy(&rect, &pMsg->data.frameContentRect, sizeof(UGL_RECT));
+
+            rect.left -= WWM_FRAME_BORDER_SIZE;
+            rect.top -= WWM_FRAME_BORDER_SIZE +
+                UGL_RECT_HEIGHT(pFrameData->captionRect);
+            rect.right += WWM_FRAME_BORDER_SIZE;
+            rect.bottom += WWM_FRAME_BORDER_SIZE;
+
+            winRectSet(winId, &rect);
+            } break;
+
         default:
             /* TODO: Catch all other message types */
             break;
