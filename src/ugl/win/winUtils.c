@@ -204,6 +204,29 @@ UGL_STATUS  winUnlock (
 
 /******************************************************************************
  *
+ * winStateGet - Get window state
+ *
+ * RETURNS: Window state or UGL_STATUS_ERROR
+ */
+
+UGL_UINT32  winStateGet (
+    WIN_ID  winId
+    ) {
+    UGL_UINT32  state;
+
+    if (winId == UGL_NULL) {
+        state = UGL_STATUS_ERROR;
+    }
+    else {
+        state = winId->state;
+    }
+
+    return state;
+}
+
+
+/******************************************************************************
+ *
  * winMgrGet - Get window manager for window
  *
  * RETURNS: Pointer to window manager or UGL_NULL

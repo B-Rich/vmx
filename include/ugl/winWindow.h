@@ -188,6 +188,17 @@ UGL_STATUS  winUnlock (
 
 /******************************************************************************
  *
+ * winStateGet - Get window state
+ *
+ * RETURNS: Window state or UGL_STATUS_ERROR
+ */
+
+UGL_UINT32  winStateGet (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winMgrGet - Get window manager for window
  *
  * RETURNS: Pointer to window manager or UGL_NULL
