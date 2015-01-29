@@ -85,122 +85,20 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
     WIN_MSG *         pMsg,
     WWM_FRAME_DATA *  pFrameData
     ) {
+    UGL_RECT  rect;
 
     switch (pMsg->type) {
-        case MSG_RECT_CHANGING:
-            if ((winStateGet(winId) & WIN_STATE_MAXIMIZED) != 0x00) {
-                memcpy(
-                    &pMsg->data.rectChanging.newRect,
-                    &pMsg->data.rectChanging.maxRect,
-                    sizeof(UGL_RECT)
-                    );
-                pMsg->data.rectChanging.newRect.left-= WWM_FRAME_BORDER_SIZE;
-                pMsg->data.rectChanging.newRect.top -= WWM_FRAME_BORDER_SIZE;
-                pMsg->data.rectChanging.newRect.right += WWM_FRAME_BORDER_SIZE;
-                pMsg->data.rectChanging.newRect.bottom += WWM_FRAME_BORDER_SIZE;
-            }
-            else {
 
-                /* Ensure minmum size of frame window */
-                if (UGL_RECT_WIDTH(pMsg->data.rectChanging.newRect) <
-                    WWM_FRAME_MIN_WIDTH) {
-
-                    if ((pMsg->data.rectChanging.newRect.left ==
-                         pMsg->data.rectChanging.oldRect.left) ||
-                        (pMsg->data.rectChanging.newRect.right !=
-                         pMsg->data.rectChanging.oldRect.right)) {
-
-                        pMsg->data.rectChanging.newRect.right =
-                            pMsg->data.rectChanging.newRect.left +
-                            WWM_FRAME_MIN_WIDTH - 1;
-                    }
-                    else {
-                        pMsg->data.rectChanging.newRect.left =
-                            pMsg->data.rectChanging.newRect.right -
-                            WWM_FRAME_MIN_WIDTH + 1;
-                    }
-                }
-
-                if (UGL_RECT_HEIGHT(pMsg->data.rectChanging.newRect) <
-                    WWM_FRAME_MIN_HEIGHT) {
-
-                    if ((pMsg->data.rectChanging.newRect.top ==
-                         pMsg->data.rectChanging.oldRect.top) ||
-                        (pMsg->data.rectChanging.newRect.bottom !=
-                         pMsg->data.rectChanging.oldRect.bottom)) {
-
-                        pMsg->data.rectChanging.newRect.bottom =
-                            pMsg->data.rectChanging.newRect.top +
-                            WWM_FRAME_MIN_HEIGHT - 1;
-                    }
-                    else {
-                        pMsg->data.rectChanging.newRect.top =
-                            pMsg->data.rectChanging.newRect.bottom -
-                            WWM_FRAME_MIN_HEIGHT + 1;
-                    }
-                }
-            }
-            break;
-
-        case MSG_RECT_CHILD_CHANGING:
-            memcpy(
-                &pMsg->data.rectChildChanging.newRect,
-                &pFrameData->contentRect,
-                sizeof(UGL_RECT)
-                );
-            break;
-
-        case MSG_RECT_CHANGED: {
-            UGL_ORD  newWidth = UGL_RECT_WIDTH(pMsg->data.rectChanged.newRect);
-            UGL_ORD  oldWidth = UGL_RECT_WIDTH(pMsg->data.rectChanged.oldRect);
-
-            if (newWidth != oldWidth) {
-                if (newWidth > oldWidth) {
-                    UGL_RECT  rect;
-                    memcpy(&rect, &pFrameData->captionRect, sizeof(UGL_RECT));
-                    rect.left = rect.right;
-                    winRectInvalidate(winId, &rect);
-                }
-
-                pMsg->data.rectChanged.validRect.right -= WWM_FRAME_BORDER_SIZE;
-                pFrameData->contentRect.right += newWidth - oldWidth;
-                pFrameData->captionRect.right += newWidth - oldWidth;
-
-                if (newWidth < oldWidth) {
-                    UGL_RECT  rect;
-                    memcpy(&rect, &pFrameData->captionRect, sizeof(UGL_RECT));
-                    rect.left = rect.right;
-                    winRectInvalidate(winId, &rect);
-                }
-            }
-
-            if (UGL_RECT_HEIGHT(pMsg->data.rectChanged.newRect) !=
-                UGL_RECT_HEIGHT(pMsg->data.rectChanged.oldRect)) {
-
-                pMsg->data.rectChanged.validRect.bottom -=
-                    WWM_FRAME_BORDER_SIZE;
-            }
-
-            winDrawRectGet(winId, &pFrameData->contentRect);
-            pFrameData->contentRect.left += WWM_FRAME_BORDER_SIZE;
-            pFrameData->contentRect.top += pFrameData->captionRect.bottom + 1;
-            pFrameData->contentRect.right -= WWM_FRAME_BORDER_SIZE;
-            pFrameData->contentRect.bottom -= WWM_FRAME_BORDER_SIZE;
-            pFrameData->captionRect.right = pFrameData->contentRect.right;
-            } break;
-
-        case MSG_FRAME_CONTENT_RECT_SET: {
-            UGL_RECT  rect;
+        case MSG_FRAME_CONTENT_RECT_SET:
             memcpy(&rect, &pMsg->data.frameContentRect, sizeof(UGL_RECT));
-
-            rect.left -= WWM_FRAME_BORDER_SIZE;
-            rect.top -= WWM_FRAME_BORDER_SIZE +
-                UGL_RECT_HEIGHT(pFrameData->captionRect);
-            rect.right += WWM_FRAME_BORDER_SIZE;
+            rect.left   -= WWM_FRAME_BORDER_SIZE;
+            rect.top    -= WWM_FRAME_BORDER_SIZE;
+                /* TODO: + UGL_RECT_HEIGHT(pFrameData->captionRect); */
+            rect.right  += WWM_FRAME_BORDER_SIZE;
             rect.bottom += WWM_FRAME_BORDER_SIZE;
 
             winRectSet(winId, &rect);
-            } break;
+            break;
 
         default:
             /* TODO: Catch all other message types */

@@ -279,6 +279,9 @@ UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
                     /* Send message to all children */
                     while (pChild != UGL_NULL) {
                         winRectSet(pChild, UGL_NULL);
+
+                        /* Advance */
+                        pChild = winNext(pChild);
                     }
                 }
                 else {
