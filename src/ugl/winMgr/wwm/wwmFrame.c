@@ -97,9 +97,7 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
             rect.right  += WWM_FRAME_BORDER_SIZE;
             rect.bottom += WWM_FRAME_BORDER_SIZE;
 
-#ifdef ENDLESS_LOOP
             winRectSet(winId, &rect);
-#endif
             break;
 
         default:
