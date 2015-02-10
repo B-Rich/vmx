@@ -74,13 +74,18 @@ UGL_LOCAL void *  wwmCreate (
     UGL_DEVICE_ID         displayId,
     UGL_INPUT_SERVICE_ID  inputServiceId 
     ) {
-    void *         pResult;
-    WIN_APP_ID     appId;
-    WIN_ID         rootWinId;
-    UGL_RECT       rootWinRect;
-    UGL_COLOR *    pColorTable;
-    UGL_MODE_INFO  modeInfo;
-    UGL_ORD        i;
+    void *              pResult;
+    WIN_APP_ID          appId;
+    WIN_ID              rootWinId;
+    UGL_COLOR *         pColorTable;
+    UGL_MODE_INFO       modeInfo;
+#ifdef TODO
+    UGL_REG_DATA *      pRegData;
+    UGL_FONT_DRIVER_ID  fntDrvId;
+    UGL_FONT_DEF        fntDef;
+    UGL_FONT_ID *       pFntTable;
+#endif
+    UGL_ORD             i;
 
     /* Allocate window manager colors */
     pColorTable = UGL_CALLOC(WIN_NUM_STANDARD_COLORS, sizeof(UGL_COLOR));
@@ -109,6 +114,14 @@ UGL_LOCAL void *  wwmCreate (
 
     /* Set color table */
     winMgrColorTableSet(winMgrId, pColorTable, WIN_NUM_STANDARD_COLORS);
+
+#ifdef TODO
+    pRegData = uglRegistryFind(UGL_FONT_ENGINE_TYPE, UGL_NULL, 0, 0);
+    if (pRegData != UGL_NULL) {
+        fntDrvId  = (UGL_FONT_DRIVER_ID) pRegData->pData;
+        pFntTable = UGL_CALLOC(WIN_NUM_STANDARD_FONTS * sizeof(UGL_FONT_ID));
+    }
+#endif
 
     appId = winAppCreate(
         "wwm",

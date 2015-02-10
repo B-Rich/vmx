@@ -222,6 +222,33 @@ UGL_STATUS  winMgrColorTableSet (
 
 /******************************************************************************
  *
+ * winMgrFontTableSet - Set window manager font table
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMgrFontTableSet (
+    WIN_MGR_ID     winMgrId,
+    UGL_FONT_ID *  pFontTable,
+    UGL_SIZE       fontTableSize
+    ) {
+    UGL_STATUS  status;
+
+    if (winMgrId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        winMgrId->pFontTable    = pFontTable;
+        winMgrId->fontTableSize = fontTableSize;
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winManageCbMsgRoute - Route messages
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR

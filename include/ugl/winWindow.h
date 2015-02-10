@@ -89,7 +89,11 @@
 #define WIN_INDEX_WHITE                     15
 
 /* Fonts */
+#define WIN_NUM_STANDARD_FONTS               3
+
 #define WIN_FONT_INDEX_SYSTEM                0
+#define WIN_FONT_INDEX_SMALL                 1
+#define WIN_FONT_INDEX_FIXED                 2
 
 #ifndef _ASMLANGUAGE
 

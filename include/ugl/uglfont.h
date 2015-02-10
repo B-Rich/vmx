@@ -53,6 +53,9 @@
 #define UGL_FONT_TEXT_BASELINE          0
 #define UGL_FONT_TEXT_UPPER_LEFT        1
 
+/* Font search priority */
+#define UGL_FONT_DONT_CARE              0
+
 #ifndef _ASMLANGUAGE
 
 #ifdef __cplusplus
@@ -74,6 +77,16 @@ typedef struct ugl_font_desc {
     char       faceName[UGL_FONT_FACE_NAME_MAX_LENGTH];
     char       familyName[UGL_FONT_FAMILY_NAME_MAX_LENGTH];
 } UGL_FONT_DESC;
+
+typedef struct ugl_font_desc_priority {
+    UGL_ORD   pixelSize;
+    UGL_ORD   weight;
+    UGL_ORD   italic;
+    UGL_ORD   spacing;
+    UGL_ORD   charSet;
+    UGL_ORD   faceName;
+    UGL_ORD   familyName;
+} UGL_FONT_DESC_PRIORITY;
 
 typedef struct ugl_font_def {
     UGL_SIZE  structSize;

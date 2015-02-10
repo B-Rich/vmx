@@ -108,6 +108,19 @@ UGL_STATUS  winMgrColorTableSet (
     UGL_SIZE     colorTableSize
     );
 
+/******************************************************************************
+ *
+ * winMgrFontTableSet - Set window manager font table
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMgrFontTableSet (
+    WIN_MGR_ID     winMgrId,
+    UGL_FONT_ID *  pFontTable,
+    UGL_SIZE       fontTableSize
+    );
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
