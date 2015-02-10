@@ -428,8 +428,7 @@ UGL_STATUS  winRectSet (
     if (pRect == UGL_NULL) {
         pRect = &winId->rect;
     }
-
-    if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
+    else if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
         status = winSend(
             winId->pParent,
             MSG_FRAME_CONTENT_RECT_SET,
@@ -470,7 +469,8 @@ UGL_STATUS  winRectSet (
     if (newRect.left == oldRect.left && newRect.top == oldRect.top &&
         newRect.right == oldRect.right && newRect.bottom == oldRect.bottom) {
 
-        status = UGL_STATUS_ERROR;
+        /* Done */
+        status = UGL_STATUS_OK;
         goto rectSetRet;
     }
 
@@ -486,7 +486,6 @@ UGL_STATUS  winRectSet (
             UGL_RECT_MOVE_TO(rect, oldRect.left, oldRect.top);
             uglRegionRectInclude(&region, &oldRect);
             uglRegionRectExclude(&region, &rect);
-
             for (pRegionRect = region.pFirstTL2BR;
                  pRegionRect != UGL_NULL;
                  pRegionRect = pRegionRect->pNextTL2BR) {
@@ -503,7 +502,6 @@ UGL_STATUS  winRectSet (
             UGL_RECT_MOVE_TO(rect, newRect.left, newRect.top);
             uglRegionRectInclude(&region, &newRect);
             uglRegionRectExclude(&region, &rect);
-
             for (pRegionRect = region.pFirstTL2BR;
                  pRegionRect != UGL_NULL;
                  pRegionRect = pRegionRect->pNextTL2BR) {
@@ -575,6 +573,8 @@ UGL_STATUS  winRectSet (
         }
 
         /* Obscure window and siblings */
+        uglRegionRectInclude(&region, &winId->rect);
+        uglRegionExclude(&region, &winId->pParent->paintersRegion);
         pSibling = winNext(winId);
         while (pSibling != UGL_NULL) {
 
