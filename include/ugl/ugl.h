@@ -68,6 +68,21 @@ UGL_STATUS uglModeSet (
     UGL_MODE *     pMode
     );
 
+/* Driver info support functions */
+
+/******************************************************************************
+ *
+ * uglInfo - Get driver info
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  uglInfo (
+    UGL_DEVICE_ID  devId,
+    UGL_INFO_REQ   infoReq,
+    void *         pInfo
+    );
+
 /* Graphics context support functions */
 
 /******************************************************************************

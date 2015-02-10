@@ -3165,6 +3165,61 @@ int uglMouseLog(void)
                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
+int uglWinInit(int noConsole)
+{
+  UGL_REG_DATA *pData;
+  UGL_INPUT_SERVICE_ID inputSrvId;
+  UGL_INPUT_DEV_ID inputDevId;
+  WIN_MGR_ID winMgrId;
+  struct vgaHWRec oldRegs;
+
+  if (mode4Enter(&oldRegs)) {
+    restoreConsole(&oldRegs);
+    printf("Unable to set graphics mode to 640x480 @60Hz, 16 color.\n");
+    return 1;
+  }
+
+  pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    printf("Input service not started.\n");
+    return 1;
+  }
+
+  inputSrvId = (UGL_INPUT_SERVICE_ID) pData->data;
+  if (inputSrvId == UGL_NULL) {
+    printf("Null input service.\n");
+    return 1;
+  }
+
+#if 0
+  pData = uglRegistryFind(UGL_PTR_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    printf("No pointer device found.\n");
+    return 1;
+  }
+
+  inputDevId = (UGL_INPUT_DEV_ID) pData->data;
+  if (inputDevId == UGL_NULL) {
+    printf("Null input device.\n");
+    return 1;
+  }
+#endif
+
+  winMgrId = winMgrCreate(gfxDevId, inputSrvId, wwmEngineId);
+  if (winMgrId == UGL_NULL) {
+    printf("Unable to create instance of window manager.\n");
+    return 1;
+  }
+
+  uglRegistryAdd(UGL_WIN_MGR_TYPE, winMgrId, 0, UGL_NULL);
+
+  if (!noConsole) {
+    restoreConsole(&oldRegs);
+  }
+
+  return 0;
+}
+
 UGL_STATUS uglWinHelloDrawCb(
   WIN_ID winId,
   WIN_MSG *pMsg,
@@ -3232,59 +3287,6 @@ int uglWinHello(int noGfx)
   return 0;
 }
 
-int uglWinInit(void)
-{
-  UGL_REG_DATA *pData;
-  UGL_INPUT_SERVICE_ID inputSrvId;
-  UGL_INPUT_DEV_ID inputDevId;
-  WIN_MGR_ID winMgrId;
-  struct vgaHWRec oldRegs;
-
-  if (mode4Enter(&oldRegs)) {
-    restoreConsole(&oldRegs);
-    printf("Unable to set graphics mode to 640x480 @60Hz, 16 color.\n");
-    return 1;
-  }
-
-  pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
-  if (pData == UGL_NULL) {
-    printf("Input service not started.\n");
-    return 1;
-  }
-
-  inputSrvId = (UGL_INPUT_SERVICE_ID) pData->data;
-  if (inputSrvId == UGL_NULL) {
-    printf("Null input service.\n");
-    return 1;
-  }
-
-#if 0
-  pData = uglRegistryFind(UGL_PTR_TYPE, UGL_NULL, 0, UGL_NULL);
-  if (pData == UGL_NULL) {
-    printf("No pointer device found.\n");
-    return 1;
-  }
-
-  inputDevId = (UGL_INPUT_DEV_ID) pData->data;
-  if (inputDevId == UGL_NULL) {
-    printf("Null input device.\n");
-    return 1;
-  }
-#endif
-
-  winMgrId = winMgrCreate(gfxDevId, inputSrvId, wwmEngineId);
-  if (winMgrId == UGL_NULL) {
-    printf("Unable to create instance of window manager.\n");
-    return 1;
-  }
-
-  uglRegistryAdd(UGL_WIN_MGR_TYPE, winMgrId, 0, UGL_NULL);
-
-  restoreConsole(&oldRegs);
-
-  return 0;
-}
-
 int uglDemoInit(void)
 {
 static SYMBOL symTableUglDemo[] = {
@@ -3323,6 +3325,7 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_uglConvertTest", uglConvertTest, 0, N_TEXT | N_EXT},
   {NULL, "_uglFontList", uglFontList, 0, N_TEXT | N_EXT},
   {NULL, "_uglRectCreate", uglRectCreate, 0, N_TEXT | N_EXT},
+  {NULL, "_uglInfo", uglInfo, 0, N_TEXT | N_EXT},
   {NULL, "_uglRegistryInit", uglRegistryInit, 0, N_TEXT | N_EXT},
   {NULL, "_uglRegistryDeinit", uglRegistryDeinit, 0, N_TEXT | N_EXT},
   {NULL, "_uglRegistryAdd", uglRegistryAdd, 0, N_TEXT | N_EXT},

@@ -195,6 +195,33 @@ UGL_STATUS  winMgrFrameClassSet (
 
 /******************************************************************************
  *
+ * winMgrColorTableSet - Set window manager color table
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMgrColorTableSet (
+    WIN_MGR_ID   winMgrId,
+    UGL_COLOR *  pColorTable,
+    UGL_SIZE     colorTableSize
+    ) {
+    UGL_STATUS  status;
+
+    if (winMgrId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        winMgrId->pColorTable    = pColorTable;
+        winMgrId->colorTableSize = colorTableSize;
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winManageCbMsgRoute - Route messages
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR

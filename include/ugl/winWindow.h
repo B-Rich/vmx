@@ -69,7 +69,23 @@
 #define WIN_STATE_MINIMIZED         0x00000020
 
 /* Colors */
+#define WIN_NUM_STANDARD_COLORS             16
+
 #define WIN_INDEX_BLACK                      0
+#define WIN_INDEX_BLUE                       1
+#define WIN_INDEX_GREEN                      2
+#define WIN_INDEX_CYAN                       3
+#define WIN_INDEX_RED                        4
+#define WIN_INDEX_MAGENTA                    5
+#define WIN_INDEX_BROWN                      6
+#define WIN_INDEX_LIGHTGRAY                  7
+#define WIN_INDEX_DARKDRAY                   8
+#define WIN_INDEX_LIGHTBLUE                  9
+#define WIN_INDX_LIGHTGREEN                 10
+#define WIN_INDEX_LIGHTCYAN                 11
+#define WIN_INDEX_LIGHTRED                  12
+#define WIN_INDEX_LIGHTMAGENTA              13
+#define WIN_INDEX_YELLOW                    14
 #define WIN_INDEX_WHITE                     15
 
 /* Fonts */

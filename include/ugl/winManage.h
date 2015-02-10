@@ -95,6 +95,19 @@ UGL_STATUS  winMgrFrameClassSet (
     WIN_CLASS_ID  classId
     );
 
+/******************************************************************************
+ *
+ * winMgrColorTableSet - Set window manager color table
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMgrColorTableSet (
+    WIN_MGR_ID   winMgrId,
+    UGL_COLOR *  pColorTable,
+    UGL_SIZE     colorTableSize
+    );
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

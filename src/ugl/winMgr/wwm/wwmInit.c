@@ -29,7 +29,8 @@
 #define WWM_APP_STACK_SIZE        20000
 
 /* Imports */
-extern WIN_CLASS_ID  wwmFrameClassCreate(void);
+extern const UGL_RGB  wwmRGBColorTable[16];
+extern WIN_CLASS_ID   wwmFrameClassCreate(void);
 
 /* Locals */
 
@@ -77,6 +78,37 @@ UGL_LOCAL void *  wwmCreate (
     WIN_APP_ID     appId;
     WIN_ID         rootWinId;
     UGL_RECT       rootWinRect;
+    UGL_COLOR *    pColorTable;
+    UGL_MODE_INFO  modeInfo;
+    UGL_ORD        i;
+
+    /* Allocate window manager colors */
+    pColorTable = UGL_CALLOC(WIN_NUM_STANDARD_COLORS, sizeof(UGL_COLOR));
+
+    uglInfo(displayId, UGL_MODE_INFO_REQ, &modeInfo);
+    if (modeInfo.clutSize == 0) {
+        uglColorAlloc(
+            displayId,
+            (UGL_ARGB *) wwmRGBColorTable,
+            UGL_NULL,
+            pColorTable,
+            WIN_NUM_STANDARD_COLORS
+            );
+    }
+    else if (modeInfo.clutSize == WIN_NUM_STANDARD_COLORS) {
+        for (i = 0; i < WIN_NUM_STANDARD_COLORS; i++) {
+            uglColorAlloc(
+                displayId,
+                (UGL_ARGB *) &wwmRGBColorTable[i],
+                &i,
+                &pColorTable[i],
+                1
+                );
+        }
+    }
+
+    /* Set color table */
+    winMgrColorTableSet(winMgrId, pColorTable, WIN_NUM_STANDARD_COLORS);
 
     appId = winAppCreate(
         "wwm",
