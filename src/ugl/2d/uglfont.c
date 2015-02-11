@@ -23,6 +23,42 @@
 #include <string.h>
 #include "ugl.h"
 
+/* Types */
+
+typedef struct ugl_font_desc_list_node {
+    UGL_FONT_DESC  fontDesc;
+    UGL_BOOL       discardKeep;
+    UGL_BOOL       discard;
+} UGL_FONT_DESC_LIST_ELMT;
+
+typedef enum {
+    UGL_NO_PRIORITY = UGL_FONT_DONT_CARE,
+    UGL_FACE_NAME_PRIORITY,
+    UGL_FAMILY_NAME_PRIORITY,
+    UGL_PIXEL_SIZE_PRIORITY,
+    UGL_WEIGHT_PRIORITY,
+    UGL_ITALIC_PRIORITY,
+    UGL_SPACING_PRIORITY,
+    UGL_CHAR_SET_PRIORITY
+} UGL_PRIORITY_TYPE;
+
+/* Locals */
+
+UGL_LOCAL UGL_VOID  uglFontDefInit (
+    UGL_FONT_DEF *             pFontDefinition,
+    UGL_FONT_DESC *            pFontDescriptor,
+    UGL_FONT_DESC_LIST_ELMT *  pListArray,
+    UGL_BOOL                   pixelSize,
+    UGL_BOOL                   weight,
+    UGL_ORD                    index,
+    UGL_FONT_DESC_PRIORITY *   pFontDescPriority
+    );
+
+UGL_LOCAL UGL_VOID  uglFontFindHighestPriority (
+    UGL_PRIORITY_TYPE *       priority,
+    UGL_FONT_DESC_PRIORITY *  pFontDescPriority
+    );
+
 /******************************************************************************
  *
  * uglFontDriverInfo - Get information about font driver
@@ -141,6 +177,164 @@ UGL_STATUS uglFontFindClose (
 
     /* Call driver specific method */
     status = (*fontDriverId->fontFindClose) (fontDriverId, searchId);
+
+    return (status);
+}
+
+/******************************************************************************
+ *
+ * uglFontFind - Find font based on search criteria
+ *
+ * RETURNS: UGL_STATUS_OK, UGL_STATUS_FINISHED or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  uglFontFind (
+    UGL_FONT_DRIVER_ID        fontDriverId,
+    UGL_FONT_DESC *           pFontDescriptor,
+    UGL_FONT_DESC_PRIORITY *  pFontDescPriority,
+    UGL_FONT_DEF *            pFontDefinition
+    ) {
+    UGL_FONT_DESC              fontDesc;
+    UGL_SEARCH_ID              searchId;
+    UGL_FONT_DESC_LIST_ELMT *  pListArray;
+    UGL_FONT_DESC_PRIORITY     fontDescPriority;
+    UGL_PRIORITY_TYPE          priority;
+    UGL_ORD                    i;
+    UGL_STATUS                 status     = UGL_STATUS_ERROR;
+    UGL_BOOL                   pixelSize  = UGL_FALSE;
+    UGL_BOOL                   weight     = UGL_FALSE;
+    UGL_SIZE                   numFonts   = 0;
+    UGL_ORD                    matchIndex = 0;
+    UGL_ORD                    numValid   = 0;
+
+    /* Check parameters */
+    if (fontDriverId == UGL_NULL || pFontDescriptor == UGL_NULL ||
+        pFontDescPriority == UGL_NULL || pFontDefinition == UGL_NULL) {
+        return (UGL_STATUS_ERROR);
+    }
+
+    searchId = (*fontDriverId->fontFindFirst)(fontDriverId, &fontDesc);
+    if (searchId != UGL_NULL) {
+        numFonts = 1;
+    }
+    else {
+        return (UGL_STATUS_ERROR);
+    }
+
+    while (status != UGL_STATUS_FINISHED) {
+        status = (*fontDriverId->fontFindNext)(
+            fontDriverId,
+            &fontDesc,
+            searchId
+            );
+
+        if (status != UGL_STATUS_FINISHED) {
+            numFonts++;
+        }
+    }
+
+    status = (*fontDriverId->fontFindClose)(fontDriverId, searchId);
+
+    if (status == UGL_STATUS_ERROR || numFonts < 1) {
+        return (UGL_STATUS_ERROR);
+    }
+
+    /* Allocate and setup font list array */
+    pListArray = (UGL_FONT_DESC_LIST_ELMT *) UGL_CALLOC(
+        numFonts,
+        sizeof(UGL_FONT_DESC_LIST_ELMT)
+        );
+    if (pListArray == UGL_NULL) {
+        return (UGL_STATUS_ERROR);
+    }
+
+    searchId = (*fontDriverId->fontFindFirst)(fontDriverId, &fontDesc);
+    if (searchId == UGL_NULL) {
+        UGL_FREE(pListArray);
+        return (UGL_STATUS_ERROR);
+    }
+
+    memcpy(&pListArray[0].fontDesc, &fontDesc, sizeof(UGL_FONT_DESC));
+    pListArray[0].discardKeep = UGL_FALSE;
+    pListArray[0].discard     = UGL_FALSE;
+    for (i = 1; status != UGL_STATUS_FINISHED && i < numFonts; i++) {
+        status = (*fontDriverId->fontFindNext)(
+            fontDriverId,
+            &fontDesc,
+            searchId
+            );
+
+        if (status != UGL_STATUS_FINISHED) {
+            memcpy(&pListArray[i].fontDesc, &fontDesc, sizeof(UGL_FONT_DESC));
+            pListArray[i].discardKeep = UGL_FALSE;
+            pListArray[i].discard     = UGL_FALSE;
+        }
+    }
+
+    (*fontDriverId->fontFindClose)(fontDriverId, searchId);
+
+    if (pFontDescPriority->pixelSize != UGL_FONT_DONT_CARE) {
+        if (pFontDescriptor->pixelSize.min > pFontDescriptor->pixelSize.max) {
+            UGL_FREE(pListArray);
+            return (UGL_STATUS_ERROR);
+        }
+    }
+
+    if (pFontDescPriority->weight != UGL_FONT_DONT_CARE) {
+        if (pFontDescriptor->weight.min > pFontDescriptor->weight.max) {
+            UGL_FREE(pListArray);
+            return (UGL_STATUS_ERROR);
+        }
+    }
+
+    memcpy(
+        &fontDescPriority,
+        pFontDescPriority,
+        sizeof(UGL_FONT_DESC_PRIORITY)
+        );
+
+    while (1) {
+        if (numValid >= 1) {
+            if (numValid == 1) {
+                uglFontDefInit(
+                    pFontDefinition,
+                    pFontDescriptor,
+                    pListArray,
+                    pixelSize,
+                    weight,
+                    matchIndex,
+                    &fontDescPriority
+                    );
+
+                UGL_FREE(pListArray);
+                return (UGL_STATUS_OK);
+            }
+            else {
+                for (i = 0; i < numFonts; i++) {
+                    if (pListArray[i].discardKeep == UGL_TRUE &&
+                        pListArray[i].discard == UGL_FALSE) {
+
+                        pListArray[i].discard = UGL_TRUE;
+                    }
+                }
+            }
+        }
+        else {
+            for (i = 0; i < numFonts; i++) {
+                if (pListArray[i].discardKeep == UGL_TRUE &&
+                    pListArray[i].discard == UGL_FALSE) {
+
+                    pListArray[i].discardKeep = UGL_FALSE;
+                }
+            }
+        }
+
+        uglFontFindHighestPriority(&priority, &fontDescPriority);
+
+        /* TODO */
+    }
+
+    /* TODO */
 
     return (status);
 }
@@ -335,5 +529,161 @@ UGL_STATUS uglTextDraw (
     uglBatchEnd (gc);
 
     return (status);
+}
+
+/******************************************************************************
+ *
+ * uglFontDefInit - Initialize font definition
+ *
+ * RETURNS: N/A
+ */
+
+UGL_LOCAL UGL_VOID  uglFontDefInit (
+    UGL_FONT_DEF *             pFontDefinition,
+    UGL_FONT_DESC *            pFontDescriptor,
+    UGL_FONT_DESC_LIST_ELMT *  pListArray,
+    UGL_BOOL                   pixelSize,
+    UGL_BOOL                   weight,
+    UGL_ORD                    index,
+    UGL_FONT_DESC_PRIORITY *   pFontDescPriority
+    ) {
+    UGL_ORD  avg;
+
+    pFontDefinition->charSet =
+        pListArray[index].fontDesc.charSet;
+    pFontDefinition->italic =
+        pListArray[index].fontDesc.italic;
+    pFontDefinition->structSize = sizeof(UGL_FONT_DEF);
+    if (pixelSize == UGL_FALSE) {
+        if (pFontDescPriority->pixelSize > UGL_FONT_DONT_CARE) {
+           avg = (pFontDescriptor->pixelSize.min +
+                  pFontDescriptor->pixelSize.max) / 2;
+
+           if (avg < pListArray[index].fontDesc.pixelSize.min) {
+               avg = pListArray[index].fontDesc.pixelSize.min;
+           }
+
+           if (avg > pListArray[index].fontDesc.pixelSize.max) {
+               avg = pListArray[index].fontDesc.pixelSize.max;
+           }
+
+           pFontDefinition->pixelSize = avg;
+        }
+        else {
+            pFontDefinition->pixelSize =
+                (pListArray[index].fontDesc.pixelSize.min +
+                 pListArray[index].fontDesc.pixelSize.max) / 2;
+        }
+    }
+    else {
+       avg = (pFontDescriptor->pixelSize.min +
+              pFontDescriptor->pixelSize.max) / 2;
+
+       if (avg < pListArray[index].fontDesc.pixelSize.min) {
+           avg = pListArray[index].fontDesc.pixelSize.min;
+       }
+
+       if (avg > pListArray[index].fontDesc.pixelSize.max) {
+           avg = pListArray[index].fontDesc.pixelSize.max;
+       }
+
+       pFontDefinition->pixelSize = avg;
+    }
+
+    if (weight == UGL_FALSE) {
+        if (pFontDescPriority->weight > UGL_FONT_DONT_CARE) {
+            avg = (pFontDescriptor->weight.min +
+                   pFontDescriptor->weight.max) / 2;
+
+            if (avg < pListArray[index].fontDesc.weight.min) {
+                avg = pListArray[index].fontDesc.weight.min;
+            }
+
+            if (avg < pListArray[index].fontDesc.weight.max) {
+                avg = pListArray[index].fontDesc.weight.max;
+            }
+
+            pFontDefinition->weight = avg;
+        }
+        else {
+            pFontDefinition->weight =
+                (pListArray[index].fontDesc.weight.min +
+                 pListArray[index].fontDesc.weight.max) / 2;
+        }
+    }
+    else {
+        avg = (pFontDescriptor->weight.min +
+               pFontDescriptor->weight.max) / 2;
+
+        if (avg < pListArray[index].fontDesc.weight.min) {
+            avg = pListArray[index].fontDesc.weight.min;
+        }
+
+        if (avg < pListArray[index].fontDesc.weight.max) {
+            avg = pListArray[index].fontDesc.weight.max;
+        }
+
+        pFontDefinition->weight = avg;
+    }
+
+    strncpy(
+        pFontDefinition->faceName,
+        pListArray[index].fontDesc.faceName,
+        UGL_FONT_FACE_NAME_MAX_LENGTH
+        );
+    pFontDefinition->faceName[UGL_FONT_FACE_NAME_MAX_LENGTH - 1] = '\0';
+
+    strncpy(
+        pFontDefinition->familyName,
+        pListArray[index].fontDesc.familyName,
+        UGL_FONT_FAMILY_NAME_MAX_LENGTH
+        );
+    pFontDefinition->familyName[UGL_FONT_FAMILY_NAME_MAX_LENGTH - 1] = '\0';
+}
+
+/******************************************************************************
+ *
+ * uglFontFindHighestPriority - Find highest priority for font
+ *
+ * RETURNS: N/A
+ */
+
+UGL_LOCAL UGL_VOID  uglFontFindHighestPriority (
+    UGL_PRIORITY_TYPE *       priority,
+    UGL_FONT_DESC_PRIORITY *  pFontDescPriority
+    ) {
+    UGL_ORD  maxPriority = UGL_FONT_DONT_CARE;
+
+    *priority = UGL_NO_PRIORITY;
+
+    if (pFontDescPriority->faceName > maxPriority) {
+        *priority = UGL_FACE_NAME_PRIORITY;
+        maxPriority = pFontDescPriority->faceName;
+    }
+
+    if (pFontDescPriority->familyName > maxPriority) {
+        *priority = UGL_FAMILY_NAME_PRIORITY;
+        maxPriority = pFontDescPriority->familyName;
+    }
+
+    if (pFontDescPriority->pixelSize > maxPriority) {
+        *priority = UGL_PIXEL_SIZE_PRIORITY;
+        maxPriority = pFontDescPriority->pixelSize;
+    }
+
+    if (pFontDescPriority->weight > maxPriority) {
+        *priority = UGL_WEIGHT_PRIORITY;
+        maxPriority = pFontDescPriority->weight;
+    }
+
+    if (pFontDescPriority->italic > maxPriority) {
+        *priority = UGL_ITALIC_PRIORITY;
+        maxPriority = pFontDescPriority->italic;
+    }
+
+    if (pFontDescPriority->charSet > maxPriority) {
+        *priority = UGL_CHAR_SET_PRIORITY;
+        maxPriority = pFontDescPriority->charSet;
+    }
 }
 
