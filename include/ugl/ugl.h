@@ -876,6 +876,33 @@ UGL_STATUS uglFontFindClose (
 
 /******************************************************************************
  *
+ * uglFontFind - Find font based on search criteria
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  uglFontFind (
+    UGL_FONT_DRIVER_ID        fontDriverId,
+    UGL_FONT_DESC *           pFontDescriptor,
+    UGL_FONT_DESC_PRIORITY *  pFontDescPriority,
+    UGL_FONT_DEF *            pFontDefinition
+    );
+
+/******************************************************************************
+ *
+ * uglFontFindString - Find font based on format string
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  uglFontFindString (
+    UGL_FONT_DRIVER_ID  fontDriverId,
+    const char *        pFontPriorityString,
+    UGL_FONT_DEF *      pFontDefinition
+    );
+
+/******************************************************************************
+ *
  * uglFontCreate - Create font
  *
  * RETURNS: UGL_FONT_ID or UGL_NULL

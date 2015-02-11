@@ -20,7 +20,9 @@
 
 /* uglfont.c - Universal graphics library font driver support */
 
+#include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "ugl.h"
 
 /* Types */
@@ -185,7 +187,7 @@ UGL_STATUS uglFontFindClose (
  *
  * uglFontFind - Find font based on search criteria
  *
- * RETURNS: UGL_STATUS_OK, UGL_STATUS_FINISHED or UGL_STATUS_ERROR
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
  */
 
 UGL_STATUS  uglFontFind (
@@ -200,9 +202,17 @@ UGL_STATUS  uglFontFind (
     UGL_FONT_DESC_PRIORITY     fontDescPriority;
     UGL_PRIORITY_TYPE          priority;
     UGL_ORD                    i;
+    UGL_ORD                    j;
+    UGL_ORD                    k;
+    UGL_ORD                    deltaPrev;
+    UGL_ORD                    deltaNew;
+    UGL_ORD                    deltaMin;
+    UGL_ORD                    deltaMax;
+    UGL_ORD *                  pMatchIndices;
     UGL_STATUS                 status     = UGL_STATUS_ERROR;
     UGL_BOOL                   pixelSize  = UGL_FALSE;
     UGL_BOOL                   weight     = UGL_FALSE;
+    UGL_BOOL                   exactMatch = UGL_FALSE;
     UGL_SIZE                   numFonts   = 0;
     UGL_ORD                    matchIndex = 0;
     UGL_ORD                    numValid   = 0;
@@ -331,10 +341,468 @@ UGL_STATUS  uglFontFind (
 
         uglFontFindHighestPriority(&priority, &fontDescPriority);
 
-        /* TODO */
+        if (priority == UGL_FACE_NAME_PRIORITY) {
+            for (i = 0, numValid = 0; i < numFonts; i++) {
+                if (pListArray[i].discard == UGL_FALSE) {
+                    if (strncmp(
+                        pListArray[i].fontDesc.faceName,
+                        pFontDescriptor->faceName,
+                        UGL_FONT_FACE_NAME_MAX_LENGTH - 1
+                        ) == 0) {
+
+                        numValid++;
+                        matchIndex = i;
+                    }
+                    else {
+                        pListArray[i].discardKeep = UGL_TRUE;
+                    }
+                }
+            }
+
+            fontDescPriority.faceName = UGL_FONT_DONT_CARE;
+        }
+        else if (priority == UGL_FAMILY_NAME_PRIORITY) {
+            for (i = 0, numValid = 0; i < numFonts; i++) {
+                if (pListArray[i].discard == UGL_FALSE) {
+                    if (strncmp(
+                        pListArray[i].fontDesc.familyName,
+                        pFontDescriptor->familyName,
+                        UGL_FONT_FAMILY_NAME_MAX_LENGTH - 1
+                        ) == 0) {
+
+                        numValid++;
+                        matchIndex = i;
+                    }
+                    else {
+                        pListArray[i].discardKeep = UGL_TRUE;
+                    }
+                }
+            }
+
+            fontDescPriority.familyName = UGL_FONT_DONT_CARE;
+        }
+        else if (priority == UGL_PIXEL_SIZE_PRIORITY) {
+            k = 0;
+            exactMatch = UGL_FALSE;
+            pMatchIndices = (UGL_ORD *) UGL_MALLOC(numFonts * sizeof(UGL_ORD));
+            if (pMatchIndices == UGL_NULL) {
+                UGL_FREE(pListArray);
+                return (UGL_STATUS_ERROR);
+            }
+
+            memset(pMatchIndices, -1, numFonts * sizeof(UGL_ORD));
+            deltaPrev = (UGL_ORD) 0x7fff;
+
+            for (i = 0, numValid = 0, matchIndex = 0; i < numFonts; i++) {
+                if (pListArray[i].discard == UGL_FALSE) {
+                    if (!(pListArray[i].fontDesc.pixelSize.min >
+                          pFontDescriptor->pixelSize.max) &&
+                        !(pListArray[i].fontDesc.pixelSize.max <
+                          pFontDescriptor->pixelSize.min)) {
+
+                        if (exactMatch == UGL_FALSE) {
+                            numValid = 0;
+                            for (j = 0, k = 0;
+                                 j < numFonts && pMatchIndices[j] != -1;
+                                 j++) {
+
+                                pListArray[pMatchIndices[j]].discardKeep =
+                                    UGL_TRUE;
+                                pMatchIndices[j] = -1;
+                            }
+                        }
+
+                        numValid++;
+                        matchIndex = i;
+                        pListArray[matchIndex].discardKeep = UGL_FALSE;
+                        exactMatch = UGL_TRUE;
+                        pixelSize = UGL_TRUE;
+                    }
+                    else {
+                        if (exactMatch == UGL_FALSE) {
+                            deltaMin = abs(
+                                pListArray[i].fontDesc.pixelSize.min -
+                                pFontDescriptor->pixelSize.min
+                                );
+                            deltaMax = abs(
+                                pFontDescriptor->pixelSize.max -
+                                pListArray[i].fontDesc.pixelSize.max
+                                );
+                            deltaNew = min(deltaMax, deltaMin);
+                            if (deltaNew <= deltaPrev) {
+                                if (deltaNew == deltaPrev) {
+                                    numValid++;
+                                    matchIndex = i;
+                                    pListArray[matchIndex].discardKeep =
+                                        UGL_FALSE;
+                                    pMatchIndices[k++] = matchIndex;
+                                    pixelSize = UGL_TRUE;
+                                    deltaPrev = deltaNew;
+                                }
+                                else {
+                                    numValid = 0;
+                                    for (j = 0, k = 0;
+                                         j < numFonts && pMatchIndices[j] != -1;
+                                         j++) {
+
+                                        pListArray[
+                                            pMatchIndices[j]
+                                            ].discardKeep = UGL_TRUE;
+                                        pMatchIndices[j] = -1;
+                                    }
+
+                                    numValid++;
+                                    matchIndex = i;
+                                    pListArray[matchIndex].discardKeep =
+                                        UGL_FALSE;
+                                    pMatchIndices[k++] = matchIndex;
+                                    pixelSize = UGL_TRUE;
+                                    deltaPrev = deltaNew;
+                                }
+                            }
+                            else {
+                                pListArray[i].discardKeep = UGL_TRUE;
+                            }
+                        }
+                        else {
+                            pListArray[i].discardKeep = UGL_TRUE;
+                        }
+                    }
+                }
+            }
+
+            UGL_FREE(pMatchIndices);
+            fontDescPriority.pixelSize = UGL_FONT_DONT_CARE;
+        }
+        else if (priority == UGL_WEIGHT_PRIORITY) {
+            k = 0;
+            exactMatch = UGL_FALSE;
+            pMatchIndices = (UGL_ORD *) UGL_MALLOC(numFonts * sizeof(UGL_ORD));
+            if (pMatchIndices == UGL_NULL) {
+                UGL_FREE(pListArray);
+                return (UGL_STATUS_ERROR);
+            }
+
+            memset(pMatchIndices, -1, numFonts * sizeof(UGL_ORD));
+            deltaPrev = (UGL_ORD) 0x7fff;
+
+            for (i = 0, numValid = 0, matchIndex = 0; i < numFonts; i++) {
+                if (pListArray[i].discard == UGL_FALSE) {
+                    if (!(pListArray[i].fontDesc.weight.min >
+                          pFontDescriptor->weight.max) &&
+                        !(pListArray[i].fontDesc.weight.max <
+                          pFontDescriptor->weight.min)) {
+
+                        if (exactMatch == UGL_FALSE) {
+                            numValid = 0;
+                            for (j = 0, k = 0;
+                                 j < numFonts && pMatchIndices[j] != -1;
+                                 j++) {
+
+                                pListArray[pMatchIndices[j]].discardKeep =
+                                    UGL_TRUE;
+                                pMatchIndices[j] = -1;
+                            }
+                        }
+
+                        numValid++;
+                        matchIndex = i;
+                        pListArray[matchIndex].discardKeep = UGL_FALSE;
+                        exactMatch = UGL_TRUE;
+                        weight = UGL_TRUE;
+                    }
+                    else {
+                        if (exactMatch == UGL_FALSE) {
+                            deltaMin = abs(
+                                pListArray[i].fontDesc.weight.min -
+                                pFontDescriptor->weight.min
+                                );
+                            deltaMax = abs(
+                                pFontDescriptor->weight.max -
+                                pListArray[i].fontDesc.weight.max
+                                );
+                            deltaNew = min(deltaMax, deltaMin);
+                            if (deltaNew <= deltaPrev) {
+                                if (deltaNew == deltaPrev) {
+                                    numValid++;
+                                    matchIndex = i;
+                                    pListArray[matchIndex].discardKeep =
+                                        UGL_FALSE;
+                                    pMatchIndices[k++] = matchIndex;
+                                    weight = UGL_TRUE;
+                                    deltaPrev = deltaNew;
+                                }
+                                else {
+                                    numValid = 0;
+                                    for (j = 0, k = 0;
+                                         j < numFonts && pMatchIndices[j] != -1;
+                                         j++) {
+
+                                        pListArray[
+                                            pMatchIndices[j]
+                                            ].discardKeep = UGL_TRUE;
+                                        pMatchIndices[j] = -1;
+                                    }
+
+                                    numValid++;
+                                    matchIndex = i;
+                                    pListArray[matchIndex].discardKeep =
+                                        UGL_FALSE;
+                                    pMatchIndices[k++] = matchIndex;
+                                    pixelSize = UGL_TRUE;
+                                    deltaPrev = deltaNew;
+                                }
+                            }
+                            else {
+                                pListArray[i].discardKeep = UGL_TRUE;
+                            }
+                        }
+                        else {
+                            pListArray[i].discardKeep = UGL_TRUE;
+                        }
+                    }
+                }
+            }
+
+            UGL_FREE(pMatchIndices);
+            fontDescPriority.weight = UGL_FONT_DONT_CARE;
+        }
+        else if (priority == UGL_ITALIC_PRIORITY) {
+            for (i = 0, numValid = 0; i < numFonts; i++) {
+                if (pListArray[i].discard == UGL_FALSE) {
+                    if (pListArray[i].fontDesc.italic ==
+                        pFontDescriptor->italic) {
+
+                        numValid++;
+                        matchIndex = i;
+                    }
+                    else {
+                        pListArray[i].discardKeep = UGL_TRUE;
+                    }
+                }
+            }
+
+            fontDescPriority.italic = UGL_FONT_DONT_CARE;
+        }
+        else if (priority == UGL_SPACING_PRIORITY) {
+            for (i = 0, numValid = 0; i < numFonts; i++) {
+                if (pListArray[i].discard == UGL_FALSE) {
+                    if (pListArray[i].fontDesc.spacing ==
+                        pFontDescriptor->spacing) {
+
+                        numValid++;
+                        matchIndex = i;
+                    }
+                    else {
+                        pListArray[i].discardKeep = UGL_TRUE;
+                    }
+                }
+            }
+
+            fontDescPriority.spacing = UGL_FONT_DONT_CARE;
+        }
+        else if (priority == UGL_CHAR_SET_PRIORITY) {
+            for (i = 0, numValid = 0; i < numFonts; i++) {
+                if (pListArray[i].discard == UGL_FALSE) {
+                    if (pListArray[i].fontDesc.charSet ==
+                        pFontDescriptor->charSet) {
+
+                        numValid++;
+                        matchIndex = i;
+                    }
+                    else {
+                        pListArray[i].discardKeep = UGL_TRUE;
+                    }
+                }
+            }
+
+            fontDescPriority.charSet = UGL_FONT_DONT_CARE;
+        }
+        else {
+            for (i = 0; i < numFonts; i++) {
+                if (pListArray[i].discard == UGL_FALSE) {
+                    break;
+                }
+            }
+
+            uglFontDefInit(
+                pFontDefinition,
+                pFontDescriptor,
+                pListArray,
+                pixelSize,
+                weight,
+                i,
+                &fontDescPriority
+                );
+
+            UGL_FREE(pListArray);
+            return (UGL_STATUS_OK);
+        }
     }
 
-    /* TODO */
+    return (UGL_STATUS_ERROR);
+}
+
+/******************************************************************************
+ *
+ * uglFontFindString - Find font based on format string
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  uglFontFindString (
+    UGL_FONT_DRIVER_ID  fontDriverId,
+    const char *        pFontPriorityString,
+    UGL_FONT_DEF *      pFontDefinition
+    ) {
+    UGL_STATUS              status;
+    UGL_FONT_DESC_PRIORITY  fontDescPriority;
+    UGL_FONT_DESC           fontDescriptor;
+    char *                  pString;
+    char *                  pStringStart;
+    char *                  pEnd;
+    UGL_SIZE                numChars;
+    UGL_SIZE                size;
+    UGL_ORD                 priority = 100;
+    char *                  pLast    = UGL_NULL;
+
+    fontDescPriority.faceName   = UGL_FONT_DONT_CARE;
+    fontDescPriority.familyName = UGL_FONT_DONT_CARE;
+    fontDescPriority.pixelSize  = UGL_FONT_DONT_CARE;
+    fontDescPriority.weight     = 1;
+    fontDescPriority.spacing    = UGL_FONT_DONT_CARE;
+    fontDescPriority.charSet    = UGL_FONT_DONT_CARE;
+
+    fontDescriptor.weight.min = UGL_FONT_BOLD_OFF;
+    fontDescriptor.weight.max = UGL_FONT_BOLD_OFF;
+    fontDescriptor.italic     = UGL_FONT_UPRIGHT;
+
+    numChars = strlen(pFontPriorityString);
+    if (numChars == 0) {
+        status = uglFontFind(
+            fontDriverId,
+            &fontDescriptor,
+            &fontDescPriority,
+            pFontDefinition
+            );
+        return (status);
+    }
+
+    /* Process priority string */
+    pString = (char *) UGL_CALLOC(1, (numChars + 1) * sizeof(char));
+    if (pString == UGL_NULL) {
+        return (UGL_STATUS_ERROR);
+    }
+
+    pStringStart = pString;
+    strncpy(pString, pFontPriorityString, numChars + 1);
+    pString[numChars] = '\0';
+    pString = strtok_r(pString, ";", &pLast);
+
+    /* Parse string tokens */
+    while (pString != UGL_NULL && priority > UGL_FONT_DONT_CARE) {
+        while (isspace((int) (*pString))) {
+            pString++;
+        }
+
+        if (strncmp(pString, "pixelSize", strlen("pixelSize")) == 0) {
+            pString = strpbrk(pString, "=");
+            pString++;
+            if (pString != UGL_NULL) {
+                size = strtol(pString, &pEnd, 10);
+                if (size > 0) {
+                    fontDescriptor.pixelSize.min = size;
+                    fontDescriptor.pixelSize.max = size;
+
+                    fontDescPriority.pixelSize = priority--;
+                }
+            }
+        }
+        else if (strncmp(pString, "faceName", strlen("faceName")) == 0) {
+            pString = strpbrk(pString, "=");
+            pString++;
+            if (pString != UGL_NULL) {
+                while (isspace((int) (*pString))) {
+                    pString++;
+                }
+
+                if (*pString != '\0') {
+                    pEnd = strncpy(
+                        fontDescriptor.faceName,
+                        pString,
+                        UGL_FONT_FACE_NAME_MAX_LENGTH
+                        );
+                    fontDescriptor.faceName[UGL_FONT_FACE_NAME_MAX_LENGTH - 1] =
+                        '\0';
+
+                    if (pEnd != UGL_NULL) {
+                        fontDescPriority.faceName = priority--;
+                    }
+                }
+            }
+        }
+        else if (strncmp(pString, "familyName", strlen("familyName")) == 0) {
+            pString = strpbrk(pString, "=");
+            pString++;
+            if (pString != UGL_NULL) {
+                while (isspace((int) (*pString))) {
+                    pString++;
+                }
+
+                if (*pString != '\0') {
+                    pEnd = strncpy(
+                        fontDescriptor.familyName,
+                        pString,
+                        UGL_FONT_FAMILY_NAME_MAX_LENGTH
+                        );
+                    fontDescriptor.familyName[
+                        UGL_FONT_FACE_NAME_MAX_LENGTH - 1] = '\0';
+
+                    if (pEnd != UGL_NULL) {
+                        fontDescPriority.familyName = priority--;
+                    }
+                }
+            }
+        }
+        else if (strncmp(pString, "italic", strlen("italic")) == 0) {
+            fontDescriptor.italic = UGL_FONT_ITALIC;
+            fontDescPriority.italic = priority--;
+        }
+        else if (strncmp(pString, "mono", strlen("mono")) == 0) {
+            if (fontDescPriority.spacing == UGL_FONT_DONT_CARE) {
+                fontDescriptor.spacing = UGL_FONT_MONO_SPACED;
+                fontDescPriority.spacing = priority--;
+            }
+        }
+        else if (strncmp(
+            pString,
+            "proportional",
+            strlen("proportional")
+            ) == 0) {
+
+            if (fontDescPriority.spacing == UGL_FONT_DONT_CARE) {
+                fontDescriptor.spacing = UGL_FONT_PROPORTIONAL;
+                fontDescPriority.spacing = priority--;
+            }
+        }
+        else if (strncmp(pString, "bold", strlen("bold")) == 0) {
+            fontDescriptor.weight.min = UGL_FONT_BOLD;
+            fontDescriptor.weight.max = UGL_FONT_BOLD;
+            fontDescPriority.weight = priority--;
+        }
+
+        /* Advance */
+        pString = strtok_r(NULL, ";", &pLast);
+    }
+
+    UGL_FREE(pStringStart);
+
+    status = uglFontFind(
+        fontDriverId,
+        &fontDescriptor,
+        &fontDescPriority,
+        pFontDefinition
+        );
 
     return (status);
 }
