@@ -1476,6 +1476,70 @@ int uglCursor4Test(UGL_REGION_ID clipRegionId)
   return 0;
 }
 
+int uglFont4Test(char *format, char *str)
+{
+  static char defFormat[] = "pixelSize=10; familyName=Courier";
+  static char defStr[]    = "Hello World!";
+  struct vgaHWRec oldRegs;
+  UGL_GC_ID       gc;
+  UGL_FONT_DEF    fontDef;
+  UGL_FONT_ID     fontId;
+
+  if (format == UGL_NULL) {
+    format = defFormat;
+    return 1;
+  }
+  if (str == UGL_NULL) {
+    str = defStr;
+    return 1;
+  }
+
+  if (mode4Enter(&oldRegs)) {
+    restoreConsole(&oldRegs);
+    printf("Unable to set graphics mode to 640x480 @60Hz, 16 color.\n");
+    return 1;
+  }
+
+  gc = uglGcCreate(gfxDevId);
+  if (gc == UGL_NULL) {
+    restoreConsole(&oldRegs);
+    printf("Unable to create graphics context.\n");
+    return 1;
+  }
+
+  uglDefaultBitmapSet(gc, NULL);
+  uglForegroundColorSet(gc, UGL_COLOR_TRANSPARENT);
+  uglBackgroundColorSet(gc, TEXT_BG_COLOR);
+  uglRectangle(gc, 0, 0, 640, 480);
+
+  uglRasterModeSet(gc, rasterOp);
+  uglForegroundColorSet(gc, TEXT_FG_COLOR);
+
+  if (uglFontFindString(fntDrvId, format, &fontDef) != UGL_STATUS_OK) {
+    printf("Unable to find font: %s.\n", format);
+    restoreConsole(&oldRegs);
+    return 1;
+  }
+
+  fontId = uglFontCreate (fntDrvId, &fontDef);
+  if (fontId == UGL_NULL) {
+    restoreConsole(&oldRegs);
+    printf("Unable to load font %s.\n", format);
+    return 1;
+  }
+
+  uglTextDraw(gc, 0, 0, strlen(str), str);
+
+  getchar();
+
+  uglGcDestroy(gc);
+  uglFontDestroy(fontId);
+
+  restoreConsole(&oldRegs);
+
+  return 0;
+}
+
 int uglText4Test(char *fontfam, char *str)
 {
   static char defFnt[] = "Times";
@@ -3302,6 +3366,7 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_uglMono4Test", uglMono4Test, 0, N_TEXT | N_EXT},
   {NULL, "_uglTrans4Test", uglTrans4Test, 0, N_TEXT | N_EXT},
   {NULL, "_uglCursor4Test", uglCursor4Test, 0, N_TEXT | N_EXT},
+  {NULL, "_uglFont4Test", uglFont4Test, 0, N_TEXT | N_EXT},
   {NULL, "_uglText4Test", uglText4Test, 0, N_TEXT | N_EXT},
   {NULL, "_uglPixel8Test", uglPixel8Test, 0, N_TEXT | N_EXT},
   {NULL, "_uglHLine8Test", uglHLine8Test, 0, N_TEXT | N_EXT},
