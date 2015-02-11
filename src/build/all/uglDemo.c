@@ -1478,7 +1478,7 @@ int uglCursor4Test(UGL_REGION_ID clipRegionId)
 
 int uglFont4Test(char *format, char *str)
 {
-  static char defFormat[] = "pixelSize=10; familyName=Courier";
+  static char defFormat[] = "pixelSize=12; familyName=Courier";
   static char defStr[]    = "Hello World!";
   struct vgaHWRec oldRegs;
   UGL_GC_ID       gc;
@@ -1487,11 +1487,9 @@ int uglFont4Test(char *format, char *str)
 
   if (format == UGL_NULL) {
     format = defFormat;
-    return 1;
   }
   if (str == UGL_NULL) {
     str = defStr;
-    return 1;
   }
 
   if (mode4Enter(&oldRegs)) {
