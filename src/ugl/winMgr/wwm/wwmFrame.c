@@ -40,9 +40,22 @@ typedef struct wwm_frame_data {
     UGL_UINT32     buttonState;
 } WWM_FRAME_DATA;
 
+typedef struct wwm_frame_class_data {
+    UGL_FONT_ID    fontId;
+    UGL_COLOR      frameColorActive;
+    UGL_COLOR      frameColorInactive;
+    UGL_COLOR      textColorActive;
+    UGL_COLOR      textColorInactive;
+    UGL_COLOR      shineColorActive;
+    UGL_COLOR      shineColorInactive;
+    UGL_COLOR      shadowColorActive;
+    UGL_COLOR      shadowColorInactive;
+} WWM_FRAME_CLASS_DATA;
+
 /* Locals */
 
-UGL_LOCAL WIN_CLASS_ID  wwmFrameClassId = UGL_NULL;
+UGL_LOCAL WWM_FRAME_CLASS_DATA  wwmFrameClassData;
+UGL_LOCAL WIN_CLASS_ID          wwmFrameClassId = UGL_NULL;
 
 UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
     WIN_ID            winId,
@@ -87,6 +100,130 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
     ) {
 
     switch (pMsg->type) {
+
+        case MSG_CLASS_INIT: {
+            UGL_REG_DATA *  pRegData;
+            UGL_DEVICE_ID   displayId;
+            UGL_RGB         color;
+            UGL_ORD         hue;
+            UGL_ORD         lightness;
+            UGL_ORD         saturation;
+            UGL_FONT_ID *   pFontTable;
+
+            pRegData = uglRegistryFind(UGL_DISPLAY_TYPE, UGL_NULL, 0, 0);
+            if (pRegData == UGL_NULL) {
+                return UGL_STATUS_ERROR;
+            }
+            displayId = (UGL_DEVICE_ID) pRegData->data;
+
+            /* Allocate colors for window frame */
+            color = WWM_FRAME_COLOR_ACTIVE;
+            uglColorAlloc(
+                displayId,
+                &color,
+                UGL_NULL,
+                &wwmFrameClassData.frameColorActive,
+                1
+                );
+
+            uglRGB2HLS(color, &hue, &lightness, &saturation);
+            uglHLS2RGB(hue, (255 + lightness) / 2, saturation, &color);
+            uglColorAlloc(
+                displayId,
+                &color,
+                UGL_NULL,
+                &wwmFrameClassData.shineColorActive,
+                1
+                );
+
+            uglHLS2RGB(hue, lightness / 2, saturation, &color);
+            uglColorAlloc(
+                displayId,
+                &color,
+                UGL_NULL,
+                &wwmFrameClassData.shadowColorActive,
+                1
+                );
+
+            color = WWM_FRAME_COLOR_INACTIVE;
+            uglColorAlloc(
+                displayId,
+                &color,
+                UGL_NULL,
+                &wwmFrameClassData.frameColorInactive,
+                1
+                );
+
+            uglRGB2HLS(color, &hue, &lightness, &saturation);
+            uglHLS2RGB(hue, (255 + lightness) / 2, saturation, &color);
+            uglColorAlloc(
+                displayId,
+                &color,
+                UGL_NULL,
+                &wwmFrameClassData.shineColorInactive,
+                1
+                );
+
+            uglHLS2RGB(hue, lightness / 2, saturation, &color);
+            uglColorAlloc(
+                displayId,
+                &color,
+                UGL_NULL,
+                &wwmFrameClassData.shadowColorInactive,
+                1
+                );
+
+            /* Allocate frame text colors and set frame font */
+            color = WWM_FRAME_TEXT_COLOR_ACTIVE;
+            uglColorAlloc(
+                displayId,
+                &color,
+                UGL_NULL,
+                &wwmFrameClassData.textColorActive,
+                1
+                );
+
+            color = WWM_FRAME_TEXT_COLOR_INACTIVE;
+            uglColorAlloc(
+                displayId,
+                &color,
+                UGL_NULL,
+                &wwmFrameClassData.textColorInactive,
+                1
+                );
+
+            pFontTable = winMgrFontTableGet(winMgrGet(winId), UGL_NULL);
+            wwmFrameClassData.fontId = pFontTable[WIN_FONT_INDEX_SYSTEM];
+
+            } break;
+
+        case MSG_CLASS_DEINIT: {
+            UGL_REG_DATA *  pRegData;
+            UGL_DEVICE_ID   displayId;
+
+            pRegData = uglRegistryFind(UGL_DISPLAY_TYPE, UGL_NULL, 0, 0);
+            if (pRegData == UGL_NULL) {
+                return UGL_STATUS_ERROR;
+            }
+            displayId = (UGL_DEVICE_ID) pRegData->data;
+
+            uglColorFree(displayId, &wwmFrameClassData.textColorInactive, 1);
+            uglColorFree(displayId, &wwmFrameClassData.textColorActive, 1);
+            uglColorFree(displayId, &wwmFrameClassData.shadowColorInactive, 1);
+            uglColorFree(displayId, &wwmFrameClassData.shineColorInactive, 1);
+            uglColorFree(displayId, &wwmFrameClassData.frameColorInactive, 1);
+            uglColorFree(displayId, &wwmFrameClassData.shadowColorActive, 1);
+            uglColorFree(displayId, &wwmFrameClassData.shineColorActive, 1);
+            uglColorFree(displayId, &wwmFrameClassData.frameColorActive, 1);
+
+            if (wwmFrameClassId != UGL_NULL) {
+                if (winClassDestroy(wwmFrameClassId) == UGL_STATUS_OK) {
+                    wwmFrameClassId = UGL_NULL;
+                }
+            }
+
+            return (UGL_STATUS_FINISHED);
+            } break;
 
         case MSG_RECT_CHANGING:
             if ((winStateGet(winId) & WIN_STATE_MAXIMIZED) != 0x00) {

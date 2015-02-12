@@ -34,6 +34,7 @@ const UGL_RGB wwmRGBColorTable[16] = {
     /* DARKGRAY     */    UGL_MAKE_ARGB(255,  84,  84,  84),
     /* LIGHTBLUE    */    UGL_MAKE_ARGB(255,  84,  84, 255),
     /* LIGHTGREEN   */    UGL_MAKE_ARGB(255,  84, 255,  84),
+    /* LIGHTCYAN    */    UGL_MAKE_ARGB(255,  84, 255, 255),
     /* LIGHTRED     */    UGL_MAKE_ARGB(255, 255,  84,  84),
     /* LIGHTMAGENTA */    UGL_MAKE_ARGB(255, 255,  84, 255),
     /* YELLOW       */    UGL_MAKE_ARGB(255, 255, 255,  84),

@@ -425,6 +425,34 @@ UGL_STATUS uglARGBSpecSet (
     UGL_ARGB_SPEC *    pSpec
     );
 
+/******************************************************************************
+ *
+ * uglRGB2HLS - Convert RGB color to HLS format
+ *
+ * RETURNS: N/A
+ */
+
+UGL_VOID  uglRGB2HLS (
+    UGL_RGB      rgb,
+    UGL_ORD * pHue,
+    UGL_ORD * pLightness,
+    UGL_ORD * pSaturation
+    );
+
+/******************************************************************************
+ *
+ * uglHLS2RGB - Convert HLS color to RGB format
+ *
+ * RETURNS: N/A
+ */
+
+UGL_VOID  uglHLS2RGB (
+    UGL_ORD    hue,
+    UGL_ORD    lightness,
+    UGL_ORD    saturation,
+    UGL_RGB *  pRgb
+    );
+
 /* Line drawing support functions */
 
 /******************************************************************************

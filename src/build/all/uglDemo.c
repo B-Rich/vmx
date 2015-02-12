@@ -3310,8 +3310,8 @@ UGL_STATUS uglWinHelloDrawCb(
   UGL_FONT_ID *pFonts;
   UGL_SIZE width, height;
 
-  uglBackgroundColorSet(pMsg->data.draw.gcId, rand() % 16);
-  uglForegroundColorSet(pMsg->data.draw.gcId, rand() % 16);
+  uglBackgroundColorSet(pMsg->data.draw.gcId, WIN_INDEX_BLUE);
+  uglForegroundColorSet(pMsg->data.draw.gcId, WIN_INDEX_WHITE);
   uglRectangle(
       pMsg->data.draw.gcId,
       pMsg->data.draw.rect.left,
@@ -3393,6 +3393,12 @@ int uglWinHello(int noGfx)
   return 0;
 }
 
+int uglWinTest(void)
+{
+  uglWinInit(TRUE);
+  uglWinHello(TRUE);
+}
+
 int uglDemoInit(void)
 {
 static SYMBOL symTableUglDemo[] = {
@@ -3455,7 +3461,8 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_uglMouseInit", uglMouseInit, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseLog", uglMouseLog, 0, N_TEXT | N_EXT},
   {NULL, "_uglWinInit", uglWinInit, 0, N_TEXT | N_EXT},
-  {NULL, "_uglWinHello", uglWinHello, 0, N_TEXT | N_EXT}
+  {NULL, "_uglWinHello", uglWinHello, 0, N_TEXT | N_EXT},
+  {NULL, "_uglWinTest", uglWinTest, 0, N_TEXT | N_EXT}
 };
 
     int i;

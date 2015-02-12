@@ -25,6 +25,14 @@
 #include "ugl.h"
 #include "driver/graphics/generic/udgen.h"
 
+/* Locals */
+
+UGL_LOCAL UGL_ORD  uglHLS2RGBValue (
+    UGL_ORD  n1,
+    UGL_ORD  n2,
+    UGL_ORD  hue
+    );
+
 /******************************************************************************
  *
  * uglClutSet
@@ -288,5 +296,155 @@ UGL_STATUS uglARGBSpecSet (
                (pSpec->nGreenBits << 4) | (pSpec->nBlueBits);
 
     return (UGL_STATUS_OK);
+}
+
+/******************************************************************************
+ *
+ * uglRGB2HLS - Convert RGB color to HLS format
+ *
+ * RETURNS: N/A
+ */
+
+UGL_VOID  uglRGB2HLS (
+    UGL_RGB      rgb,
+    UGL_ORD * pHue,
+    UGL_ORD * pLightness,
+    UGL_ORD * pSaturation
+    ) {
+    UGL_ORD  hue;
+    UGL_ORD  lightness;
+    UGL_ORD  saturation;
+    UGL_ORD  minValue;
+    UGL_ORD  maxValue;
+    UGL_ORD  delta;
+
+    UGL_UINT32  red   = UGL_RGB_RED(rgb);
+    UGL_UINT32  green = UGL_RGB_GREEN(rgb);
+    UGL_UINT32  blue  = UGL_RGB_BLUE(rgb);
+
+    if (red > green) {
+        minValue = green;
+        maxValue = red;
+    }
+    else {
+        minValue = red;
+        maxValue = green;
+    }
+
+    if (blue > maxValue) {
+        maxValue = blue;
+    }
+    else if (blue < minValue) {
+        minValue = blue;
+    }
+
+    lightness = (maxValue - minValue) / 2;
+
+    if (maxValue == minValue) {
+        hue = 0;
+        saturation = 0;
+    }
+    else {
+        delta = maxValue - minValue;
+
+        if (lightness < 128) {
+            saturation = delta * 255 / (maxValue + minValue);
+        }
+        else {
+            saturation = delta * 255 / (510 - maxValue - minValue);
+        }
+
+        if (red == maxValue) {
+            hue = (green - blue) * 60 / delta;
+        }
+        else if (green == maxValue) {
+            hue = (blue - red) * 60 / delta;
+        }
+        else {
+            hue = (red - green) * 60 / delta;
+        }
+
+        if (hue < 0) {
+            hue += 360;
+        }
+    }
+
+    *pHue        = hue;
+    *pLightness  = lightness;
+    *pSaturation = saturation;
+}
+
+/******************************************************************************
+ *
+ * uglHLS2RGB - Convert HLS color to RGB format
+ *
+ * RETURNS: N/A
+ */
+
+UGL_VOID  uglHLS2RGB (
+    UGL_ORD    hue,
+    UGL_ORD    lightness,
+    UGL_ORD    saturation,
+    UGL_RGB *  pRgb
+    ) {
+    UGL_ORD  n1;
+    UGL_ORD  n2;
+
+    if (lightness < 128) {
+        n2 = lightness * (saturation + 255) / 255;
+    }
+    else {
+       n2 = lightness + saturation - lightness * saturation / 255;
+    }
+
+    n1 = 2 * lightness - n2;
+
+    if (saturation == 0) {
+        *pRgb = UGL_MAKE_RGB(lightness, lightness, lightness);
+    }
+    else {
+        *pRgb = UGL_MAKE_RGB(
+            uglHLS2RGBValue(n1, n2, hue + 120),
+            uglHLS2RGBValue(n1, n2, hue),
+            uglHLS2RGBValue(n1, n2, hue - 120)
+            );
+   }
+}
+
+/******************************************************************************
+ *
+ * uglHLS2RGBValue - Helper for conversion of HLS color to RGB format
+ *
+ * RETURNS: N/A
+ */
+
+UGL_LOCAL UGL_ORD  uglHLS2RGBValue (
+    UGL_ORD  n1,
+    UGL_ORD  n2,
+    UGL_ORD  hue
+    ) {
+    UGL_ORD  value;
+
+    if (hue < 0) {
+        hue += 360;
+    }
+    else if (hue > 360) {
+        hue -= 360;
+    }
+
+    if (hue < 60) {
+        value = n1 + (n2 - n1) * hue / 60;
+    }
+    else if (hue < 180) {
+        value = n2;
+    }
+    else if (hue < 240) {
+        value = n1 + (n2 - n1) * (240 - hue) / 60;
+    }
+    else {
+        value = n1;
+    }
+
+    return value;
 }
 

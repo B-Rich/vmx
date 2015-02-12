@@ -154,6 +154,33 @@ typedef struct ugl_color_cube {
 
 /******************************************************************************
  *
+ * UGL_RGB_RED - Get red component from color info
+ *
+ * RETURNS: Red value
+ */
+
+#define UGL_RGB_RED(rgb)        (UGL_RGB)(UGL_ARGB_RED(rgb))
+
+/******************************************************************************
+ *
+ * UGL_RGB_GREEN - Get green component from color info
+ *
+ * RETURNS: Green value
+ */
+
+#define UGL_RGB_GREEN(rgb)      (UGL_RGB)(UGL_ARGB_GREEN(rgb))
+
+/******************************************************************************
+ *
+ * UGL_RGB_BLUE - Get blue component from color info
+ *
+ * RETURNS: Blue value
+ */
+
+#define UGL_RGB_BLUE(rgb)       (UGL_RGB)(UGL_ARGB_BLUE(rgb))
+
+/******************************************************************************
+ *
  * UGL_MAKE_ARGB - Genereate color info from argb values
  *
  * RETURNS: Argb value
