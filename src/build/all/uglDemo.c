@@ -1484,6 +1484,7 @@ int uglFont4Test(char *format, char *str)
   UGL_GC_ID       gc;
   UGL_FONT_DEF    fontDef;
   UGL_FONT_ID     fontId;
+  UGL_SIZE        width;
 
   if (format == UGL_NULL) {
     format = defFormat;
@@ -1491,6 +1492,21 @@ int uglFont4Test(char *format, char *str)
   if (str == UGL_NULL) {
     str = defStr;
   }
+
+  if (uglFontFindString(fntDrvId, format, &fontDef) != UGL_STATUS_OK) {
+    printf("Unable to find font: %s.\n", format);
+    return 1;
+  }
+
+  printf("Font definition:\n");
+  printf("structSize = %d\n", fontDef.structSize);
+  printf("pixelSize  = %d\n", fontDef.pixelSize);
+  printf("weight     = %d\n", fontDef.weight);
+  printf("italic     = %d\n", fontDef.italic);
+  printf("charSet    = %d\n", fontDef.charSet);
+  printf("faceName   = %s\n", fontDef.faceName);
+  printf("familyName = %s\n", fontDef.familyName);
+  getchar();
 
   if (mode4Enter(&oldRegs)) {
     restoreConsole(&oldRegs);
@@ -1513,12 +1529,6 @@ int uglFont4Test(char *format, char *str)
   uglRasterModeSet(gc, rasterOp);
   uglForegroundColorSet(gc, TEXT_FG_COLOR);
 
-  if (uglFontFindString(fntDrvId, format, &fontDef) != UGL_STATUS_OK) {
-    printf("Unable to find font: %s.\n", format);
-    restoreConsole(&oldRegs);
-    return 1;
-  }
-
   fontId = uglFontCreate (fntDrvId, &fontDef);
   if (fontId == UGL_NULL) {
     restoreConsole(&oldRegs);
@@ -1526,7 +1536,15 @@ int uglFont4Test(char *format, char *str)
     return 1;
   }
 
-  uglTextDraw(gc, 0, 0, strlen(str), str);
+  if (uglTextSizeGet(fontId, &width, UGL_NULL,
+                     strlen(str), str) != UGL_STATUS_OK) {
+    restoreConsole(&oldRegs);
+    printf("Unable to retreive text size for %s.\n", str);
+    return 1;
+  }
+
+  uglFontSet(gc, fontId);
+  uglTextDraw(gc, (320 - width / 2), 240, strlen(str), str);
 
   getchar();
 
