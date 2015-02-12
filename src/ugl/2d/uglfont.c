@@ -666,12 +666,13 @@ UGL_STATUS  uglFontFindString (
     UGL_ORD                 priority = 100;
     char *                  pLast    = UGL_NULL;
 
-    fontDescPriority.faceName   = UGL_FONT_DONT_CARE;
-    fontDescPriority.familyName = UGL_FONT_DONT_CARE;
     fontDescPriority.pixelSize  = UGL_FONT_DONT_CARE;
     fontDescPriority.weight     = 1;
+    fontDescPriority.italic     = 1;
     fontDescPriority.spacing    = UGL_FONT_DONT_CARE;
     fontDescPriority.charSet    = UGL_FONT_DONT_CARE;
+    fontDescPriority.faceName   = UGL_FONT_DONT_CARE;
+    fontDescPriority.familyName = UGL_FONT_DONT_CARE;
 
     fontDescriptor.weight.min = UGL_FONT_BOLD_OFF;
     fontDescriptor.weight.max = UGL_FONT_BOLD_OFF;
