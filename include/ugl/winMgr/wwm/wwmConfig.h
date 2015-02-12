@@ -35,6 +35,10 @@
 extern "C" {
 #endif
 
+#define WWM_SYSTEM_FONT          "pixelSize = 10; familyName = Times"
+#define WWM_SMALL_FONT           "pixelSize =  6; familyName = Times"
+#define WWM_FIXED_FONT           "pixelSize = 10; familyName = Courier"
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

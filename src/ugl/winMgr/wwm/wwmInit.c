@@ -22,6 +22,7 @@
 
 #include "ugl.h"
 #include "uglWin.h"
+#include "winMgr/wwm/wwmConfig.h"
 
 /* Defines */
 
@@ -79,12 +80,11 @@ UGL_LOCAL void *  wwmCreate (
     WIN_ID              rootWinId;
     UGL_COLOR *         pColorTable;
     UGL_MODE_INFO       modeInfo;
-#ifdef TODO
     UGL_REG_DATA *      pRegData;
     UGL_FONT_DRIVER_ID  fntDrvId;
     UGL_FONT_DEF        fntDef;
     UGL_FONT_ID *       pFntTable;
-#endif
+    UGL_ORD             textOrigin;
     UGL_ORD             i;
 
     /* Allocate window manager colors */
@@ -115,13 +115,42 @@ UGL_LOCAL void *  wwmCreate (
     /* Set color table */
     winMgrColorTableSet(winMgrId, pColorTable, WIN_NUM_STANDARD_COLORS);
 
-#ifdef TODO
     pRegData = uglRegistryFind(UGL_FONT_ENGINE_TYPE, UGL_NULL, 0, 0);
     if (pRegData != UGL_NULL) {
-        fntDrvId  = (UGL_FONT_DRIVER_ID) pRegData->pData;
-        pFntTable = UGL_CALLOC(WIN_NUM_STANDARD_FONTS * sizeof(UGL_FONT_ID));
+        fntDrvId  = (UGL_FONT_DRIVER_ID) pRegData->data;
+        pFntTable = UGL_CALLOC(WIN_NUM_STANDARD_FONTS, sizeof(UGL_FONT_ID));
+
+        uglFontFindString(fntDrvId, WWM_SYSTEM_FONT, &fntDef);
+        pFntTable[WIN_FONT_INDEX_SYSTEM] = uglFontCreate(fntDrvId, &fntDef);
+
+        uglFontFindString(fntDrvId, WWM_SMALL_FONT, &fntDef);
+        pFntTable[WIN_FONT_INDEX_SMALL] = uglFontCreate(fntDrvId, &fntDef);
+
+        uglFontFindString(fntDrvId, WWM_FIXED_FONT, &fntDef);
+        pFntTable[WIN_FONT_INDEX_FIXED] = uglFontCreate(fntDrvId, &fntDef);
+
+        textOrigin = UGL_FONT_TEXT_UPPER_LEFT;
+        uglFontInfo(
+            pFntTable[WIN_FONT_INDEX_SYSTEM],
+            UGL_FONT_TEXT_ORIGIN_SET,
+            &textOrigin
+            );
+        uglFontInfo(
+            pFntTable[WIN_FONT_INDEX_SMALL],
+            UGL_FONT_TEXT_ORIGIN_SET,
+            &textOrigin
+            );
+        uglFontInfo(
+            pFntTable[WIN_FONT_INDEX_FIXED],
+            UGL_FONT_TEXT_ORIGIN_SET,
+            &textOrigin
+            );
+
+        winMgrFontTableSet(winMgrId, pFntTable, WIN_NUM_STANDARD_FONTS);
     }
-#endif
+    else {
+        winMgrFontTableSet(winMgrId, UGL_NULL, 0);
+    }
 
     appId = winAppCreate(
         "wwm",

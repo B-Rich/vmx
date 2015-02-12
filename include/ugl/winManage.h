@@ -121,6 +121,18 @@ UGL_STATUS  winMgrFontTableSet (
     UGL_SIZE       fontTableSize
     );
 
+/******************************************************************************
+ *
+ * winMgrFontTableGet - Get window manager font table
+ *
+ * RETURNS: Pointer to font table or UGL_NULL
+ */
+
+UGL_FONT_ID *  winMgrFontTableGet (
+    WIN_MGR_ID winMgrId,
+    UGL_SIZE * pFontTableSize
+    );
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

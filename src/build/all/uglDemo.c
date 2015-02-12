@@ -34,6 +34,7 @@
 #include "ugl.h"
 #include "uglinput.h"
 #include "uglWin.h"
+#include "winManage.h"
 #include "driver/graphics/vga/udvga.h"
 #include "driver/graphics/vga/udvgamode.h"
 #include "driver/graphics/generic/udgen.h"
@@ -3305,6 +3306,9 @@ UGL_STATUS uglWinHelloDrawCb(
   WIN_MSG *pMsg,
   void *pData,
   void *pParam) {
+  static char defStr[] = "Hello World!";
+  UGL_FONT_ID *pFonts;
+  UGL_SIZE width, height;
 
   uglBackgroundColorSet(pMsg->data.draw.gcId, rand() % 16);
   uglForegroundColorSet(pMsg->data.draw.gcId, rand() % 16);
@@ -3315,6 +3319,27 @@ UGL_STATUS uglWinHelloDrawCb(
       pMsg->data.draw.rect.right - 1,
       pMsg->data.draw.rect.bottom - 1
       );
+
+  pFonts = winMgrFontTableGet(winMgrGet(winId), UGL_NULL);
+  if (pFonts != UGL_NULL) {
+    uglTextSizeGet(
+      pFonts[WIN_FONT_INDEX_SYSTEM],
+      &width,
+      &height,
+      strlen(defStr),
+      defStr
+      );
+    uglFontSet(pMsg->data.draw.gcId, pFonts[WIN_FONT_INDEX_SYSTEM]);
+    uglTextDraw(
+      pMsg->data.draw.gcId,
+      (pMsg->data.draw.rect.right - pMsg->data.draw.rect.left) / 2 -
+        width / 2,
+      (pMsg->data.draw.rect.bottom - pMsg->data.draw.rect.top) / 2 -
+        height / 2,
+      strlen(defStr),
+      defStr
+      );
+  }
 
   return UGL_STATUS_OK;
 }
@@ -3356,7 +3381,7 @@ int uglWinHello(int noGfx)
   winAttach(winId, UGL_NULL, UGL_NULL);
   winSend(winId, MSG_EXPOSE, UGL_NULL, 0);
 
-  taskDelay(animTreshold);
+  getchar();
 
   winDestroy(winId);
   winAppDestroy(appId);

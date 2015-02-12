@@ -249,6 +249,33 @@ UGL_STATUS  winMgrFontTableSet (
 
 /******************************************************************************
  *
+ * winMgrFontTableGet - Get window manager font table
+ *
+ * RETURNS: Pointer to font table or UGL_NULL
+ */
+
+UGL_FONT_ID *  winMgrFontTableGet (
+    WIN_MGR_ID winMgrId,
+    UGL_SIZE * pFontTableSize
+    ) {
+    UGL_FONT_ID *  pFontTable;
+
+    if (winMgrId == UGL_NULL) {
+        pFontTable = UGL_NULL;
+    }
+    else {
+        if (pFontTableSize != UGL_NULL) {
+            *pFontTableSize = winMgrId->fontTableSize;
+        }
+
+        pFontTable = winMgrId->pFontTable;
+    }
+
+    return pFontTable;
+}
+
+/******************************************************************************
+ *
  * winManageCbMsgRoute - Route messages
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
