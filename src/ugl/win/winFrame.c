@@ -43,7 +43,7 @@ UGL_STATUS  winFrameCaptionSet (
         status = UGL_STATUS_ERROR;
     }
     else {
-        if ((winId->attributes & WIN_ATTRIB_FRAMED) == 0x00) {
+        if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
             pWindow = winId->pParent;
         }
         else {
