@@ -20,9 +20,9 @@
 
 /* wwmFrame.c - Window manager frame class */
 
+#include <string.h>
 #include "ugl.h"
-#include "uglWin.h"
-#include "winMgr/wwm/wwmConfig.h"
+#include "winMgr/wwm/wwm.h"
 
 /* Types */
 
@@ -56,6 +56,51 @@ typedef struct wwm_frame_class_data {
 UGL_LOCAL WWM_FRAME_CLASS_DATA  wwmFrameClassData;
 UGL_LOCAL WIN_CLASS_ID          wwmFrameClassId = UGL_NULL;
 
+UGL_LOCAL UGL_VOID  wwmFrame3DRectDraw (
+    WIN_ID            winId,
+    UGL_GC_ID         gcId,
+    const UGL_RECT *  pRect,
+    UGL_POS           depth,
+    WWM_FRAME_DATA *  pFrameData
+    );
+
+UGL_LOCAL UGL_VOID  wwmFrameBorderDraw (
+    WIN_ID            winId,
+    UGL_GC_ID         gcId,
+    UGL_RECT *        pRect,
+    WWM_FRAME_DATA *  pFrameData
+    );
+
+UGL_LOCAL UGL_VOID  wwmFrameCloseIconDraw (
+    WIN_ID            winId,
+    UGL_GC_ID         gcId,
+    WWM_FRAME_DATA *  pFrameData
+    );
+
+UGL_LOCAL UGL_VOID  wwmFrameMinIconDraw (
+    WIN_ID            winId,
+    UGL_GC_ID         gcId,
+    WWM_FRAME_DATA *  pFrameData
+    );
+
+UGL_LOCAL UGL_VOID  wwmFrameMaxIconDraw (
+    WIN_ID            winId,
+    UGL_GC_ID         gcId,
+    WWM_FRAME_DATA *  pFrameData
+    );
+
+UGL_LOCAL UGL_VOID  wwmFrameDraw (
+    WIN_ID            winId,
+    UGL_GC_ID         gcId,
+    const UGL_RECT *  pRect,
+    WWM_FRAME_DATA *  pFrameData
+    );
+
+UGL_LOCAL UGL_VOID  wwmFrameInit (
+    WIN_ID            winId,
+    WWM_FRAME_DATA *  pFrameData
+    );
+
 UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
     WIN_ID            winId,
     WIN_CLASS_ID      classId,
@@ -86,12 +131,284 @@ WIN_CLASS_ID  wwmFrameClassCreate (
 
 /******************************************************************************
  *
- * wwmFrameRegionInit - Initialize frame region
+ * wwmFrame3DRectDraw - Draw 3D frame rectangle
  *
  * RETURNS: N/A
  */
 
-UGL_LOCAL UGL_VOID  wwmFrameRegionInit (
+UGL_LOCAL UGL_VOID  wwmFrame3DRectDraw (
+    WIN_ID            winId,
+    UGL_GC_ID         gcId,
+    const UGL_RECT *  pRect,
+    UGL_POS           depth,
+    WWM_FRAME_DATA *  pFrameData
+    ) {
+    UGL_COLOR  topLeftColor;
+    UGL_COLOR  bottomRightColor;
+
+    if (winIsActive(winId) == UGL_TRUE) {
+        if (depth < 0) {
+            topLeftColor     = wwmFrameClassData.shadowColorActive;
+            bottomRightColor = wwmFrameClassData.shineColorActive;
+        }
+        else if (depth > 0) {
+            topLeftColor     = wwmFrameClassData.shineColorActive;
+            bottomRightColor = wwmFrameClassData.shadowColorActive;
+        }
+        else {
+            topLeftColor     = wwmFrameClassData.frameColorActive;
+            bottomRightColor = wwmFrameClassData.frameColorActive;
+        }
+    }
+    else {
+        if (depth < 0) {
+            topLeftColor     = wwmFrameClassData.shadowColorInactive;
+            bottomRightColor = wwmFrameClassData.shineColorInactive;
+        }
+        else if (depth > 0) {
+            topLeftColor     = wwmFrameClassData.shineColorInactive;
+            bottomRightColor = wwmFrameClassData.shadowColorInactive;
+        }
+        else {
+            topLeftColor     = wwmFrameClassData.frameColorInactive;
+            bottomRightColor = wwmFrameClassData.frameColorInactive;
+        }
+    }
+
+    uglLineWidthSet(gcId, 1);
+
+    uglForegroundColorSet(gcId, topLeftColor);
+    uglLine(gcId, pRect->left + 1, pRect->top, pRect->right, pRect->top);
+    uglLine(gcId, pRect->left, pRect->top, pRect->left, pRect->bottom);
+
+    uglForegroundColorSet(gcId, bottomRightColor);
+    uglLine(gcId, pRect->left + 1, pRect->bottom, pRect->right, pRect->bottom);
+    uglLine(gcId, pRect->right, pRect->top, pRect->right, pRect->bottom);
+}
+
+/******************************************************************************
+ *
+ * wwmFrameBorderDraw - Draw frame border
+ *
+ * RETURNS: N/A
+ */
+
+UGL_LOCAL UGL_VOID  wwmFrameBorderDraw (
+    WIN_ID            winId,
+    UGL_GC_ID         gcId,
+    UGL_RECT *        pRect,
+    WWM_FRAME_DATA *  pFrameData
+    ) {
+    UGL_ORD  i;
+
+    wwmFrame3DRectDraw(winId, gcId, pRect, 1, pFrameData);
+    WWM_RECT_DECREMENT(*pRect);
+
+    uglBackgroundColorSet(gcId, UGL_COLOR_TRANSPARENT);
+    if (winIsActive(winId) == UGL_TRUE) {
+        uglForegroundColorSet(gcId, wwmFrameClassData.frameColorActive);
+    }
+    else {
+        uglForegroundColorSet(gcId, wwmFrameClassData.frameColorInactive);
+    }
+
+    for (i = 0; i < WWM_FRAME_BORDER_SIZE - 2; i++) {
+        uglRectangle(
+            gcId,
+            pRect->left,
+            pRect->top,
+            pRect->right,
+            pRect->bottom
+            );
+        WWM_RECT_DECREMENT(*pRect);
+    }
+
+    wwmFrame3DRectDraw(winId, gcId, pRect, -1, pFrameData);
+}
+
+/******************************************************************************
+ *
+ * wwmFrameCloseIconDraw - Draw frame close icon
+ *
+ * RETURNS: N/A
+ */
+
+UGL_LOCAL UGL_VOID  wwmFrameCloseIconDraw (
+    WIN_ID            winId,
+    UGL_GC_ID         gcId,
+    WWM_FRAME_DATA *  pFrameData
+    ) {
+    UGL_RECT  rect;
+
+    rect.left   = (pFrameData->closeRect.left +
+                   pFrameData->closeRect.right) / 2 - 3;
+    rect.top    = (pFrameData->closeRect.top +
+                   pFrameData->closeRect.bottom) / 2 - 3;
+    rect.right  = rect.left + 7;
+    rect.bottom = rect.top + 6;
+
+    wwmFrame3DRectDraw(winId, gcId, &pFrameData->closeRect, 1, pFrameData);
+
+    uglForegroundColorSet(gcId, WIN_BLACK);
+    uglLine(gcId, rect.left, rect.top, rect.right - 1, rect.bottom);
+    uglLine(gcId, rect.right - 1, rect.top, rect.left, rect.bottom);
+    uglLine(gcId, rect.left + 1, rect.top, rect.right, rect.bottom);
+    uglLine(gcId, rect.right, rect.top, rect.left + 1, rect.bottom);
+}
+
+/******************************************************************************
+ *
+ * wwmFrameMinIconDraw - Draw frame minimize icon
+ *
+ * RETURNS: N/A
+ */
+
+UGL_LOCAL UGL_VOID  wwmFrameMinIconDraw (
+    WIN_ID            winId,
+    UGL_GC_ID         gcId,
+    WWM_FRAME_DATA *  pFrameData
+    ) {
+    UGL_RECT  rect;
+    UGL_POS   points[8];
+
+    rect.left   = (pFrameData->minRect.left +
+                   pFrameData->minRect.right) / 2 - 3;
+    rect.top    = (pFrameData->minRect.top +
+                   pFrameData->minRect.bottom) / 2 - 1;
+    rect.right  = rect.left + 6;
+    rect.bottom = rect.top + 3;
+
+    wwmFrame3DRectDraw(winId, gcId, &pFrameData->minRect, 1, pFrameData);
+
+    points[0] = rect.left;
+    points[1] = rect.top;
+    points[2] = rect.right;
+    points[3] = rect.top;
+    points[4] = rect.left + 3;
+    points[5] = rect.bottom;
+    points[6] = rect.left;
+    points[7] = rect.top;
+
+    uglBackgroundColorSet(gcId, WIN_BLACK);
+    uglForegroundColorSet(gcId, UGL_COLOR_TRANSPARENT);
+
+    uglPolygon(gcId, 4, points);
+}
+
+/******************************************************************************
+ *
+ * wwmFrameMaxIconDraw - Draw frame maximize icon
+ *
+ * RETURNS: N/A
+ */
+
+UGL_LOCAL UGL_VOID  wwmFrameMaxIconDraw (
+    WIN_ID            winId,
+    UGL_GC_ID         gcId,
+    WWM_FRAME_DATA *  pFrameData
+    ) {
+    UGL_RECT  rect;
+    UGL_POS   points[8];
+
+    rect.left   = (pFrameData->maxRect.left +
+                   pFrameData->maxRect.right) / 2 - 3;
+    rect.top    = (pFrameData->maxRect.top +
+                   pFrameData->maxRect.bottom) / 2 - 2;
+    rect.right  = rect.left + 6;
+    rect.bottom = rect.top + 3;
+
+    wwmFrame3DRectDraw(winId, gcId, &pFrameData->maxRect, 1, pFrameData);
+
+    points[0] = rect.left;
+    points[1] = rect.bottom;
+    points[2] = rect.right;
+    points[3] = rect.bottom;
+    points[4] = rect.left + 3;
+    points[5] = rect.top;
+    points[6] = rect.left;
+    points[7] = rect.bottom;
+
+    uglBackgroundColorSet(gcId, WIN_BLACK);
+    uglForegroundColorSet(gcId, UGL_COLOR_TRANSPARENT);
+
+    uglPolygon(gcId, 4, points);
+}
+
+/******************************************************************************
+ *
+ * wwmFrameDraw - Draw window frame
+ *
+ * RETURNS: N/A
+ */
+
+UGL_LOCAL UGL_VOID  wwmFrameDraw (
+    WIN_ID            winId,
+    UGL_GC_ID         gcId,
+    const UGL_RECT *  pRect,
+    WWM_FRAME_DATA *  pFrameData
+    ) {
+    UGL_RECT    rect;
+    UGL_UINT32  attributes;
+
+    memcpy(&rect, pRect, sizeof(UGL_RECT));
+    attributes = winAttribGet(winId);
+
+    wwmFrameBorderDraw(winId, gcId, &rect, pFrameData);
+    rect.bottom = pFrameData->captionRect.bottom;
+
+    if (winIsActive(winId) == UGL_TRUE) {
+        uglBackgroundColorSet(gcId, wwmFrameClassData.frameColorActive);
+    }
+    else {
+        uglBackgroundColorSet(gcId, wwmFrameClassData.frameColorInactive);
+    }
+    uglForegroundColorSet(gcId, UGL_COLOR_TRANSPARENT);
+    uglRectangle(gcId, rect.left, rect.top, rect.right, rect.bottom);
+    uglClipRectSet(gcId, rect.left, rect.top, rect.right, rect.bottom);
+
+    if ((attributes & WIN_ATTRIB_NO_CLOSE) == 0x00) {
+        wwmFrameCloseIconDraw(winId, gcId, pFrameData);
+    }
+
+    if ((attributes & WIN_ATTRIB_NO_MINIMIZE) == 0x00) {
+        wwmFrameMinIconDraw(winId, gcId, pFrameData);
+    }
+
+    if ((attributes & WIN_ATTRIB_NO_MAXIMIZE) == 0x00) {
+        wwmFrameMaxIconDraw(winId, gcId, pFrameData);
+    }
+
+    rect.left = pFrameData->captionRect.left;
+    wwmFrame3DRectDraw(winId, gcId, &rect, 1, pFrameData);
+    WWM_RECT_DECREMENT(rect);
+    uglClipRectSet(gcId, rect.left, rect.top, rect.right, rect.bottom);
+
+    if (winIsActive(winId) == UGL_TRUE) {
+        uglForegroundColorSet(gcId, wwmFrameClassData.textColorActive);
+    }
+    else {
+        uglForegroundColorSet(gcId, wwmFrameClassData.textColorInactive);
+    }
+
+    uglFontSet(gcId, wwmFrameClassData.fontId);
+    uglBackgroundColorSet(gcId, UGL_COLOR_TRANSPARENT);
+    uglTextDraw(
+        gcId,
+        rect.left + 2,
+        rect.top + 1,
+        -1,
+        pFrameData->pTitleText
+        );
+}
+
+/******************************************************************************
+ *
+ * wwmFrameInit - Initialize frame
+ *
+ * RETURNS: N/A
+ */
+
+UGL_LOCAL UGL_VOID  wwmFrameInit (
     WIN_ID            winId,
     WWM_FRAME_DATA *  pFrameData
     ) {
@@ -181,7 +498,7 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
     switch (pMsg->type) {
 
         case MSG_CREATE:
-            wwmFrameRegionInit(winId, pFrameData);
+            wwmFrameInit(winId, pFrameData);
 #ifdef TODO
             winCbAdd(
                 winId,

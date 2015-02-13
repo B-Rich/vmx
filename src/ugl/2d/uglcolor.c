@@ -306,10 +306,10 @@ UGL_STATUS uglARGBSpecSet (
  */
 
 UGL_VOID  uglRGB2HLS (
-    UGL_RGB      rgb,
-    UGL_ORD * pHue,
-    UGL_ORD * pLightness,
-    UGL_ORD * pSaturation
+    UGL_RGB    rgb,
+    UGL_ORD *  pHue,
+    UGL_ORD *  pLightness,
+    UGL_ORD *  pSaturation
     ) {
     UGL_ORD  hue;
     UGL_ORD  lightness;

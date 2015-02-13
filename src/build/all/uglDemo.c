@@ -3310,8 +3310,8 @@ UGL_STATUS uglWinHelloDrawCb(
   UGL_FONT_ID *pFonts;
   UGL_SIZE width, height;
 
-  uglBackgroundColorSet(pMsg->data.draw.gcId, WIN_INDEX_BLUE);
-  uglForegroundColorSet(pMsg->data.draw.gcId, WIN_INDEX_WHITE);
+  uglBackgroundColorSet(pMsg->data.draw.gcId, WIN_BLUE);
+  uglForegroundColorSet(pMsg->data.draw.gcId, WIN_WHITE);
   uglRectangle(
       pMsg->data.draw.gcId,
       pMsg->data.draw.rect.left,
