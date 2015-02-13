@@ -510,6 +510,15 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
 #endif
             break;
 
+        case MSG_DESTROY:
+#ifdef TODO
+            winCbRemove(winId, wwmMoveSizeCallback);
+#endif
+            if (pFrameData->pTitleText != UGL_NULL) {
+                UGL_FREE(pFrameData->pTitleText);
+            }
+            break;
+
         case MSG_CLASS_INIT: {
             UGL_REG_DATA *      pRegData;
             UGL_DEVICE_ID       displayId;
@@ -604,7 +613,7 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
 
             pRegData = uglRegistryFind(UGL_FONT_ENGINE_TYPE, UGL_NULL, 0, 0);
             if (pRegData == UGL_NULL) {
-                return (UGL_STATUS_ERROR);
+                return UGL_STATUS_ERROR;
             }
 
             fntDrvId  = (UGL_FONT_DRIVER_ID) pRegData->data;
@@ -637,8 +646,17 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
                 }
             }
 
-            return (UGL_STATUS_FINISHED);
+            return UGL_STATUS_FINISHED;
             } break;
+
+        case MSG_DRAW:
+            wwmFrameDraw(
+                winId,
+                pMsg->data.draw.gcId,
+                &pMsg->data.draw.rect,
+                pFrameData
+                );
+            return UGL_STATUS_FINISHED;
 
         case MSG_RECT_CHANGING:
             if ((winStateGet(winId) & WIN_STATE_MAXIMIZED) != 0x00) {
@@ -755,6 +773,33 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
 
             winRectSet(winId, &rect);
             } break;
+
+        case MSG_FRAME_CAPTION_GET:
+            pMsg->data.frameCaptionData.caption.pText =
+                (UGL_CHAR *) pFrameData->pTitleText;
+            pMsg->data.frameCaptionData.isWide = UGL_FALSE;
+            break;
+
+        case MSG_FRAME_CAPTION_SET:
+            if (pFrameData->pTitleText != UGL_NULL) {
+                UGL_FREE(pFrameData->pTitleText);
+                pFrameData->pTitleText = UGL_NULL;
+            }
+
+            if (pMsg->data.frameCaptionData.caption.pText != UGL_NULL) {
+                pFrameData->pTitleText = UGL_MALLOC(
+                    strlen(pMsg->data.frameCaption) + 1);
+
+                if (pFrameData->pTitleText == UGL_NULL) {
+                    return UGL_STATUS_ERROR;
+                }
+
+                strcpy(pFrameData->pTitleText, pMsg->data.frameCaption);
+            }
+
+            winRectInvalidate(winId, UGL_NULL);
+
+            break;
 
         default:
             /* TODO: Catch all other message types */
