@@ -101,6 +101,25 @@
 extern "C" {
 #endif
 
+/* Macros */
+
+#define WIN_BLACK               (winColorGet(UGL_NULL, WIN_INDEX_BLACK))
+#define WIN_BLUE                (winColorGet(UGL_NULL, WIN_INDEX_BLUE))
+#define WIN_GREEN               (winColorGet(UGL_NULL, WIN_INDEX_GREEN))
+#define WIN_CYAN                (winColorGet(UGL_NULL, WIN_INDEX_CYAN))
+#define WIN_RED                 (winColorGet(UGL_NULL, WIN_INDEX_RED))
+#define WIN_MAGENTA             (winColorGet(UGL_NULL, WIN_INDEX_MAGENTA))
+#define WIN_BROWN               (winColorGet(UGL_NULL, WIN_INDEX_BROWN))
+#define WIN_LIGHTGRAY           (winColorGet(UGL_NULL, WIN_INDEX_LIGHTGRAY))
+#define WIN_DARKGRAY            (winColorGet(UGL_NULL, WIN_INDEX_DARKGRAY))
+#define WIN_LIGHTBLUE           (winColorGet(UGL_NULL, WIN_INDEX_LIGHTBLUE))
+#define WIN_LIGHTGREEN          (winColorGet(UGL_NULL, WIN_INDEX_LIGHTGREEN))
+#define WIN_LIGHTCYAN           (winColorGet(UGL_NULL, WIN_INDEX_LIGHTCYAN))
+#define WIN_LIGHTRED            (winColorGet(UGL_NULL, WIN_INDEX_LIGHTRED))
+#define WIN_LIGHTMAGENTA        (winColorGet(UGL_NULL, WIN_INDEX_LIGHTMAGENTA))
+#define WIN_YELLOW              (winColorGet(UGL_NULL, WIN_INDEX_YELLOW))
+#define WIN_WHITE               (winColorGet(UGL_NULL, WIN_INDEX_WHITE))
+
 /* Types */
 
 typedef UGL_STATUS  (WIN_CB) (
@@ -219,6 +238,17 @@ UGL_UINT32  winStateGet (
 
 /******************************************************************************
  *
+ * winAttribGet - Get public window attributes
+ *
+ * RETURNS: Window attributes or zero
+ */
+
+UGL_UINT32  winAttribGet (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winMgrGet - Get window manager for window
  *
  * RETURNS: Pointer to window manager or UGL_NULL
@@ -264,6 +294,18 @@ UGL_STATUS  winWindowRectToScreen (
 UGL_STATUS  winDrawRectGet (
     WIN_ID      winId,
     UGL_RECT *  pRect
+    );
+
+/******************************************************************************
+ *
+ * winColorGet - Get color from window standard colors or zero
+ *
+ * RETURNS: Window color
+ */
+
+UGL_COLOR  winColorGet (
+    WIN_ID   winId,
+    UGL_ORD  index
     );
 
 /******************************************************************************

@@ -21,8 +21,7 @@
 /* wwmInit.c - Generic window manager */
 
 #include "ugl.h"
-#include "uglWin.h"
-#include "winMgr/wwm/wwmConfig.h"
+#include "winMgr/wwm/wwm.h"
 
 /* Defines */
 

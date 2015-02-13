@@ -25,6 +25,10 @@
 #include "uglWin.h"
 #include "private/uglWinP.h"
 
+/* Imports */
+
+extern WIN_MGR *  pDefaultWinMgr;
+
 /******************************************************************************
  *
  * winCount - Get number of child windows
@@ -227,6 +231,28 @@ UGL_UINT32  winStateGet (
 
 /******************************************************************************
  *
+ * winAttribGet - Get public window attributes
+ *
+ * RETURNS: Window attributes or zero
+ */
+
+UGL_UINT32  winAttribGet (
+    WIN_ID  winId
+    ) {
+    UGL_UINT32  attributes;
+
+    if (winId == UGL_NULL) {
+        attributes = 0;
+    }
+    else {
+        attributes = winId->attributes & WIN_PUBLIC_ATTRIBS;
+    }
+
+    return attributes;
+}
+
+/******************************************************************************
+ *
  * winMgrGet - Get window manager for window
  *
  * RETURNS: Pointer to window manager or UGL_NULL
@@ -334,6 +360,7 @@ UGL_STATUS  winWindowRectToScreen (
 
     return status;
 }
+
 /******************************************************************************
  *
  * winDrawRectGet - Get window drawing rectangle
@@ -358,5 +385,36 @@ UGL_STATUS  winDrawRectGet (
     }
 
     return status;
+}
+
+/******************************************************************************
+ *
+ * winColorGet - Get color from window standard colors or zero
+ *
+ * RETURNS: Window color
+ */
+
+UGL_COLOR  winColorGet (
+    WIN_ID   winId,
+    UGL_ORD  index
+    ) {
+    UGL_COLOR  color;
+    WIN_MGR *  pWinMgr;
+
+    if (winId == UGL_NULL) {
+        pWinMgr = pDefaultWinMgr;
+    }
+    else {
+        pWinMgr = winId->pApp->pWinMgr;
+    }
+
+    if (index < 0 || index >= pWinMgr->colorTableSize) {
+        color = 0;
+    }
+    else {
+        color = pWinMgr->pColorTable[index];
+    }
+
+    return color;
 }
 

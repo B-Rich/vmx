@@ -18,16 +18,14 @@
  *   along with Real VMX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* wwmConfig.h - Window manager configuration */
+/* wwm.h.h - Window manager header */
 
-#ifndef _wwmConfig_h
-#define _wwmConfig_h
+#ifndef _wwm_h
+#define _wwm_h
 
-/* Defines */
-
-#define WWM_FRAME_BORDER_SIZE     4
-#define WWM_FRAME_MIN_WIDTH      60
-#define WWM_FRAME_MIN_HEIGHT     30
+#include "uglWin.h"
+#include "winManage.h"
+#include "winMgr/wwm/wwmConfig.h"
 
 #ifndef _ASMLANGUAGE
 
@@ -35,15 +33,20 @@
 extern "C" {
 #endif
 
-#define WWM_FRAME_COLOR_ACTIVE           UGL_MAKE_RGB(128,   0,   0)
-#define WWM_FRAME_COLOR_INACTIVE         UGL_MAKE_RGB(128, 128, 128)
-#define WWM_FRAME_TEXT_COLOR_ACTIVE      UGL_MAKE_RGB(255, 255,  84)
-#define WWM_FRAME_TEXT_COLOR_INACTIVE    UGL_MAKE_RGB(255, 255, 255)
+/* Macros */
 
-#define WWM_FRAME_FONT                   "pixelSize = 10; familyName = Times"
-#define WWM_SYSTEM_FONT                  "pixelSize = 10; familyName = Times"
-#define WWM_SMALL_FONT                   "pixelSize =  6; familyName = Times"
-#define WWM_FIXED_FONT                   "pixelSize = 10; familyName = Courier"
+/******************************************************************************
+ *
+ * WWM_RECT_DECREMENT - Decrease rectangle one unit from all sides
+ *
+ *
+ */
+
+#define WWM_RECT_DECREMENT(rect)                                              \
+    (rect).left++;                                                            \
+    (rect).top++;                                                             \
+    (rect).right--;                                                           \
+    (rect).bottom--
 
 #ifdef __cplusplus
 }
@@ -51,5 +54,5 @@ extern "C" {
 
 #endif /* _ASMLANGUAGE */
 
-#endif /* _wwmConfig_h */
+#endif /* _wwm_h */
 
