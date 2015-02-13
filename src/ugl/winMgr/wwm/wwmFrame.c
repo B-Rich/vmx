@@ -181,8 +181,8 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
     switch (pMsg->type) {
 
         case MSG_CREATE:
-#ifdef TODO
             wwmFrameRegionInit(winId, pFrameData);
+#ifdef TODO
             winCbAdd(
                 winId,
                 MSG_PTR_FIRST,
@@ -194,13 +194,14 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
             break;
 
         case MSG_CLASS_INIT: {
-            UGL_REG_DATA *  pRegData;
-            UGL_DEVICE_ID   displayId;
-            UGL_RGB         color;
-            UGL_ORD         hue;
-            UGL_ORD         lightness;
-            UGL_ORD         saturation;
-            UGL_FONT_ID *   pFontTable;
+            UGL_REG_DATA *      pRegData;
+            UGL_DEVICE_ID       displayId;
+            UGL_RGB             color;
+            UGL_ORD             hue;
+            UGL_ORD             lightness;
+            UGL_ORD             saturation;
+            UGL_FONT_DRIVER_ID  fntDrvId;
+            UGL_FONT_DEF        fntDef;
 
             pRegData = uglRegistryFind(UGL_DISPLAY_TYPE, UGL_NULL, 0, 0);
             if (pRegData == UGL_NULL) {
@@ -284,9 +285,14 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
                 1
                 );
 
-            pFontTable = winMgrFontTableGet(winMgrGet(winId), UGL_NULL);
-            wwmFrameClassData.fontId = pFontTable[WIN_FONT_INDEX_SYSTEM];
+            pRegData = uglRegistryFind(UGL_FONT_ENGINE_TYPE, UGL_NULL, 0, 0);
+            if (pRegData == UGL_NULL) {
+                return (UGL_STATUS_ERROR);
+            }
 
+            fntDrvId  = (UGL_FONT_DRIVER_ID) pRegData->data;
+            uglFontFindString(fntDrvId, WWM_FRAME_FONT, &fntDef);
+            wwmFrameClassData.fontId = uglFontCreate(fntDrvId, &fntDef);
             } break;
 
         case MSG_CLASS_DEINIT: {

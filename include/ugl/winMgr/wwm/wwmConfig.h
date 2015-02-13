@@ -40,6 +40,7 @@ extern "C" {
 #define WWM_FRAME_TEXT_COLOR_ACTIVE      UGL_MAKE_RGB(255, 255,  84)
 #define WWM_FRAME_TEXT_COLOR_INACTIVE    UGL_MAKE_RGB(255, 255, 255)
 
+#define WWM_FRAME_FONT                   "pixelSize = 10; familyName = Times"
 #define WWM_SYSTEM_FONT                  "pixelSize = 10; familyName = Times"
 #define WWM_SMALL_FONT                   "pixelSize =  6; familyName = Times"
 #define WWM_FIXED_FONT                   "pixelSize = 10; familyName = Courier"
