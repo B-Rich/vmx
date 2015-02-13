@@ -594,6 +594,17 @@ WIN_ID  winDirtyGet (
 
 /******************************************************************************
  *
+ * winUpdate - Request to update window directly
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+ 
+UGL_STATUS  winUpdate (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winDeadGet - Get next window on destroy list
  *
  * RETURNS: Window id or UGL_NULL
