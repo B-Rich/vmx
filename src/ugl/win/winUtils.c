@@ -227,6 +227,28 @@ UGL_UINT32  winStateGet (
 
 /******************************************************************************
  *
+ * winAttribGet - Get public window attributes
+ *
+ * RETURNS: Window attributes or zero
+ */
+
+UGL_UINT32  winAttribGet (
+    WIN_ID  winId
+    ) {
+    UGL_UINT32  attributes;
+
+    if (winId == UGL_NULL) {
+        attributes = 0;
+    }
+    else {
+        attributes = winId->attributes & WIN_PUBLIC_ATTRIBS;
+    }
+
+    return attributes;
+}
+
+/******************************************************************************
+ *
  * winMgrGet - Get window manager for window
  *
  * RETURNS: Pointer to window manager or UGL_NULL

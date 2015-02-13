@@ -28,7 +28,6 @@
 
 typedef struct wwm_frame_data {
     void *         pTitleText;
-    UGL_BOOL       titleIsWide;
     UGL_RECT       contentRect;
     UGL_RECT       closeRect;
     UGL_RECT       minRect;
@@ -87,6 +86,86 @@ WIN_CLASS_ID  wwmFrameClassCreate (
 
 /******************************************************************************
  *
+ * wwmFrameRegionInit - Initialize frame region
+ *
+ * RETURNS: N/A
+ */
+
+UGL_LOCAL UGL_VOID  wwmFrameRegionInit (
+    WIN_ID            winId,
+    WWM_FRAME_DATA *  pFrameData
+    ) {
+    UGL_RECT    rect;
+    UGL_SIZE    captionHeight;
+    UGL_UINT32  attributes;
+
+    uglTextSizeGet(
+        wwmFrameClassData.fontId,
+        UGL_NULL,
+        &captionHeight,
+        -1,
+        pFrameData->pTitleText
+        );
+    captionHeight += 4;
+
+    rect.left   = WWM_FRAME_BORDER_SIZE;
+    rect.top    = WWM_FRAME_BORDER_SIZE;
+    rect.right  = rect.left + captionHeight;
+    rect.bottom = rect.top + captionHeight - 1;
+
+    attributes = winAttribGet(winId);
+    if ((attributes & WIN_ATTRIB_NO_CLOSE) == 0x00) {
+        memcpy(&pFrameData->closeRect, &rect, sizeof(UGL_RECT));
+        pFrameData->closeRect.right++;
+        UGL_RECT_MOVE(rect, captionHeight + 2, 0);
+    }
+    else {
+        pFrameData->closeRect.left   = -1;
+        pFrameData->closeRect.top    = -1;
+        pFrameData->closeRect.right  = -1;
+        pFrameData->closeRect.bottom = -1;
+    }
+
+    if ((attributes & WIN_ATTRIB_NO_MINIMIZE) == 0x00) {
+        memcpy(&pFrameData->minRect, &rect, sizeof(UGL_RECT));
+        UGL_RECT_MOVE(rect, captionHeight + 1, 0);
+    }
+    else {
+        pFrameData->minRect.left   = -1;
+        pFrameData->minRect.top    = -1;
+        pFrameData->minRect.right  = -1;
+        pFrameData->minRect.bottom = -1;
+    }
+
+    if ((attributes & WIN_ATTRIB_NO_MAXIMIZE) == 0x00 &&
+        (attributes & WIN_ATTRIB_NO_RESIZE) == 0x00) {
+
+        memcpy(&pFrameData->maxRect, &rect, sizeof(UGL_RECT));
+        UGL_RECT_MOVE(rect, captionHeight + 1, 0);
+    }
+    else {
+        pFrameData->maxRect.left   = -1;
+        pFrameData->maxRect.top    = -1;
+        pFrameData->maxRect.right  = -1;
+        pFrameData->maxRect.bottom = -1;
+    }
+
+    winDrawRectGet(winId, &pFrameData->captionRect);
+    pFrameData->captionRect.left    = rect.left;
+    pFrameData->captionRect.top    += WWM_FRAME_BORDER_SIZE;
+    pFrameData->captionRect.right  -= WWM_FRAME_BORDER_SIZE;
+    pFrameData->captionRect.bottom  = pFrameData->captionRect.top +
+        captionHeight - 1;
+
+    winDrawRectGet(winId, &pFrameData->contentRect);
+    pFrameData->contentRect.left   += WWM_FRAME_BORDER_SIZE;
+    pFrameData->contentRect.top     = pFrameData->captionRect.bottom + 1;
+    pFrameData->contentRect.right  -= WWM_FRAME_BORDER_SIZE;
+    pFrameData->captionRect.bottom -= WWM_FRAME_BORDER_SIZE;
+}
+
+/******************************************************************************
+ *
  * wwmFrameMsgHandler - Frame class message handler
  *
  * RETURNS: Pointer to display or UGL_NULL
@@ -100,6 +179,19 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
     ) {
 
     switch (pMsg->type) {
+
+        case MSG_CREATE:
+#ifdef TODO
+            wwmFrameRegionInit(winId, pFrameData);
+            winCbAdd(
+                winId,
+                MSG_PTR_FIRST,
+                MSG_PTR_LAST,
+                wwmMoveSizeCallback,
+                0
+                );
+#endif
+            break;
 
         case MSG_CLASS_INIT: {
             UGL_REG_DATA *  pRegData;
@@ -333,8 +425,8 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
             memcpy(&rect, &pMsg->data.frameContentRect, sizeof(UGL_RECT));
 
             rect.left   -= WWM_FRAME_BORDER_SIZE;
-            rect.top    -= WWM_FRAME_BORDER_SIZE;
-                /* TODO: + UGL_RECT_HEIGHT(pFrameData->captionRect); */
+            rect.top    -= WWM_FRAME_BORDER_SIZE +
+                UGL_RECT_HEIGHT(pFrameData->captionRect);
             rect.right  += WWM_FRAME_BORDER_SIZE;
             rect.bottom += WWM_FRAME_BORDER_SIZE;
 
