@@ -1754,7 +1754,7 @@ UGL_STATUS  winDirtySet (
     ) {
     UGL_STATUS      status;
     WIN_RESOURCE *  pResource;
-    UGL_WINDOW *    pWindow;
+    UGL_WINDOW *    pNextWindow;
     WIN_APP *       pApp = winId->pApp;
 
     if (winId == UGL_NULL) {
@@ -1771,8 +1771,8 @@ UGL_STATUS  winDirtySet (
             pResource = (WIN_RESOURCE *) uglListFirst(&pApp->resourceList);
             while (pResource != NULL) {
 
-                pWindow = (UGL_WINDOW *) pResource->id;
-                if ((pWindow->state & WIN_STATE_DIRTY) == 0x00) {
+                pNextWindow = (UGL_WINDOW *) pResource->id;
+                if ((pNextWindow->state & WIN_STATE_DIRTY) == 0x00) {
                     break;
                 }
 
