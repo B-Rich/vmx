@@ -47,6 +47,7 @@
 #include "cursor.cbm"
 #include "font8x16.cfs"
 
+//#define UGL_POINTER_INIT
 #define PAL_LENGTH             16
 #define BALL_SPEED             4
 #define DB_CLEAR_COLOR         0x06
@@ -3179,6 +3180,12 @@ int uglMouseInit(void)
     return UGL_STATUS_ERROR;
   }
 
+  inputDevId = (UGL_INPUT_DEV_ID) pData->data;
+  if (inputDevId != UGL_NULL) {
+    printf("Mouse already initialized.\n");
+    return UGL_STATUS_FINISHED;
+  }
+
   inputDevId = uglInputDevOpen("/mouse", &uglPs2PtrDriver);
   if (inputDevId == UGL_NULL) {
     return UGL_STATUS_ERROR;
@@ -3272,7 +3279,9 @@ int uglWinInit(int noConsole)
     return 1;
   }
 
-#if 0
+#ifdef UGL_POINTER_INIT
+  uglMouseInit();
+
   pData = uglRegistryFind(UGL_PTR_TYPE, UGL_NULL, 0, UGL_NULL);
   if (pData == UGL_NULL) {
     printf("No pointer device found.\n");
