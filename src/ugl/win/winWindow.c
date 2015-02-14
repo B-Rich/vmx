@@ -129,6 +129,9 @@ WIN_ID  winCreate (
         pWindow->attributes = attributes | WIN_ATTRIB_CLIP_CHILDREN;
         pWindow->state      = WIN_STATE_HIDDEN;
 
+        /* Set window identifier in resource node */
+        pWindow->resource.id = pWindow;
+
         /* Setup window data pointers */
         if (appDataSize > 0) {
             pWindow->pAppData= &pWindow[1];
