@@ -25,8 +25,6 @@
 #include "uglWin.h"
 #include "private/uglWinP.h"
 
-#define GFX_MODE
-
 /* Locals */
 
 UGL_LOCAL UGL_VOID  winWakeUp (
@@ -512,11 +510,9 @@ UGL_STATUS  winRectSet (
             uglRegionEmpty(&region);
         }
 
-#ifdef GFX_MODE
         if (newRect.left != oldRect.left || newRect.top != oldRect.top) {
             winInvalidate(winId);
         }
-#endif
 
         memcpy(&winId->rect, &oldRect, sizeof(UGL_RECT));
 
@@ -652,7 +648,6 @@ UGL_STATUS  winRectSet (
             }
         }
 
-#ifdef GFX_MODE
         /* Move window */
         if (newRect.left != oldRect.left || newRect.top != oldRect.top) {
             uglRegionInit(&moveRegion);
@@ -672,7 +667,7 @@ UGL_STATUS  winRectSet (
                     UGL_RECT_MOVE(
                         viewportRect,
                         pParent->rect.left,
-                        pParent->rect.right
+                        pParent->rect.top
                         );
                 }
 
@@ -701,7 +696,6 @@ UGL_STATUS  winRectSet (
 
             uglRegionDeinit(&moveRegion);
         }
-#endif
 
         /* Expose window */
         uglRegionCopy(&winId->pParent->paintersRegion, &region);
