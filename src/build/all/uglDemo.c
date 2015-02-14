@@ -3167,9 +3167,6 @@ int uglMouseInit(void)
   UGL_INPUT_SERVICE_ID inputSrvId;
   UGL_INPUT_DEV_ID inputDevId;
 
-  i8042MseDrvInit();
-  i8042MseDevCreate("/mouse");
-
   pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
   if (pData == UGL_NULL) {
     return UGL_STATUS_ERROR;
@@ -3180,11 +3177,14 @@ int uglMouseInit(void)
     return UGL_STATUS_ERROR;
   }
 
-  inputDevId = (UGL_INPUT_DEV_ID) pData->data;
-  if (inputDevId != UGL_NULL) {
+  pData = uglRegistryFind(UGL_PTR_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData != UGL_NULL) {
     printf("Mouse already initialized.\n");
-    return UGL_STATUS_FINISHED;
+    return 1;
   }
+
+  i8042MseDrvInit();
+  i8042MseDevCreate("/mouse");
 
   inputDevId = uglInputDevOpen("/mouse", &uglPs2PtrDriver);
   if (inputDevId == UGL_NULL) {
