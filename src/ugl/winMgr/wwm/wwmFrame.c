@@ -519,6 +519,18 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
             }
             break;
 
+        case MSG_MANAGE:
+            if (winVisibleGet(winId) == UGL_TRUE ||
+                ((winStateGet(winId) & WIN_STATE_MINIMIZED) != 0x00)) {
+
+                if (winVisibleGet(winId) == UGL_TRUE &&
+                    ((winStateGet(winId) & WIN_STATE_MINIMIZED) != 0x00)) {
+
+                    winVisibleSet(winId, UGL_FALSE);
+                }
+            }
+            return UGL_STATUS_FINISHED;
+
         case MSG_CLASS_INIT: {
             UGL_REG_DATA *      pRegData;
             UGL_DEVICE_ID       displayId;

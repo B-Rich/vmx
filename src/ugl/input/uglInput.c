@@ -28,38 +28,8 @@
 #include "ugl.h"
 #include "uglos.h"
 #include "uglMsg.h"
+#include "private/uglInputP.h"
 #include "uglinput.h"
-
-/* Defines */
-
-#define UGL_INPUT_Q_SIZE           64
-
-#define UGL_SERVICE_RUN             0
-#define UGL_SERVICE_IDLE            1
-#define UGL_SERVICE_DESTROYED       2
-#define UGL_SERVICE_IDLE_REQ        3
-#define UGL_SERVICE_RESUME_REQ      4
-#define UGL_SERVICE_DESTROY_REQ     5
-
-#define UGL_SERVICE_DELAY_CYCLE   100
-#define UGL_SELECT_TIMEOUT       1000
-
-/* Types */
-
-typedef struct ugl_input_service {
-    UGL_LOCK_ID            lockId;
-    UGL_TASK_ID            taskId;
-    UGL_RECT               boundingRect;
-    UGL_POINT              position;
-    UGL_UINT32             modifiers;
-    volatile UGL_UINT32    taskState;
-    UGL_BOOL               autoLedControl;
-    UGL_KBD_MAP           *pKbdMap;
-    struct ugl_cb_list    *pCbList;
-    struct ugl_msg_queue  *pDefaultQ;
-    struct ugl_msg_queue  *pInputQ;
-    struct ugl_input_dev  *ppDevice[UGL_MAX_INPUT_DEVICES];
-} UGL_INPUT_SERVICE;
 
 /* Locals */
 

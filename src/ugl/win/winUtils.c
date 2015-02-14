@@ -253,6 +253,114 @@ UGL_UINT32  winAttribGet (
 
 /******************************************************************************
  *
+ * winVisibleSet - Check if a window is visible
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_STATUS  winVisibleSet (
+    WIN_ID    winId,
+    UGL_BOOL  visible
+    ) {
+    UGL_STATUS    status;
+    UGL_WINDOW *  pWindow;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
+            if (winId->pParent == UGL_NULL) {
+                status = UGL_STATUS_ERROR;
+            }
+            else {
+                pWindow = winId->pParent;
+                status = UGL_STATUS_OK;
+            }
+        }
+        else {
+            pWindow = winId;
+            status = UGL_STATUS_OK;
+        }
+    }
+
+    if (status == UGL_STATUS_OK) {
+        winLock(winId);
+
+        if (visible == UGL_TRUE &&
+            (pWindow->attributes & WIN_ATTRIB_VISIBLE) == 0x00) {
+
+            pWindow->attributes |= WIN_ATTRIB_VISIBLE;
+            if (((pWindow->state & WIN_STATE_MANAGED) != 0x00) &&
+                (pWindow->pParent == UGL_NULL ||
+                 (pWindow->pParent->state & WIN_STATE_HIDDEN) != 0x00)) {
+
+                winShow(pWindow);
+            }
+        }
+        else if (visible == UGL_FALSE &&
+                 (pWindow->attributes & WIN_ATTRIB_VISIBLE) != 0x00) {
+
+            winHide(pWindow);
+            pWindow->attributes &= ~WIN_ATTRIB_VISIBLE;
+        }
+
+        winUnlock(winId);
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * winVisibleGet - Check if a window is visible
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_BOOL  winVisibleGet (
+    WIN_ID  winId
+    ) {
+    UGL_STATUS    status;
+    UGL_BOOL      result;
+    UGL_WINDOW *  pWindow;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
+            if (winId->pParent == UGL_NULL) {
+                status = UGL_STATUS_ERROR;
+            }
+            else {
+                pWindow = winId->pParent;
+                status = UGL_STATUS_OK;
+            }
+        }
+        else {
+            pWindow = winId;
+            status = UGL_STATUS_OK;
+        }
+    }
+
+    if (status == UGL_STATUS_OK) {
+        if ((pWindow->attributes & WIN_ATTRIB_VISIBLE) != 0x00) {
+            result = UGL_TRUE;
+        }
+        else {
+            result = UGL_FALSE;
+        }
+    }
+    else {
+        result = UGL_FALSE;
+    }
+    
+    return result;
+}
+
+/******************************************************************************
+ *
  * winMgrGet - Get window manager for window
  *
  * RETURNS: Pointer to window manager or UGL_NULL

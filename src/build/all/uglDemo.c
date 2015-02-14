@@ -3379,7 +3379,7 @@ int uglWinHello(int noGfx)
   winCbAdd(winId, MSG_DRAW, 0, uglWinHelloDrawCb, UGL_NULL);
 
   winAttach(winId, UGL_NULL, UGL_NULL);
-  winSend(winId, MSG_EXPOSE, UGL_NULL, 0);
+  winUpdate(winId);
 
   getchar();
 

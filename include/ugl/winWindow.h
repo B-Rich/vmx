@@ -249,6 +249,29 @@ UGL_UINT32  winAttribGet (
 
 /******************************************************************************
  *
+ * winVisibleSet - Check if a window is visible
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_STATUS  winVisibleSet (
+    WIN_ID    winId,
+    UGL_BOOL  visible
+    );
+
+/******************************************************************************
+ *
+ * winVisibleGet - Check if a window is visible
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_BOOL  winVisibleGet (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winMgrGet - Get window manager for window
  *
  * RETURNS: Pointer to window manager or UGL_NULL
@@ -512,17 +535,6 @@ UGL_STATUS  winManage (
 
 /******************************************************************************
  *
- * winShow - Show window
- *
- * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
- */
-
-UGL_STATUS  winShow (
-    WIN_ID  winId
-    );
-
-/******************************************************************************
- *
  * winDrawStart - Start window drawing
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -612,6 +624,28 @@ UGL_STATUS  winUpdate (
 
 WIN_ID  winDeadGet (
     WIN_APP_ID  appId
+    );
+
+/******************************************************************************
+ *
+ * winShow - Show window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winShow (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winHide - Hide window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winHide (
+    WIN_ID  winId
     );
 
 #ifdef __cplusplus
