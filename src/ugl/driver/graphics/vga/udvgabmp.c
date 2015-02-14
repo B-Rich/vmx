@@ -1013,6 +1013,133 @@ UGL_LOCAL UGL_VOID uglVgaBltFrameBufferToColor (
 
 /******************************************************************************
  *
+ * uglVgaBltBitmapToBitmap - Blit within the same bitmap
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_LOCAL UGL_VOID uglVgaBltBitmapToBitmap(
+    UGL_DEVICE_ID  devId,
+    UGL_VGA_DDB *  bitmapId,
+    UGL_RECT *     pSrcRect,
+    UGL_RECT *     pDestRect
+    ) {
+    UGL_GENERIC_DRIVER *  pDrv;
+    UGL_GC_ID             gc;
+    UGL_SIZE              width;
+    UGL_SIZE              height;
+    UGL_DIB               dib;
+    UGL_DDB_ID            bufBitmapId;
+    UGL_RECT              bufBitmapRect;
+    UGL_POINT             destPoint;
+    UGL_RECT              rect;
+    UGL_RASTER_OP         rasterOp;
+
+    /* Initialize locals */
+    pDrv   = (UGL_GENERIC_DRIVER *) devId;
+    gc     = pDrv->gc;
+    width  = UGL_RECT_WIDTH(*pDestRect);
+    height = UGL_RECT_HEIGHT(*pDestRect);
+
+    /* Create buffer bitmap */
+    dib.width  = width;
+    dib.height = height;
+    dib.stride = width;
+
+    bufBitmapId = uglVgaBitmapCreate(
+        devId,
+        &dib,
+        UGL_DIB_INIT_NONE,
+        0,
+        UGL_NULL
+        );
+
+    bufBitmapRect.left   = 0;
+    bufBitmapRect.top    = 0;
+    bufBitmapRect.right  = width - 1;
+    bufBitmapRect.bottom = height - 1;
+
+    if (gc->rasterOp == UGL_RASTER_OP_COPY &&
+        ((UGL_DDB_ID) bitmapId == UGL_DISPLAY_ID)) {
+
+        /* Store source rectangle bitmap data in buffer */
+        destPoint.x = bufBitmapRect.left;
+        destPoint.y = bufBitmapRect.top;
+        uglVgaBitmapBlt(
+            devId,
+            (UGL_DDB_ID) bitmapId,
+            pSrcRect,
+            bufBitmapId,
+            &destPoint
+            );
+
+        /* Write data in bitmap buffer to destination rectangle */
+        destPoint.x = pDestRect->left;
+        destPoint.y = pDestRect->top;
+        uglVgaBitmapBlt(
+            devId,
+            (UGL_DDB_ID) bufBitmapId,
+            &bufBitmapRect,
+            (UGL_DDB_ID) bitmapId,
+            &destPoint
+            );
+    }
+    else {
+        /* Store raster op and desination rectangle */
+        rasterOp = gc->rasterOp;
+        UGL_RECT_COPY (&rect, pDestRect);
+
+        /* Store destination rectangle bitmap data in buffer */
+        gc->rasterOp = UGL_RASTER_OP_COPY;
+        destPoint.x = bufBitmapRect.left;
+        destPoint.y = bufBitmapRect.top;
+        uglVgaBitmapBlt(
+            devId,
+            (UGL_DDB_ID) bitmapId,
+            pDestRect,
+            bufBitmapId,
+            &destPoint
+            );
+
+        /* Write source rectangle bitmap data to buffer bitmap */
+        UGL_RECT_COPY (pDestRect, &rect);
+        gc->rasterOp = rasterOp;
+        uglVgaBitmapBlt(
+            devId,
+            (UGL_DDB_ID) bitmapId,
+            pSrcRect,
+            bufBitmapId,
+            &destPoint
+            );
+
+        /* Write buffer bitmap data to destination rectangle */
+        destPoint.x = pDestRect->left;
+        destPoint.y = pDestRect->top;
+        gc->rasterOp = UGL_RASTER_OP_COPY;
+        gc->changed |= UGL_GC_RASTER_OP_CHANGED;
+        UGL_GC_CHANGED_SET(gc);
+        UGL_GC_SET(devId, gc);
+        uglVgaBitmapBlt(
+            devId,
+            (UGL_DDB_ID) bufBitmapId,
+            &bufBitmapRect,
+            (UGL_DDB_ID) bitmapId,
+            &destPoint
+            );
+
+        /* Restore graphics context */
+        gc->rasterOp = rasterOp;
+        gc->changed |= UGL_GC_RASTER_OP_CHANGED;
+        UGL_GC_CHANGED_SET(gc);
+        UGL_GC_SET(devId, gc);
+    }
+
+    /* Destroy buffer bitmap */
+    (*devId->bitmapDestroy)(devId, bufBitmapId);
+}
+
+/******************************************************************************
+ *
  * uglVgaBitmapBlt - Blit from one bitmap memory area to another
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -1093,7 +1220,10 @@ UGL_STATUS uglVgaBitmapBlt (
                               UGL_RECT_HEIGHT(srcRect));
 
             /* Blit */
-            if ((UGL_DDB_ID) pSrcBmp == UGL_DISPLAY_ID) {
+            if (pSrcBmp == pDestBmp) {
+                uglVgaBltBitmapToBitmap(devId, pSrcBmp, &srcRect, &destRect);
+            }
+            else if ((UGL_DDB_ID) pSrcBmp == UGL_DISPLAY_ID) {
                 uglVgaBltFrameBufferToColor (devId, &srcRect,
                                              pDestBmp, &destRect);
             }
