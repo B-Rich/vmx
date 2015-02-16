@@ -151,6 +151,11 @@ UGL_STATUS  winAppDestroy (
             }
             uglOSUnlock(appId->lockId);
 
+            /* Remove from window manager app list */
+            uglOSLock(appId->pWinMgr->lockId);
+            uglListRemove(&appId->pWinMgr->appList, &appId->node);
+            uglOSUnlock(appId->pWinMgr->lockId);
+
             /* Send destroy message */
             memset(&msg, 0, sizeof(UGL_MSG));
             msg.type = MSG_APP_DESTROY;
@@ -387,7 +392,7 @@ UGL_LOCAL UGL_STATUS  winAppMsgGet (
                     pMsg->type  = MSG_EXPOSE;
                     pMsg->winId = winId;
 
-                    status = UGL_STATUS_ERROR;
+                    status = UGL_STATUS_OK;
                     break;
                 }
 
@@ -398,6 +403,7 @@ UGL_LOCAL UGL_STATUS  winAppMsgGet (
 
                 /* Wait for message */
                 status = uglMsgQGet(appId->pQueue, (UGL_MSG *) pMsg, timeout);
+                appId->state &= ~WIN_APP_STATE_PENDING;
             }
 
         } while (pMsg->type == WIN_MSG_TYPE_WAKE_UP &&
@@ -426,7 +432,7 @@ UGL_LOCAL UGL_VOID  winAppTask (
     /* Make sure it has correct task id */
     pApp->taskId = uglOSGetTaskIdSelf();
 
-    while (1) {
+    while (UGL_TRUE) {
 
         /* Calcualte timeout */
         if ((pApp->state & WIN_APP_STATE_EXIT_WAIT) != 0x00) {
@@ -478,6 +484,7 @@ UGL_LOCAL UGL_VOID  winAppTask (
                 if (status == UGL_STATUS_OK) {
                     pApp->taskId = (UGL_TASK_ID) 0;
                     winAppDestroy(pApp);
+                    return;
                 }
                 else if (msg.data.appExitTimeout != 0) {
                     pApp->state |= WIN_APP_STATE_EXIT_WAIT;
