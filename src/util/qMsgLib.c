@@ -318,7 +318,7 @@ Q_MSG_NODE* qMsgGet(
     {
         if (timeout == WAIT_NONE)
         {
-            errnoSet(S_msgQLib_INVALID_TIMEOUT);
+            errnoSet(S_objLib_UNAVAILABLE);
             INT_UNLOCK(level);
             pNode = NULL;
             break;
