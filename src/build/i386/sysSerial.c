@@ -31,10 +31,10 @@ void test_func(void) {
     I8250_CHAN drv;
     SIO_CHAN *chan = (SIO_CHAN *) &drv;
 
-    sioIoctl(chan, 1, 0);
-    sioTxStartup(chan);
-    sioCallbackInstall(chan, 0, cb, 0);
-    sioPollInput(chan, &c);
-    sioPollOutput(chan, &c);
+    SIO_IOCTL(chan, 1, 0);
+    SIO_TX_STARTUP(chan);
+    SIO_CALLBACK_INSTALL(chan, 0, cb, 0);
+    SIO_POLL_INPUT(chan, &c);
+    SIO_POLL_OUTPUT(chan, &c);
 }
 

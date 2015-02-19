@@ -36,6 +36,7 @@
 #define SIO_HW_OPTS_GET         0x1006
 #define SIO_MODE_SET            0x1007
 #define SIO_MODE_GET            0x1008
+#define SIO_AVAIL_MODES_GET     0x1009
 #define SIO_OPEN                0x100a
 #define SIO_HUP                 0x100b
 #define SIO_MSTAT_GET           0x100c
@@ -148,53 +149,53 @@ struct sio_drv_funcs {
 
 /******************************************************************************
  *
- * sioIoctl - Call ioctl method for driver
+ * SIO_IOCTL - Call ioctl method for driver
  *
  * RETURNS: Return code from ioctl
  */
 
-#define sioIoctl(pSioChan, cmd, arg)                                          \
+#define SIO_IOCTL(pSioChan, cmd, arg)                                         \
     ((*(pSioChan)->pDrvFuncs->ioctl)((pSioChan), (cmd), (arg)))
 
 /******************************************************************************
  *
- * sioTxStartup - Call TX startup method for driver
+ * SIO_TX_STARTUP - Call TX startup method for driver
  *
  * RETURNS: Return code from txStartup
  */
 
-#define sioTxStartup(pSioChan)                                                \
+#define SIO_TX_STARTUP(pSioChan)                                              \
     ((*(pSioChan)->pDrvFuncs->txStartup)((pSioChan)))
 
 /******************************************************************************
  *
- * sioIoctl - Call callback install method for driver
+ * SIO_CALLBACK_INSTALL - Call callback install method for driver
  *
  * RETURNS: Return code from callback install
  */
 
-#define sioCallbackInstall(pSioChan, callbackType, callback, callbackArg)     \
+#define SIO_CALLBACK_INSTALL(pSioChan, callbackType, callback, callbackArg)   \
     ((*(pSioChan)->pDrvFuncs->callbackInstall)((pSioChan), (callbackType),    \
                                                (callback), (callbackArg)))
 
 /******************************************************************************
  *
- * sioPollInput - Call poll input method for driver
+ * SIO_POLL_INPUT - Call poll input method for driver
  *
  * RETURNS: Return code from poll input
  */
 
-#define sioPollInput(pSioChan, inChar)                                        \
+#define SIO_POLL_INPUT(pSioChan, inChar)                                      \
     ((*(pSioChan)->pDrvFuncs->pollInput)((pSioChan), (inChar)))
 
 /******************************************************************************
  *
- * sioPollOutput - Call poll output method for driver
+ * SIO_POLL_OUTPUT - Call poll output method for driver
  *
  * RETURNS: Return code from poll output
  */
 
-#define sioPollOutput(pSioChan, outChar)                                      \
+#define SIO_POLL_OUTPUT(pSioChan, outChar)                                    \
     ((*(pSioChan)->pDrvFuncs->pollOutput)((pSioChan), (outChar)))
 
 #ifdef __cplusplus

@@ -44,7 +44,7 @@
 #define UART_MSR                0x06
 
 /* Interrupt enable register */
-#define I8250_IER_RXDY          0x01
+#define I8250_IER_RXRDY         0x01
 #define I8250_IER_TBE           0x02
 #define I8250_IER_LST           0x04
 #define I8250_IER_MSI           0x08
@@ -109,11 +109,13 @@ typedef struct {
     SIO_DRV_FUNCS  * pDrvFuncs;
 
     STATUS         (*getTxChar) (
-        void
+        void *,
+        ...
         );
 
     STATUS         (*putRcvChar) (
-        void
+        void *,
+        ...
         );
 
     ARG              getTxArg;
@@ -123,12 +125,12 @@ typedef struct {
     u_int16_t        channelMode;
 
     u_int8_t        (*inByte) (
-        int     reg
+        u_int32_t  reg
         );
 
     void            (*outByte) (
-        int     reg,
-        int8_t  c
+        u_int32_t  reg,
+        int8_t     c
         );
 
     u_int32_t         lcr;

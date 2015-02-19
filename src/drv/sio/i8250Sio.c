@@ -20,8 +20,18 @@
 
 /* i8250Sio.c - PC compatibles serial driver */
 
+#include <errno.h>
+#include <sys/types.h>
 #include <vmx.h>
+#include <arch/intArchLib.h>
 #include <drv/sio/i8250Sio.h>
+
+/* Defines */
+
+#define I8250_IRR_READ_MAX          40
+#define I8250_DEFAULT_BAUD        9600
+#define I8250_SIO_OPEN          0x100a
+#define I8250_SIO_HUP           0x100b
 
 /* Locals */
 
@@ -46,4 +56,419 @@ LOCAL BAUD           baudTable [] = {
     {  57600,    2 },
     { 115200,    1 }
 };
+
+LOCAL int  i8250CallbackInstall (
+    SIO_CHAN *  pSioChan,
+    int         callbackType,
+    STATUS    (*callback)(void *, ...),
+    ARG         callbackArg
+    );
+
+LOCAL STATUS  i8250Open (
+    I8250_CHAN *  pChan
+    );
+
+LOCAL STATUS  i8250Hup (
+    I8250_CHAN *  pChan
+    );
+
+LOCAL STATUS  i8250BaudSet (
+    I8250_CHAN *  pChan,
+    int           rate
+    );
+
+LOCAL STATUS  i8250ModeSet (
+    I8250_CHAN *  pChan,
+    u_int16_t     mode
+    );
+
+LOCAL STATUS  i8250ModeSet (
+    I8250_CHAN *  pChan,
+    u_int16_t     mode
+    );
+
+/******************************************************************************
+ *
+ * i8250CallbackInstall - Install ISR callback
+ *
+ * RETURNS: OK or error code
+ */
+
+LOCAL int  i8250CallbackInstall (
+    SIO_CHAN *  pSioChan,
+    int         callbackType,
+    STATUS    (*callback)(void *, ...),
+    ARG         callbackArg
+    ) {
+    int           status;
+    I8250_CHAN *  pChan = (I8250_CHAN *) pSioChan;
+
+    switch (callbackType) {
+        case SIO_CALLBACK_GET_TX_CHAR:
+            pChan->getTxChar = callback;
+            pChan->getTxArg  = callbackArg;
+            status = OK;
+            break;
+
+        case SIO_CALLBACK_PUT_RCV_CHAR:
+            pChan->putRcvChar = callback;
+            pChan->putRcvArg  = callbackArg;
+            status = OK;
+            break;
+
+        default:
+            status = ENOSYS;
+            break;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * i8250Open - Open connection
+ *
+ * RETURNS: OK
+ */
+
+LOCAL STATUS  i8250Open (
+    I8250_CHAN *  pChan
+    ) {
+    int     level;
+    int8_t  mask;
+
+    mask = ((*pChan->inByte)(pChan->mdc)) & (I8250_MCR_RTS | I8250_MCR_DTR);
+
+    if (mask != (I8250_MCR_RTS | I8250_MCR_DTR)) {
+        INT_LOCK(level);
+
+        (*pChan->outByte)(
+            pChan->mdc,
+            (I8250_MCR_RTS | I8250_MCR_DTR | I8250_MCR_OUT2)
+            );
+
+        INT_UNLOCK(level);
+    }
+
+    return OK;
+}
+
+/******************************************************************************
+ *
+ * i8250Hup - Hang up connection
+ *
+ * RETURNS: OK
+ */
+
+LOCAL STATUS  i8250Hup (
+    I8250_CHAN *  pChan
+    ) {
+    int  level;
+
+    INT_LOCK(level);
+
+    (*pChan->outByte)(pChan->mdc, I8250_MCR_OUT2);
+
+    INT_UNLOCK(level);
+
+    return OK;
+}
+
+/******************************************************************************
+ *
+ * i8250BaudSet - Set baud rate
+ *
+ * RETURNS: OK or ERROR
+ */
+
+LOCAL STATUS  i8250BaudSet (
+    I8250_CHAN *  pChan,
+    int           rate
+    ) {
+    STATUS    status = ERROR;
+    int       level;
+    int       i;
+    u_int8_t  lcr;
+
+    INT_LOCK(level);
+
+    for (i = 0; i < NELEMENTS(baudTable); i++) {
+        if (baudTable[i].rate == rate) {
+            lcr = (*pChan->inByte)(pChan->lcr);
+            (*pChan->outByte)(pChan->lcr, (int8_t) (I8250_LCR_DLAB | lcr));
+            (*pChan->outByte)(pChan->brdh, MSB(baudTable[i].preset));
+            (*pChan->outByte)(pChan->brdl, LSB(baudTable[i].preset));
+            (*pChan->outByte)(pChan->lcr, lcr);
+            status = OK;
+            break;
+        }
+    }
+
+    INT_UNLOCK(level);
+}
+
+/******************************************************************************
+ *
+ * i8250ModeSet - Setup channel mode
+ *
+ * RETURNS: OK or ERROR
+ */
+
+LOCAL STATUS  i8250ModeSet (
+    I8250_CHAN *  pChan,
+    u_int16_t     mode
+    ) {
+    STATUS  status;
+    int     level;
+    int8_t  ier;
+    int8_t  mask;
+
+    if (mode != SIO_MODE_POLL && mode != SIO_MODE_INT) {
+        status = ERROR;
+    }
+    else {
+        INT_LOCK(level);
+
+        if (mode == SIO_MODE_POLL) {
+            ier = 0x00;
+        }
+        else {
+            if ((pChan->options & CLOCAL) != 0x00) {
+                ier = I8250_IER_RXRDY;
+            }
+            else {
+                mask = ((*pChan->inByte)(pChan->msr)) & I8250_MSR_CTS;
+                if ((mask & I8250_MSR_CTS) != 0x00) {
+                    ier = (I8250_IER_TBE | I8250_IER_MSI);
+                }
+                else {
+                    ier = I8250_IER_MSI;
+                }
+            }
+        }
+
+        (*pChan->outByte)(pChan->ier, ier);
+
+        pChan->channelMode = mode;
+
+        INT_UNLOCK(level);
+        status = OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * i8250OptSet - Setup channel options
+ *
+ * RETURNS: OK or ERROR
+ */
+
+LOCAL STATUS  i8250OptSet (
+    I8250_CHAN *  pChan,
+    u_int32_t     options
+    ) {
+    STATUS  status;
+    int     level;
+    int8_t  mask;
+    int8_t  ier;
+    int8_t  lcr;
+    int8_t  mcr = 0;
+
+    ier = (*pChan->inByte)(pChan->ier);
+    if ((options & 0xffffff00) != 0x00) {
+        status = ERROR;
+    }
+    else {
+        switch(options & CSIZE) {
+            case CS5:
+                lcr = I8250_LCR_CS5;
+                break;
+
+            case CS6:
+                lcr = I8250_LCR_CS6;
+                break;
+
+            case CS7:
+                lcr = I8250_LCR_CS7;
+                break;
+
+            case CS8:
+                lcr = I8250_LCR_CS8;
+                break;
+
+            default:
+                lcr = I8250_LCR_CS8;
+                break;
+        }
+
+        if ((options & STOPB) != 0x00) {
+            lcr |= I8250_LCR_2_STB;
+        }
+        else {
+            lcr |= I8250_LCR_1_STB;
+        }
+
+        switch (options & (PARENB | PARODD)) {
+            case 0:
+                lcr |= I8250_LCR_PDIS;
+                break;
+
+            case PARENB | PARODD:
+                lcr |= I8250_LCR_PEN;
+                break;
+
+            case PARENB:
+                lcr |= (I8250_LCR_PEN | I8250_LCR_EPS);
+                break;
+
+            default:
+                lcr |= I8250_LCR_PDIS;
+                break;
+        }
+
+        (*pChan->outByte)(pChan->ier, 0x00);
+
+        if ((options & CLOCAL) == 0x00) {
+            mcr |= (I8250_MCR_DTR | I8250_MCR_RTS);
+            ier |= I8250_IER_MSI;
+            mask = ((*pChan->inByte)(pChan->msr)) & I8250_MSR_CTS;
+            if ((mask & I8250_MSR_CTS) != 0x00) {
+                ier |= I8250_IER_TBE;
+            }
+            else {
+                ier &= ~I8250_IER_TBE;
+            }
+        }
+        else {
+            ier &= ~I8250_IER_MSI;
+        }
+
+        INT_LOCK(level);
+
+        (*pChan->inByte)(pChan->data);
+        if ((options & CREAD) != 0x00) {
+            ier |= I8250_IER_RXRDY;
+        }
+
+        if (pChan->channelMode == SIO_MODE_INT) {
+            (*pChan->outByte)(pChan->ier, ier);
+        }
+
+        pChan->options = options;
+
+        INT_UNLOCK(level);
+    }
+}
+
+/******************************************************************************
+ *
+ * i8250Ioctl - Serial device input/output control
+ *
+ * RETURNS: OK or error code
+ */
+
+LOCAL int  i8250Ioctl (
+    I8250_CHAN *  pChan,
+    int           req,
+    int           arg
+    ) {
+    int     status;
+    int     i;
+    int     level;
+    int8_t  baudH;
+    int8_t  baudL;
+    int8_t  lcr;
+
+    switch (req) {
+        case SIO_BAUD_SET:
+            if (i8250BaudSet(pChan, arg) != OK) {
+                status = EIO;
+            }
+            else {
+                status = OK;
+            }
+            break;
+
+        case SIO_BAUD_GET:
+            INT_LOCK(level);
+
+            lcr = (*pChan->inByte)(pChan->lcr);
+            (*pChan->outByte)(pChan->lcr, (int8_t) (I8250_LCR_DLAB | lcr));
+            baudH = (*pChan->inByte)(pChan->brdh);
+            baudL = (*pChan->inByte)(pChan->brdl);
+            (*pChan->outByte)(pChan->lcr, lcr);
+
+            status = EIO;
+            for (i = 0; i < NELEMENTS(baudTable); i++) {
+                if (baudH == MSB(baudTable[i].preset) &&
+                    baudL == LSB(baudTable[i].preset)) {
+
+                    *((int *) arg) = baudTable[i].rate;
+                    status = OK;
+                }
+            }
+
+            INT_UNLOCK(level);
+            break;
+
+        case SIO_MODE_SET:
+            if (i8250ModeSet(pChan, arg) != OK) {
+                status = EIO;
+            }
+            else {
+                status = OK;
+            }
+            break;
+
+        case SIO_MODE_GET:
+            *((int *) arg) = pChan->channelMode;
+            status = OK;
+            break;
+
+        case SIO_AVAIL_MODES_GET:
+            *((int *) arg) = SIO_MODE_INT | SIO_MODE_POLL;
+            status = OK;
+            break;
+
+        case SIO_HW_OPTS_SET:
+            if (i8250OptSet(pChan, arg) != OK) {
+                status = EIO;
+            }
+            else {
+                status = OK;
+            }
+            break;
+
+        case SIO_HW_OPTS_GET:
+            *((int *) arg) = pChan->options;
+            status = OK;
+            break;
+
+        case SIO_OPEN:
+            if ((pChan->options & HUPCL) == 0x00) {
+                status = ERROR;
+            }
+            else {
+                status = i8250Open(pChan);
+            }
+            break;
+
+        case SIO_HUP:
+            if ((pChan->options & HUPCL) == 0x00) {
+                status = ERROR;
+            }
+            else {
+                status = i8250Hup(pChan);
+            }
+            break;
+
+        default:
+            status = ENOSYS;
+            break;
+    }
+
+    return status;
+}
 
