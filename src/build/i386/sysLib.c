@@ -37,6 +37,9 @@ CALL_GATE *sysIdt	= (CALL_GATE *) (VEC_BASE_ADRS);
 #include <drv/intrCtl/i8259Pic.c>
 #include <drv/timer/i8253Timer.c>
 
+/* Serial console */
+#include "sysSerial.c"
+
 /* Console */
 #ifdef   INCLUDE_PC_CONSOLE
 #include <drv/input/englishKeymap.c>
