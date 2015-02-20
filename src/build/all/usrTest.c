@@ -30,6 +30,7 @@
 
 /* Imports */
 IMPORT SYMTAB_ID sysSymTable;
+IMPORT SIO_CHAN* sysSerialChanGet(int channel);
 
 static jmp_buf jbuf;
 
