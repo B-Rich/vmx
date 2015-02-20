@@ -108,15 +108,8 @@ extern "C" {
 typedef struct {
     SIO_DRV_FUNCS  * pDrvFuncs;
 
-    STATUS         (*getTxChar) (
-        void *,
-        ...
-        );
-
-    STATUS         (*putRcvChar) (
-        void *,
-        ...
-        );
+    FUNCPTR          getTxChar;
+    FUNCPTR          putRcvChar;
 
     ARG              getTxArg;
     ARG              putRcvArg;

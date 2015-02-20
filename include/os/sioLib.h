@@ -130,7 +130,7 @@ struct sio_drv_funcs {
     int  (*callbackInstall) (
         SIO_CHAN  * pSioChan,
         int         callbackType,
-        STATUS      (*callback)(void *, ...),
+        FUNCPTR     callback,
         ARG         callbackArg
         );
 

@@ -80,7 +80,7 @@ LOCAL int  i8250TxStartup (
 LOCAL int  i8250CallbackInstall (
     SIO_CHAN *  pSioChan,
     int         callbackType,
-    STATUS    (*callback)(void *, ...),
+    FUNCPTR     callback,
     ARG         callbackArg
     );
 
@@ -550,7 +550,7 @@ LOCAL int  i8250TxStartup (
 LOCAL int  i8250CallbackInstall (
     SIO_CHAN *  pSioChan,
     int         callbackType,
-    STATUS    (*callback)(void *, ...),
+    FUNCPTR     callback,
     ARG         callbackArg
     ) {
     int           status;
