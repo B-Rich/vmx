@@ -25,6 +25,7 @@
 
 /* Include arch independant config */
 #include "../all/configAll.h"
+#include "configInum.h"
 
 #define VM_INVALID_ADDR         -1
 #define VM_PAGE_SIZE            PAGE_SIZE_4KB
@@ -58,6 +59,21 @@
 
 #define SYS_CLOCK_RATE_MIN      19
 #define SYS_CLOCK_RATE_MAX      8192
+
+/* PC serial ports related */
+#define COM1_BASE_ADR           0x03f8
+#define COM2_BASE_ADR           0x02f8
+#define COM3_BASE_ADR           0x03e8
+#define COM4_BASE_ADR           0x02e8
+
+#define COM1_INT_LVL            0x04
+#define COM2_INT_LVL            0x03
+#define COM3_INT_LVL            0x05
+#define COM4_INT_LVL            0x09
+
+#define UART_REG_ADDR_INTERVAL  1
+
+#define N_UART_CHANNELS         2
 
 /* PC vga related */
 #define DIAG_CTRL               0x61

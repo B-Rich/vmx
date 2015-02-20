@@ -141,7 +141,7 @@ struct sio_drv_funcs {
 
     int  (*pollOutput) (
         SIO_CHAN  * pSioChan,
-        char  *     outChar
+        char        outChar
         );
 };
 

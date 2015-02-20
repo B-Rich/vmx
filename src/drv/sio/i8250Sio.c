@@ -36,6 +36,7 @@
 /* Locals */
 
 LOCAL SIO_DRV_FUNCS  i8250SioDrvFuncs;
+LOCAL BOOL           i8250SioInstalled = FALSE;
 LOCAL BAUD           baudTable [] = {
     {     50, 2304 },
     {     75, 1536 },
@@ -57,18 +58,7 @@ LOCAL BAUD           baudTable [] = {
     { 115200,    1 }
 };
 
-LOCAL int  i8250CallbackInstall (
-    SIO_CHAN *  pSioChan,
-    int         callbackType,
-    STATUS    (*callback)(void *, ...),
-    ARG         callbackArg
-    );
-
-LOCAL STATUS  i8250Open (
-    I8250_CHAN *  pChan
-    );
-
-LOCAL STATUS  i8250Hup (
+LOCAL int  i8250Init (
     I8250_CHAN *  pChan
     );
 
@@ -77,51 +67,93 @@ LOCAL STATUS  i8250BaudSet (
     int           rate
     );
 
-LOCAL STATUS  i8250ModeSet (
-    I8250_CHAN *  pChan,
-    u_int16_t     mode
+LOCAL int  i8250Ioctl (
+    SIO_CHAN *  pSioChan,
+    int         req,
+    ARG         arg
     );
 
-LOCAL STATUS  i8250ModeSet (
-    I8250_CHAN *  pChan,
-    u_int16_t     mode
+LOCAL int  i8250TxStartup (
+    SIO_CHAN *  pSioChan
     );
-
-/******************************************************************************
- *
- * i8250CallbackInstall - Install ISR callback
- *
- * RETURNS: OK or error code
- */
 
 LOCAL int  i8250CallbackInstall (
     SIO_CHAN *  pSioChan,
     int         callbackType,
     STATUS    (*callback)(void *, ...),
     ARG         callbackArg
+    );
+
+LOCAL int  i8250RxChar (
+    SIO_CHAN *  pSioChan,
+    char *      pChar
+    );
+
+LOCAL int  i8250TxChar (
+    SIO_CHAN *  pSioChan,
+    char        outChar
+    );
+
+/******************************************************************************
+ *
+ * i8250HrdInit - Initialize serial communication device
+ *
+ * RETURNS: N/A
+ */
+
+void  i8250HrdInit (
+    I8250_CHAN *  pChan
     ) {
-    int           status;
-    I8250_CHAN *  pChan = (I8250_CHAN *) pSioChan;
 
-    switch (callbackType) {
-        case SIO_CALLBACK_GET_TX_CHAR:
-            pChan->getTxChar = callback;
-            pChan->getTxArg  = callbackArg;
-            status = OK;
-            break;
+    if (i8250SioInstalled == FALSE) {
+        i8250SioDrvFuncs.ioctl           = i8250Ioctl;
+        i8250SioDrvFuncs.txStartup       = i8250TxStartup;
+        i8250SioDrvFuncs.callbackInstall = i8250CallbackInstall;
+        i8250SioDrvFuncs.pollInput       = i8250RxChar;
+        i8250SioDrvFuncs.pollOutput      = i8250TxChar;
 
-        case SIO_CALLBACK_PUT_RCV_CHAR:
-            pChan->putRcvChar = callback;
-            pChan->putRcvArg  = callbackArg;
-            status = OK;
-            break;
+        pChan->pDrvFuncs = &i8250SioDrvFuncs;
 
-        default:
-            status = ENOSYS;
-            break;
+        i8250Init(pChan);
+
+        i8250SioInstalled = TRUE;
     }
+}
 
-    return status;
+/******************************************************************************
+ *
+ * i8250Init - Initialize comminication channel
+ *
+ * RETURNS: N/A
+ */
+
+LOCAL int  i8250Init (
+    I8250_CHAN *  pChan
+    ) {
+    int  level;
+
+    INT_LOCK(level);
+
+    /* Baud rate */
+    i8250BaudSet(pChan, I8250_DEFAULT_BAUD);
+
+    /* 8 data bits, 1 stop bit and no parity */
+    (*pChan->outByte)(pChan->lcr, (I8250_LCR_CS8 | I8250_LCR_1_STB));
+    (*pChan->outByte)(
+        pChan->mdc,
+        (I8250_MCR_RTS | I8250_MCR_DTR | I8250_MCR_OUT2)
+        );
+
+    /* Clear */
+    (*pChan->inByte)(pChan->data);
+
+    /* Disable interrupts */
+    (*pChan->outByte)(pChan->ier, 0x00);
+
+    /* Set options */
+    pChan->options = (CLOCAL | CREAD | CS8);
+
+    INT_UNLOCK(level);
 }
 
 /******************************************************************************
@@ -370,20 +402,21 @@ LOCAL STATUS  i8250OptSet (
  */
 
 LOCAL int  i8250Ioctl (
-    I8250_CHAN *  pChan,
-    int           req,
-    int           arg
+    SIO_CHAN *  pSioChan,
+    int         req,
+    ARG         arg
     ) {
-    int     status;
-    int     i;
-    int     level;
-    int8_t  baudH;
-    int8_t  baudL;
-    int8_t  lcr;
+    int           status;
+    int           i;
+    int           level;
+    int8_t        baudH;
+    int8_t        baudL;
+    int8_t        lcr;
+    I8250_CHAN *  pChan = (I8250_CHAN *) pSioChan;
 
     switch (req) {
         case SIO_BAUD_SET:
-            if (i8250BaudSet(pChan, arg) != OK) {
+            if (i8250BaudSet(pChan, (int) arg) != OK) {
                 status = EIO;
             }
             else {
@@ -414,7 +447,7 @@ LOCAL int  i8250Ioctl (
             break;
 
         case SIO_MODE_SET:
-            if (i8250ModeSet(pChan, arg) != OK) {
+            if (i8250ModeSet(pChan, (int) arg) != OK) {
                 status = EIO;
             }
             else {
@@ -433,7 +466,7 @@ LOCAL int  i8250Ioctl (
             break;
 
         case SIO_HW_OPTS_SET:
-            if (i8250OptSet(pChan, arg) != OK) {
+            if (i8250OptSet(pChan, (int) arg) != OK) {
                 status = EIO;
             }
             else {
@@ -470,5 +503,205 @@ LOCAL int  i8250Ioctl (
     }
 
     return status;
+}
+
+/******************************************************************************
+ *
+ * i8250TxStartup - Transmit startup
+ *
+ * RETURNS: OK
+ */
+
+LOCAL int  i8250TxStartup (
+    SIO_CHAN *  pSioChan
+    ) {
+    int8_t        ier;
+    int8_t        mask;
+    I8250_CHAN *  pChan = (I8250_CHAN *) pSioChan;
+
+    ier = I8250_IER_RXRDY;
+    if (pChan->channelMode == SIO_MODE_INT) {
+        if ((pChan->options & CLOCAL) != 0x00) {
+            ier |= I8250_IER_TBE;
+        }
+        else {
+            mask = ((*pChan->inByte)(pChan->msr)) & I8250_MSR_CTS;
+            if ((mask & I8250_MSR_CTS) != 0x00) {
+                ier |= (I8250_IER_TBE | I8250_IER_MSI);
+            }
+            else {
+                ier |= (I8250_IER_MSI);
+            }
+        }
+
+        (*pChan->outByte)(pChan->ier, ier);
+    }
+
+    return OK;
+}
+
+/******************************************************************************
+ *
+ * i8250CallbackInstall - Install ISR callback
+ *
+ * RETURNS: OK or error code
+ */
+
+LOCAL int  i8250CallbackInstall (
+    SIO_CHAN *  pSioChan,
+    int         callbackType,
+    STATUS    (*callback)(void *, ...),
+    ARG         callbackArg
+    ) {
+    int           status;
+    I8250_CHAN *  pChan = (I8250_CHAN *) pSioChan;
+
+    switch (callbackType) {
+        case SIO_CALLBACK_GET_TX_CHAR:
+            pChan->getTxChar = callback;
+            pChan->getTxArg  = callbackArg;
+            status = OK;
+            break;
+
+        case SIO_CALLBACK_PUT_RCV_CHAR:
+            pChan->putRcvChar = callback;
+            pChan->putRcvArg  = callbackArg;
+            status = OK;
+            break;
+
+        default:
+            status = ENOSYS;
+            break;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * i8250RxChar - Receive character from device
+ *
+ * RETURNS: OK or EAGAIN
+ */
+
+LOCAL int  i8250RxChar (
+    SIO_CHAN *  pSioChan,
+    char *      pChar
+    ) {
+    int           status;
+    int8_t        stat;
+    I8250_CHAN *  pChan = (I8250_CHAN *) pSioChan;
+
+    stat = (*pChan->inByte)(pChan->lst);
+    if ((stat & I8250_LSR_RXRDY) == 0x00) {
+        status = EAGAIN;
+    }
+    else {
+        *pChar = (*pChan->inByte)(pChan->data);
+        status = OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * i8250TxChar - Transmit character to device
+ *
+ * RETURNS: OK or EAGAIN
+ */
+
+LOCAL int  i8250TxChar (
+    SIO_CHAN *  pSioChan,
+    char        outChar
+    ) {
+    int           status;
+    int8_t        stat;
+    int8_t        msr;
+    I8250_CHAN *  pChan = (I8250_CHAN *) pSioChan;
+
+    stat = (*pChan->inByte)(pChan->lst);
+    msr  = (*pChan->inByte)(pChan->msr);
+    if ((stat & I8250_LSR_TEMT) == 0x00) {
+        status = EAGAIN;
+    }
+    else {
+        if ((pChan->options & CLOCAL) != 0x00) {
+            if ((msr & I8250_MSR_CTS) != 0x00) {
+                (*pChan->outByte)(pChan->data, outChar);
+                status = OK;
+            }
+            else {
+                status = EAGAIN;
+            }
+        }
+        else {
+            (*pChan->outByte)(pChan->data, outChar);
+            status = OK;
+        }
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * i8250Int - Interrupt sertice routine from serial device
+ *
+ * RETURNS: N/A
+ */
+
+void  i8250Int (
+    I8250_CHAN *  pChan
+    ) {
+    char    outChar;
+    int8_t  intId;
+    int8_t  lineStatus;
+    int8_t  ier;
+    int8_t  msr;
+    int     i = 0;
+
+    ier = (*pChan->inByte)(pChan->ier);
+    while (TRUE) {
+        intId = ((*pChan->inByte)(pChan->iid) & I8250_IIR_MASK);
+        if (intId == I8250_IIR_IP || (++i > I8250_IRR_READ_MAX)) {
+            break;
+        }
+
+        intId &= 0x06;
+        if (intId == I8250_IIR_SEOB) {
+            lineStatus = (*pChan->inByte)(pChan->lst);
+        }
+        else if (intId == I8250_IIR_RBRF) {
+            if (pChan->putRcvChar != NULL) {
+                (*pChan->putRcvChar)(
+                    pChan->putRcvArg,
+                    (*pChan->inByte)(pChan->data)
+                    );
+            }
+            else {
+                (*pChan->inByte)(pChan->data);
+            }
+        }
+        else if (intId == I8250_IIR_THRE) {
+            if (pChan->getTxChar != NULL &&
+                (*pChan->getTxChar)(pChan->getTxArg, &outChar) == OK) {
+
+                (*pChan->outByte)(pChan->data, outChar);
+            }
+        }
+        else if (intId == I8250_IRR_MSTAT) {
+            msr  = (*pChan->inByte)(pChan->msr);
+            ier |= (I8250_IER_RXRDY | I8250_IER_MSI);
+            if ((msr & I8250_MSR_CTS) != 0x00 &&
+                (msr & I8250_MSR_DCTS) != 0x00) {
+
+                (*pChan->outByte)(pChan->ier, (I8250_IER_TBE | ier));
+            }
+            else {
+                (*pChan->outByte)(pChan->ier, (ier & ~I8250_IER_TBE));
+            }
+        }
+    }
 }
 

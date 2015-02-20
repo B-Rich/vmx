@@ -124,7 +124,7 @@ typedef struct {
     u_int16_t        int_vec;
     u_int16_t        channelMode;
 
-    u_int8_t        (*inByte) (
+    int8_t        (*inByte) (
         u_int32_t  reg
         );
 
@@ -149,6 +149,30 @@ typedef struct {
     int               rate;
     int               preset;
 } BAUD;
+
+/* Functions */
+
+/******************************************************************************
+ *
+ * i8250HrdInit - Initialize serial communication device
+ *
+ * RETURNS: N/A
+ */
+
+void  i8250HrdInit (
+    I8250_CHAN *  pChan
+    );
+
+/******************************************************************************
+ *
+ * i8250Int - Interrupt sertice routine from serial device
+ *
+ * RETURNS: N/A
+ */
+
+void  i8250Int (
+    I8250_CHAN *  pChan
+    );
 
 #ifdef __cplusplus
 }

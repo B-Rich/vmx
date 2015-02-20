@@ -28,18 +28,6 @@
 
 	/* Internals */
 	.globl	GTEXT(sysInit)
-	.globl	GTEXT(sysInByte)
-	.globl	GTEXT(sysInWord)
-	.globl	GTEXT(sysInLong)
-	.globl	GTEXT(sysOutByte)
-	.globl	GTEXT(sysOutWord)
-	.globl	GTEXT(sysOutLong)
-	.globl	GTEXT(sysInWordString)
-	.globl	GTEXT(sysInLongString)
-	.globl	GTEXT(sysOutLongString)
-	.globl	GTEXT(sysOutWordString)
-	.globl	GTEXT(sysWait)
-	.globl	GTEXT(sysReboot)
 
 	/* Externals */
 	.globl	GTEXT(usrInit)

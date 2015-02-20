@@ -20,21 +20,84 @@
 
 /* sysSerial.c - Serial driver initialization */
 
+/* Includes */
+#include <sys/types.h>
+#include <vmx.h>
+#include <arch/sysArchLib.h>
+
 #include <drv/sio/i8250Sio.c>
 
-STATUS cb(void *arg, ...) {
-    return ERROR;
+/* Macros */
+
+#define UART_REG(reg, chan) \
+    (devParams[(chan)].baseAdrs + (reg) * devParams[chan].regSpace)
+
+/* Types */
+
+typedef struct {
+    u_int16_t  vector;
+    u_int32_t  baseAdrs;
+    u_int16_t  regSpace;
+    u_int16_t  intLevel;
+} I8250_CHAN_PARAMS;
+
+/* Locals */
+
+LOCAL I8250_CHAN        i8250Chan[N_UART_CHANNELS];
+LOCAL I8250_CHAN_PARAMS devParams[] = {
+    { INT_NUM_COM1, COM1_BASE_ADR, UART_REG_ADDR_INTERVAL, COM1_INT_LVL },
+    { INT_NUM_COM2, COM2_BASE_ADR, UART_REG_ADDR_INTERVAL, COM2_INT_LVL }
+};
+
+void  sysSerialHwInit (
+    void
+    ) {
+    int  i;
+
+    for (i = 0; i < N_UART_CHANNELS; i++) {
+        i8250Chan[i].int_vec     = devParams[i].vector;
+        i8250Chan[i].channelMode = 0x0000;
+        i8250Chan[i].lcr         = UART_REG(UART_LCR, i);
+        i8250Chan[i].data        = UART_REG(UART_RDR, i);
+        i8250Chan[i].brdl        = UART_REG(UART_BRDL, i);
+        i8250Chan[i].brdh        = UART_REG(UART_BRDH, i);
+        i8250Chan[i].ier         = UART_REG(UART_IER, i);
+        i8250Chan[i].iid         = UART_REG(UART_IID, i);
+        i8250Chan[i].mdc         = UART_REG(UART_MDC, i);
+        i8250Chan[i].lst         = UART_REG(UART_LST, i);
+        i8250Chan[i].msr         = UART_REG(UART_MSR, i);
+        i8250Chan[i].outByte     = sysOutByte;
+        i8250Chan[i].inByte      = sysInByte;
+
+        i8250HrdInit(&i8250Chan[i]);
+    }
 }
 
-void test_func(void) {
-    char c;
-    I8250_CHAN drv;
-    SIO_CHAN *chan = (SIO_CHAN *) &drv;
+void sysSerialHwInit2 (
+    void
+    ) {
+    int  i;
 
-    SIO_IOCTL(chan, 1, 0);
-    SIO_TX_STARTUP(chan);
-    SIO_CALLBACK_INSTALL(chan, 0, cb, 0);
-    SIO_POLL_INPUT(chan, &c);
-    SIO_POLL_OUTPUT(chan, &c);
+    for (i = 0; i < N_UART_CHANNELS; i++) {
+        if (i8250Chan[i].int_vec != 0) {
+            intConnectDefault(i8250Chan[i].int_vec, i8250Int, &i8250Chan[i]);
+            sysIntEnablePIC(devParams[i].intLevel);
+        }
+    }
+}
+
+SIO_CHAN *  sysSerialChanGet (
+    int  channel
+    ) {
+    SIO_CHAN *  pSioChan;
+
+    if (channel >= 0 && channel < N_UART_CHANNELS) {
+        pSioChan = (SIO_CHAN *) &i8250Chan[channel];
+    }
+    else {
+        pSioChan = NULL;
+    }
+
+    return pSioChan;
 }
 
