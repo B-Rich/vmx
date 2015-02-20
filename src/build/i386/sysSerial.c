@@ -21,6 +21,7 @@
 /* sysSerial.c - Serial driver initialization */
 
 /* Includes */
+#include <string.h>
 #include <sys/types.h>
 #include <vmx.h>
 #include <arch/sysArchLib.h>
@@ -55,6 +56,7 @@ void  sysSerialHwInit (
     int  i;
 
     for (i = 0; i < N_UART_CHANNELS; i++) {
+        memset(&i8250Chan[i], 0, sizeof(I8250_CHAN));
         i8250Chan[i].int_vec     = devParams[i].vector;
         i8250Chan[i].channelMode = 0x0000;
         i8250Chan[i].lcr         = UART_REG(UART_LCR, i);
