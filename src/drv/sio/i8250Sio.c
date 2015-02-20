@@ -589,11 +589,11 @@ LOCAL int  i8250RxChar (
     char *      pChar
     ) {
     int           status;
-    int8_t        stat;
+    int8_t        lst;
     I8250_CHAN *  pChan = (I8250_CHAN *) pSioChan;
 
-    stat = (*pChan->inByte)(pChan->lst);
-    if ((stat & I8250_LSR_RXRDY) == 0x00) {
+    lst = (*pChan->inByte)(pChan->lst);
+    if ((lst & I8250_LSR_RXRDY) == 0x00) {
         status = EAGAIN;
     }
     else {
@@ -616,17 +616,17 @@ LOCAL int  i8250TxChar (
     char        outChar
     ) {
     int           status;
-    int8_t        stat;
+    int8_t        lst;
     int8_t        msr;
     I8250_CHAN *  pChan = (I8250_CHAN *) pSioChan;
 
-    stat = (*pChan->inByte)(pChan->lst);
+    lst = (*pChan->inByte)(pChan->lst);
     msr  = (*pChan->inByte)(pChan->msr);
-    if ((stat & I8250_LSR_TEMT) == 0x00) {
+    if ((lst & I8250_LSR_TEMT) == 0x00) {
         status = EAGAIN;
     }
     else {
-        if ((pChan->options & CLOCAL) != 0x00) {
+        if ((pChan->options & CLOCAL) == 0x00) {
             if ((msr & I8250_MSR_CTS) != 0x00) {
                 (*pChan->outByte)(pChan->data, outChar);
                 status = OK;

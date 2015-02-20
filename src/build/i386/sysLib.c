@@ -233,6 +233,9 @@ void sysHwInit2(
     intConnectDefault(0x21, kbdIntr, (void *) 0);
 #endif /* INCLUDE_PC_CONSOLE */
 
+    sysSerialHwInit();
+    sysSerialHwInit2();
+
 #ifdef INCLUDE_PC_MOUSE
     /* TODO */
 #endif /* INCLUDE_PC_MOUSE */
