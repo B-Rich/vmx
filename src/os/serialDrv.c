@@ -30,6 +30,9 @@
 
 /* Defines */
 
+#define SERIAL_DEV_READ_SIZE    40
+#define SERIAL_DEV_WRITE_SIZE   40
+
 /* Locals */
 LOCAL int serialDrvNum = ERROR;
 
@@ -172,19 +175,32 @@ STATUS serialDevCreate(
 
                 SIO_IOCTL(pChan, SIO_MODE_SET, (ARG) SIO_MODE_INT);
 
-                /* Install driver */
-                if (iosDevAdd(
-                        &pSerialDev->devHeader,
-                        name,
-                        serialDrvNum
-                        ) != OK)
+                /* Initialize typewriter */
+                if (tyDevInit(
+                    &pSerialDev->tyDev,
+                    SERIAL_DEV_READ_SIZE,
+                    SERIAL_DEV_WRITE_SIZE,
+                    (FUNCPTR) pChan->pDrvFuncs->txStartup
+                    ) != OK)
                 {
-                    free(pSerialDev);
                     status = ERROR;
                 }
                 else
                 {
-                    status = OK;
+                    /* Install driver */
+                    if (iosDevAdd(
+                            &pSerialDev->devHeader,
+                            name,
+                            serialDrvNum
+                            ) != OK)
+                    {
+                        free(pSerialDev);
+                        status = ERROR;
+                    }
+                    else
+                    {
+                        status = OK;
+                    }
                 }
             }
         }
@@ -230,6 +246,9 @@ STATUS serialDevDelete(
             }
             else
             {
+                /* Delete typewriter */
+                tyDevRemove(&pSerialDev->tyDev);
+
                 /* Delete device */
                 iosDevDelete(&pSerialDev->devHeader);
 
