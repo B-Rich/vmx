@@ -241,7 +241,7 @@ int serialInTest(
     return 0;
 }
 
-int serialDev(
+int serialTest(
     char *name,
     int   channel
     )
@@ -268,7 +268,8 @@ void usrTestInit(
         {NULL, "_sendSignalTest", sendSignalTest, 0, N_TEXT | N_EXT},
         {NULL, "_sendQSignalTest", sendQSignalTest, 0, N_TEXT | N_EXT},
         {NULL, "_serialOutTest", serialOutTest, 0, N_TEXT | N_EXT},
-        {NULL, "_serialInTest", serialInTest, 0, N_TEXT | N_EXT}
+        {NULL, "_serialInTest", serialInTest, 0, N_TEXT | N_EXT},
+        {NULL, "_serialTest", serialTest, 0, N_TEXT | N_EXT}
     };
 
     int i;
