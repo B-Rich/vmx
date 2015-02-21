@@ -28,11 +28,6 @@
 #include <arch/intArchLib.h>
 #include <os/serialDrv.h>
 
-/* Defines */
-
-#define SERIAL_DEV_READ_SIZE    40
-#define SERIAL_DEV_WRITE_SIZE   40
-
 /* Locals */
 LOCAL int serialDrvNum = ERROR;
 
@@ -127,7 +122,9 @@ STATUS serialDrvInit(
 
 STATUS serialDevCreate(
     char *name,
-    SIO_CHAN *  pChan
+    SIO_CHAN *pChan,
+    int readBufferSize,
+    int writeBufferSize
     )
 {
     STATUS status;
@@ -178,8 +175,8 @@ STATUS serialDevCreate(
                 /* Initialize typewriter */
                 if (tyDevInit(
                     &pSerialDev->tyDev,
-                    SERIAL_DEV_READ_SIZE,
-                    SERIAL_DEV_WRITE_SIZE,
+                    readBufferSize,
+                    writeBufferSize,
                     (FUNCPTR) pChan->pDrvFuncs->txStartup
                     ) != OK)
                 {

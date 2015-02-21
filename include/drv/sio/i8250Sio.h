@@ -106,36 +106,26 @@ extern "C" {
 /* Types */
 
 typedef struct {
-    SIO_DRV_FUNCS  * pDrvFuncs;
+    SIO_DRV_FUNCS * pDrvFuncs;
 
-    FUNCPTR          getTxChar;
-    FUNCPTR          putRcvChar;
+    FUNCPTR         getTxChar;
+    FUNCPTR         putRcvChar;
+    ARG             getTxArg;
+    ARG             putRcvArg;
 
-    ARG              getTxArg;
-    ARG              putRcvArg;
+    u_int16_t       int_vec;
+    u_int16_t       channelMode;
+    u_int32_t       options;
 
-    u_int16_t        int_vec;
-    u_int16_t        channelMode;
-
-    int8_t        (*inByte) (
-        u_int32_t  reg
-        );
-
-    void            (*outByte) (
-        u_int32_t  reg,
-        int8_t     c
-        );
-
-    u_int32_t         lcr;
-    u_int32_t         lst;
-    u_int32_t         mdc;
-    u_int32_t         msr;
-    u_int32_t         ier;
-    u_int32_t         iid;
-    u_int32_t         brdl;
-    u_int32_t         brdh;
-    u_int32_t         data;
-    u_int32_t         options;
+    u_int32_t       lcr;
+    u_int32_t       lst;
+    u_int32_t       mdc;
+    u_int32_t       msr;
+    u_int32_t       ier;
+    u_int32_t       iid;
+    u_int32_t       brdl;
+    u_int32_t       brdh;
+    u_int32_t       data;
 } I8250_CHAN;
 
 typedef struct {

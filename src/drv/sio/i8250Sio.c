@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <vmx.h>
 #include <arch/intArchLib.h>
+#include <arch/sysArchLib.h>
 #include <drv/sio/i8250Sio.h>
 
 /* Defines */
@@ -138,17 +139,17 @@ LOCAL int  i8250Init (
     i8250BaudSet(pChan, I8250_DEFAULT_BAUD);
 
     /* 8 data bits, 1 stop bit and no parity */
-    (*pChan->outByte)(pChan->lcr, (I8250_LCR_CS8 | I8250_LCR_1_STB));
-    (*pChan->outByte)(
+    sysOutByte(pChan->lcr, I8250_LCR_CS8 | I8250_LCR_1_STB);
+    sysOutByte(
         pChan->mdc,
-        (I8250_MCR_RTS | I8250_MCR_DTR | I8250_MCR_OUT2)
+        I8250_MCR_RTS | I8250_MCR_DTR | I8250_MCR_OUT2
         );
 
     /* Clear */
-    (*pChan->inByte)(pChan->data);
+    sysInByte(pChan->data);
 
     /* Disable interrupts */
-    (*pChan->outByte)(pChan->ier, 0x00);
+    sysOutByte(pChan->ier, 0x00);
 
     /* Set options */
     pChan->options = (CLOCAL | CREAD | CS8);
@@ -169,12 +170,12 @@ LOCAL STATUS  i8250Open (
     int     level;
     int8_t  mask;
 
-    mask = ((*pChan->inByte)(pChan->mdc)) & (I8250_MCR_RTS | I8250_MCR_DTR);
+    mask = sysInByte(pChan->mdc) & (I8250_MCR_RTS | I8250_MCR_DTR);
 
     if (mask != (I8250_MCR_RTS | I8250_MCR_DTR)) {
         INT_LOCK(level);
 
-        (*pChan->outByte)(
+        sysOutByte(
             pChan->mdc,
             (I8250_MCR_RTS | I8250_MCR_DTR | I8250_MCR_OUT2)
             );
@@ -199,7 +200,7 @@ LOCAL STATUS  i8250Hup (
 
     INT_LOCK(level);
 
-    (*pChan->outByte)(pChan->mdc, I8250_MCR_OUT2);
+    sysOutByte(pChan->mdc, I8250_MCR_OUT2);
 
     INT_UNLOCK(level);
 
@@ -226,11 +227,11 @@ LOCAL STATUS  i8250BaudSet (
 
     for (i = 0; i < NELEMENTS(baudTable); i++) {
         if (baudTable[i].rate == rate) {
-            lcr = (*pChan->inByte)(pChan->lcr);
-            (*pChan->outByte)(pChan->lcr, (int8_t) (I8250_LCR_DLAB | lcr));
-            (*pChan->outByte)(pChan->brdh, MSB(baudTable[i].preset));
-            (*pChan->outByte)(pChan->brdl, LSB(baudTable[i].preset));
-            (*pChan->outByte)(pChan->lcr, lcr);
+            lcr = sysInByte(pChan->lcr);
+            sysOutByte(pChan->lcr, (int8_t) (I8250_LCR_DLAB | lcr));
+            sysOutByte(pChan->brdh, MSB(baudTable[i].preset));
+            sysOutByte(pChan->brdl, LSB(baudTable[i].preset));
+            sysOutByte(pChan->lcr, lcr);
             status = OK;
             break;
         }
@@ -269,7 +270,7 @@ LOCAL STATUS  i8250ModeSet (
                 ier = I8250_IER_RXRDY;
             }
             else {
-                mask = ((*pChan->inByte)(pChan->msr)) & I8250_MSR_CTS;
+                mask = sysInByte(pChan->msr) & I8250_MSR_CTS;
                 if ((mask & I8250_MSR_CTS) != 0x00) {
                     ier = (I8250_IER_TBE | I8250_IER_MSI);
                 }
@@ -279,7 +280,7 @@ LOCAL STATUS  i8250ModeSet (
             }
         }
 
-        (*pChan->outByte)(pChan->ier, ier);
+        sysOutByte(pChan->ier, ier);
 
         pChan->channelMode = mode;
 
@@ -308,7 +309,7 @@ LOCAL STATUS  i8250OptSet (
     int8_t  lcr;
     int8_t  mcr = 0;
 
-    ier = (*pChan->inByte)(pChan->ier);
+    ier = sysInByte(pChan->ier);
     if ((options & 0xffffff00) != 0x00) {
         status = ERROR;
     }
@@ -360,12 +361,13 @@ LOCAL STATUS  i8250OptSet (
                 break;
         }
 
-        (*pChan->outByte)(pChan->ier, 0x00);
+        /* Disable interrupts */
+        sysOutByte(pChan->ier, 0x00);
 
         if ((options & CLOCAL) == 0x00) {
             mcr |= (I8250_MCR_DTR | I8250_MCR_RTS);
             ier |= I8250_IER_MSI;
-            mask = ((*pChan->inByte)(pChan->msr)) & I8250_MSR_CTS;
+            mask = sysInByte(pChan->msr) & I8250_MSR_CTS;
             if ((mask & I8250_MSR_CTS) != 0x00) {
                 ier |= I8250_IER_TBE;
             }
@@ -379,13 +381,13 @@ LOCAL STATUS  i8250OptSet (
 
         INT_LOCK(level);
 
-        (*pChan->inByte)(pChan->data);
+        sysInByte(pChan->data);
         if ((options & CREAD) != 0x00) {
             ier |= I8250_IER_RXRDY;
         }
 
         if (pChan->channelMode == SIO_MODE_INT) {
-            (*pChan->outByte)(pChan->ier, ier);
+            sysOutByte(pChan->ier, ier);
         }
 
         pChan->options = options;
@@ -427,11 +429,11 @@ LOCAL int  i8250Ioctl (
         case SIO_BAUD_GET:
             INT_LOCK(level);
 
-            lcr = (*pChan->inByte)(pChan->lcr);
-            (*pChan->outByte)(pChan->lcr, (int8_t) (I8250_LCR_DLAB | lcr));
-            baudH = (*pChan->inByte)(pChan->brdh);
-            baudL = (*pChan->inByte)(pChan->brdl);
-            (*pChan->outByte)(pChan->lcr, lcr);
+            lcr = sysInByte(pChan->lcr);
+            sysOutByte(pChan->lcr, I8250_LCR_DLAB | lcr);
+            baudH = sysInByte(pChan->brdh);
+            baudL = sysInByte(pChan->brdl);
+            sysOutByte(pChan->lcr, lcr);
 
             status = EIO;
             for (i = 0; i < NELEMENTS(baudTable); i++) {
@@ -517,15 +519,22 @@ LOCAL int  i8250TxStartup (
     ) {
     int8_t        ier;
     int8_t        mask;
+    char          outChar;
     I8250_CHAN *  pChan = (I8250_CHAN *) pSioChan;
 
     ier = I8250_IER_RXRDY;
     if (pChan->channelMode == SIO_MODE_INT) {
+        if (pChan->getTxChar != NULL &&
+            (*pChan->getTxChar)(pChan->getTxArg, &outChar) == OK) {
+
+            sysOutByte(pChan->data, outChar);
+        }
+
         if ((pChan->options & CLOCAL) != 0x00) {
             ier |= I8250_IER_TBE;
         }
         else {
-            mask = ((*pChan->inByte)(pChan->msr)) & I8250_MSR_CTS;
+            mask = sysInByte(pChan->msr) & I8250_MSR_CTS;
             if ((mask & I8250_MSR_CTS) != 0x00) {
                 ier |= (I8250_IER_TBE | I8250_IER_MSI);
             }
@@ -534,7 +543,7 @@ LOCAL int  i8250TxStartup (
             }
         }
 
-        (*pChan->outByte)(pChan->ier, ier);
+        sysOutByte(pChan->ier, ier);
     }
 
     return OK;
@@ -592,12 +601,12 @@ LOCAL int  i8250RxChar (
     int8_t        lst;
     I8250_CHAN *  pChan = (I8250_CHAN *) pSioChan;
 
-    lst = (*pChan->inByte)(pChan->lst);
+    lst = sysInByte(pChan->lst);
     if ((lst & I8250_LSR_RXRDY) == 0x00) {
         status = EAGAIN;
     }
     else {
-        *pChar = (*pChan->inByte)(pChan->data);
+        *pChar = sysInByte(pChan->data);
         status = OK;
     }
 
@@ -620,15 +629,15 @@ LOCAL int  i8250TxChar (
     int8_t        msr;
     I8250_CHAN *  pChan = (I8250_CHAN *) pSioChan;
 
-    lst = (*pChan->inByte)(pChan->lst);
-    msr  = (*pChan->inByte)(pChan->msr);
+    lst = sysInByte(pChan->lst);
+    msr  = sysInByte(pChan->msr);
     if ((lst & I8250_LSR_TEMT) == 0x00) {
         status = EAGAIN;
     }
     else {
         if ((pChan->options & CLOCAL) == 0x00) {
             if ((msr & I8250_MSR_CTS) != 0x00) {
-                (*pChan->outByte)(pChan->data, outChar);
+                sysOutByte(pChan->data, outChar);
                 status = OK;
             }
             else {
@@ -636,7 +645,7 @@ LOCAL int  i8250TxChar (
             }
         }
         else {
-            (*pChan->outByte)(pChan->data, outChar);
+            sysOutByte(pChan->data, outChar);
             status = OK;
         }
     }
@@ -656,50 +665,50 @@ void  i8250Int (
     ) {
     char    outChar;
     int8_t  intId;
-    int8_t  lineStatus;
+    int8_t  lst;
     int8_t  ier;
     int8_t  msr;
     int     i = 0;
 
-    ier = (*pChan->inByte)(pChan->ier);
+    ier = sysInByte(pChan->ier);
     while (TRUE) {
-        intId = ((*pChan->inByte)(pChan->iid) & I8250_IIR_MASK);
+        intId = sysInByte(pChan->iid) & I8250_IIR_MASK;
         if (intId == I8250_IIR_IP || (++i > I8250_IRR_READ_MAX)) {
             break;
         }
 
-        intId &= 0x06;
+        intId &= I8250_IIR_SEOB;
         if (intId == I8250_IIR_SEOB) {
-            lineStatus = (*pChan->inByte)(pChan->lst);
+            lst = sysInByte(pChan->lst);
         }
         else if (intId == I8250_IIR_RBRF) {
             if (pChan->putRcvChar != NULL) {
                 (*pChan->putRcvChar)(
                     pChan->putRcvArg,
-                    (*pChan->inByte)(pChan->data)
+                    sysInByte(pChan->data)
                     );
             }
             else {
-                (*pChan->inByte)(pChan->data);
+                sysInByte(pChan->data);
             }
         }
         else if (intId == I8250_IIR_THRE) {
             if (pChan->getTxChar != NULL &&
                 (*pChan->getTxChar)(pChan->getTxArg, &outChar) == OK) {
 
-                (*pChan->outByte)(pChan->data, outChar);
+                sysOutByte(pChan->data, outChar);
             }
         }
         else if (intId == I8250_IRR_MSTAT) {
-            msr  = (*pChan->inByte)(pChan->msr);
+            msr  = sysInByte(pChan->msr);
             ier |= (I8250_IER_RXRDY | I8250_IER_MSI);
             if ((msr & I8250_MSR_CTS) != 0x00 &&
                 (msr & I8250_MSR_DCTS) != 0x00) {
 
-                (*pChan->outByte)(pChan->ier, (I8250_IER_TBE | ier));
+                sysOutByte(pChan->ier, I8250_IER_TBE | ier);
             }
             else {
-                (*pChan->outByte)(pChan->ier, (ier & ~I8250_IER_TBE));
+                sysOutByte(pChan->ier, ier & ~I8250_IER_TBE);
             }
         }
     }

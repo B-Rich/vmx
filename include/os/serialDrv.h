@@ -63,7 +63,9 @@ STATUS serialDrvInit(
 
 STATUS serialDevCreate(
     char *name,
-    SIO_CHAN *  pChan
+    SIO_CHAN *pChan,
+    int readBufferSize,
+    int writeBufferSize
     );
 
 /******************************************************************************

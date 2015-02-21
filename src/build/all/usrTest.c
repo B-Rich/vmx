@@ -27,6 +27,7 @@
 #include <a.out.h>
 #include <os/symLib.h>
 #include <os/sioLib.h>
+#include <os/serialDrv.h>
 
 /* Imports */
 IMPORT SYMTAB_ID sysSymTable;
@@ -238,6 +239,21 @@ int serialInTest(
     }
 
     return 0;
+}
+
+int serialDev(
+    char *name,
+    int   channel
+    )
+{
+    static char defName[] = "/serial";
+
+    if (name == NULL) {
+        name = defName;
+    }
+
+    serialDrvInit();
+    return serialDevCreate(name, sysSerialChanGet(channel), 40, 40);
 }
 
 void usrTestInit(

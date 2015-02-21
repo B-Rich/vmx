@@ -24,7 +24,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <vmx.h>
-#include <arch/sysArchLib.h>
 
 #include <drv/sio/i8250Sio.c>
 
@@ -68,8 +67,6 @@ void  sysSerialHwInit (
         i8250Chan[i].mdc         = UART_REG(UART_MDC, i);
         i8250Chan[i].lst         = UART_REG(UART_LST, i);
         i8250Chan[i].msr         = UART_REG(UART_MSR, i);
-        i8250Chan[i].outByte     = sysOutByte;
-        i8250Chan[i].inByte      = sysInByte;
 
         i8250HrdInit(&i8250Chan[i]);
     }
