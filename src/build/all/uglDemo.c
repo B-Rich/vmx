@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <a.out.h>
 
 #include <vmx.h>
@@ -3255,11 +3257,16 @@ int uglMouseLog(void)
 
 int uglWinInit(int noConsole)
 {
+  int fd;
   UGL_REG_DATA *pData;
   UGL_INPUT_SERVICE_ID inputSrvId;
   UGL_INPUT_DEV_ID inputDevId;
   WIN_MGR_ID winMgrId;
   struct vgaHWRec oldRegs;
+
+  fd = open("/serial", O_RDWR);
+  logFdAdd(fd);
+  logFdDelete(STDERR_FILENO);
 
   if (mode4Enter(&oldRegs)) {
     restoreConsole(&oldRegs);
@@ -3302,6 +3309,7 @@ int uglWinInit(int noConsole)
   }
 
   uglRegistryAdd(UGL_WIN_MGR_TYPE, winMgrId, 0, UGL_NULL);
+  logMsg("Initialized window system.\n");
 
   if (!noConsole) {
     restoreConsole(&oldRegs);

@@ -80,6 +80,26 @@ STATUS logFdAdd(
     int fd
     );
 
+/******************************************************************************
+ * logFdDelete - Delete logging file descriptor
+ *
+ * RETURNS: OK or ERROR
+ */
+
+STATUS logFdDelete(
+    int fd
+    );
+
+/******************************************************************************
+ * logShow - Show log file descriptors
+ *
+ * RETURNS: N/A
+ */
+
+void logShow(
+    void
+    );
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
