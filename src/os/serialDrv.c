@@ -370,7 +370,36 @@ LOCAL int serialWrite(
     int maxBytes
     )
 {
+#ifdef NOT_YET
     return tyWrite(&pSerialDev->tyDev, buf, maxBytes);
+#else
+    int  i;
+    int  rv;
+    int  count;
+
+    i = 0;
+    while (i < maxBytes) {
+        rv = SIO_POLL_OUTPUT(pSerialDev->pChan, buf[i]);
+#if 0
+        if (rv == OK) {
+            i++;
+        }
+        else if (rv == EAGAIN) {
+            continue;
+        }
+        else {
+            break;
+        }
+#else
+        for (count = 0; count < 100; count++) {
+            sysDelay();
+        }
+        i++;
+#endif
+    }
+
+    return i;
+#endif
 }
 
 /******************************************************************************
