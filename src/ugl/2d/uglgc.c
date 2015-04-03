@@ -281,6 +281,7 @@ UGL_STATUS uglDefaultBitmapSet (
             vpRect.bottom += gc->viewPort.top;
 
             if (uglOSLock (devId->lockId) != UGL_STATUS_OK) {
+                uglOSUnlock (gc->lockId);
                 return (UGL_STATUS_ERROR);
             }
             (*devId->cursorHide) (devId, &vpRect);
@@ -424,6 +425,7 @@ UGL_STATUS uglClipRectSet (
 
         /* Lock device */
         if (uglOSLock (devId->lockId) != UGL_STATUS_OK) {
+            uglOSUnlock (gc->lockId);
             return (UGL_STATUS_ERROR);
         }
         (*devId->cursorHide) (devId, &clipRect);
