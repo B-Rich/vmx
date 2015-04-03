@@ -132,7 +132,8 @@ UGL_STATUS  winMgrRootWinSet (
 
         /* Setup root window */
         winMgrId->pRootWindow = (UGL_WINDOW *) rootWinId;
-        winMgrId->pRootWindow->state |= WIN_ATTRIB_ROOT;
+        winMgrId->pRootWindow->attributes |= WIN_ATTRIB_ROOT;
+        winMgrId->pRootWindow->state |= WIN_STATE_ACTIVE;
         winRectSet(winMgrId->pRootWindow, &rect);
         winManage(winMgrId->pRootWindow);
         winShow(winMgrId->pRootWindow);

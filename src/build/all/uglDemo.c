@@ -36,6 +36,7 @@
 #include "ugl.h"
 #include "uglinput.h"
 #include "uglWin.h"
+#include "private/uglWinP.h"
 #include "winManage.h"
 #include "driver/graphics/vga/udvga.h"
 #include "driver/graphics/vga/udvgamode.h"
@@ -3327,6 +3328,7 @@ UGL_STATUS uglWinHelloDrawCb(
   UGL_FONT_ID *pFonts;
   UGL_SIZE width, height;
 
+logMsg("<==WINDOW CALLBACK: %d for %x==>\n", pMsg->type, winId);
   uglBackgroundColorSet(pMsg->data.draw.gcId, WIN_BLUE);
   uglForegroundColorSet(pMsg->data.draw.gcId, WIN_WHITE);
   uglRectangle(
@@ -3361,11 +3363,13 @@ UGL_STATUS uglWinHelloDrawCb(
   return UGL_STATUS_OK;
 }
 
-int uglWinHello(int noGfx)
+int uglWinHello(int noGfx, int frameless)
 {
   struct vgaHWRec oldRegs;
   WIN_APP_ID appId;
+  UGL_UINT32 attrib;
   WIN_ID winId;
+  WIN_ID parentId;
 
   if (!noGfx && mode4Enter(&oldRegs)) {
     restoreConsole(&oldRegs);
@@ -3381,8 +3385,14 @@ int uglWinHello(int noGfx)
     printf("Unable to create window application context.\n");
     return 1;
   }
+logMsg("Create window application context: %x\n", appId);
 
-  winId = winCreate(appId, UGL_NULL, WIN_ATTRIB_VISIBLE | WIN_ATTRIB_FRAMED,
+  attrib = WIN_ATTRIB_VISIBLE;
+  if (!frameless) {
+      attrib |= WIN_ATTRIB_FRAMED;
+  }
+
+  winId = winCreate(appId, UGL_NULL, attrib,
                     100, 100, 200, 160, UGL_NULL, 0, UGL_NULL);
   if (winId == UGL_NULL) {
     winAppDestroy(appId);
@@ -3392,28 +3402,43 @@ int uglWinHello(int noGfx)
     printf("Unable to create window .\n");
     return 1;
   }
+  parentId = winId->pParent;
+logMsg("Created window: %x, parent = %x\n", winId, parentId);
 
   winCbAdd(winId, MSG_DRAW, 0, uglWinHelloDrawCb, UGL_NULL);
 
+logMsg("Attach window: %x\n", winId);
   winAttach(winId, UGL_NULL, UGL_NULL);
-  winUpdate(winId);
 
+#if 1
+logMsg("Show window: %x\n", winId);
+  winShow(winId);
+#else
+logMsg("Update window: %x\n", winId);
+  winUpdate(winId);
+#endif
+
+logMsg("Waiting for input...\n");
   getchar();
 
+logMsg("Destroy window: %x\n", winId);
   winDestroy(winId);
+
+logMsg("Destroy app: %x\n", appId);
   winAppDestroy(appId);
 
   if (!noGfx) {
     restoreConsole(&oldRegs);
   }
 
+logMsg("done\n");
   return 0;
 }
 
-int uglWinTest(void)
+int uglWinTest(int frameless)
 {
   uglWinInit(TRUE);
-  uglWinHello(TRUE);
+  uglWinHello(TRUE, frameless);
 }
 
 int uglDemoInit(void)
