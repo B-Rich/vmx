@@ -36,7 +36,6 @@
 #include "ugl.h"
 #include "uglinput.h"
 #include "uglWin.h"
-#include "private/uglWinP.h"
 #include "winManage.h"
 #include "driver/graphics/vga/udvga.h"
 #include "driver/graphics/vga/udvgamode.h"
@@ -3277,64 +3276,6 @@ int uglLogDev(char *devname)
   return OK;
 }
 
-int uglWinInit(int noConsole)
-{
-  UGL_REG_DATA *pData;
-  UGL_INPUT_SERVICE_ID inputSrvId;
-  UGL_INPUT_DEV_ID inputDevId;
-  WIN_MGR_ID winMgrId;
-  struct vgaHWRec oldRegs;
-
-  if (mode4Enter(&oldRegs)) {
-    restoreConsole(&oldRegs);
-    printf("Unable to set graphics mode to 640x480 @60Hz, 16 color.\n");
-    return 1;
-  }
-
-  pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
-  if (pData == UGL_NULL) {
-    printf("Input service not started.\n");
-    return 1;
-  }
-
-  inputSrvId = (UGL_INPUT_SERVICE_ID) pData->data;
-  if (inputSrvId == UGL_NULL) {
-    printf("Null input service.\n");
-    return 1;
-  }
-
-#ifdef UGL_POINTER_INIT
-  uglMouseInit();
-
-  pData = uglRegistryFind(UGL_PTR_TYPE, UGL_NULL, 0, UGL_NULL);
-  if (pData == UGL_NULL) {
-    printf("No pointer device found.\n");
-    return 1;
-  }
-
-  inputDevId = (UGL_INPUT_DEV_ID) pData->data;
-  if (inputDevId == UGL_NULL) {
-    printf("Null input device.\n");
-    return 1;
-  }
-#endif
-
-  winMgrId = winMgrCreate(gfxDevId, inputSrvId, wwmEngineId);
-  if (winMgrId == UGL_NULL) {
-    printf("Unable to create instance of window manager.\n");
-    return 1;
-  }
-
-  uglRegistryAdd(UGL_WIN_MGR_TYPE, winMgrId, 0, UGL_NULL);
-  logMsg("Initialized window system.\n");
-
-  if (!noConsole) {
-    restoreConsole(&oldRegs);
-  }
-
-  return 0;
-}
-
 UGL_STATUS uglWinHelloDrawCb(
   WIN_ID winId,
   WIN_MSG *pMsg,
@@ -3344,7 +3285,7 @@ UGL_STATUS uglWinHelloDrawCb(
   UGL_FONT_ID *pFonts;
   UGL_SIZE width, height;
 
-logMsg("<==WINDOW CALLBACK: %d for %x==>\n", pMsg->type, winId);
+  logMsg("<==WINDOW CALLBACK: %d for %x==>\n", pMsg->type, winId);
   uglBackgroundColorSet(pMsg->data.draw.gcId, WIN_BLUE);
   uglForegroundColorSet(pMsg->data.draw.gcId, WIN_WHITE);
   uglRectangle(
@@ -3379,29 +3320,67 @@ logMsg("<==WINDOW CALLBACK: %d for %x==>\n", pMsg->type, winId);
   return UGL_STATUS_OK;
 }
 
-int uglWinHello(int noGfx, int frameless)
+int uglWin(int frameless)
 {
   struct vgaHWRec oldRegs;
+  UGL_REG_DATA *pData;
+  UGL_INPUT_SERVICE_ID inputSrvId;
+  UGL_INPUT_DEV_ID inputDevId;
+  WIN_MGR_ID winMgrId;
   WIN_APP_ID appId;
   UGL_UINT32 attrib;
   WIN_ID winId;
-  WIN_ID parentId;
 
-  if (!noGfx && mode4Enter(&oldRegs)) {
+  if (mode4Enter(&oldRegs)) {
     restoreConsole(&oldRegs);
     printf("Unable to set graphics mode to 640x480 @60Hz, 16 color.\n");
-    return 1;
+    return UGL_STATUS_ERROR;
   }
+
+  pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    printf("Input service not started.\n");
+    return UGL_STATUS_ERROR;
+  }
+
+  inputSrvId = (UGL_INPUT_SERVICE_ID) pData->data;
+  if (inputSrvId == UGL_NULL) {
+    printf("Null input service.\n");
+    return UGL_STATUS_ERROR;
+  }
+
+#ifdef UGL_POINTER_INIT
+  uglMouseInit();
+
+  pData = uglRegistryFind(UGL_PTR_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    printf("No pointer device found.\n");
+    return UGL_STATUS_ERROR;
+  }
+
+  inputDevId = (UGL_INPUT_DEV_ID) pData->data;
+  if (inputDevId == UGL_NULL) {
+    printf("Null input device.\n");
+    return UGL_STATUS_ERROR;
+  }
+#endif
+
+  winMgrId = winMgrCreate(gfxDevId, inputSrvId, wwmEngineId);
+  if (winMgrId == UGL_NULL) {
+    printf("Unable to create instance of window manager.\n");
+    return UGL_STATUS_ERROR;
+  }
+
+  uglRegistryAdd(UGL_WIN_MGR_TYPE, winMgrId, 0, UGL_NULL);
+  logMsg("Initialized window system.\n");
 
   appId = winAppCreate("winHello", 0, 0, 0, UGL_NULL);
   if (appId == UGL_NULL) {
-    if (!noGfx) {
-      restoreConsole(&oldRegs);
-    }
+    restoreConsole(&oldRegs);
     printf("Unable to create window application context.\n");
-    return 1;
+    return UGL_STATUS_ERROR;
   }
-logMsg("Create window application context: %x\n", appId);
+  logMsg("Created window application context: %x\n", appId);
 
   attrib = WIN_ATTRIB_VISIBLE;
   if (!frameless) {
@@ -3412,49 +3391,27 @@ logMsg("Create window application context: %x\n", appId);
                     100, 100, 200, 160, UGL_NULL, 0, UGL_NULL);
   if (winId == UGL_NULL) {
     winAppDestroy(appId);
-    if (!noGfx) {
-      restoreConsole(&oldRegs);
-    }
+    restoreConsole(&oldRegs);
     printf("Unable to create window .\n");
-    return 1;
+    return UGL_STATUS_ERROR;
   }
-  parentId = winId->pParent;
-logMsg("Created window: %x, parent = %x\n", winId, parentId);
+  logMsg("Created window: %x\n", winId);
 
   winCbAdd(winId, MSG_DRAW, 0, uglWinHelloDrawCb, UGL_NULL);
-
-logMsg("Attach window: %x\n", winId);
   winAttach(winId, UGL_NULL, UGL_NULL);
 
-#if 1
-logMsg("Show window: %x\n", winId);
-  winShow(winId);
-#else
-logMsg("Update window: %x\n", winId);
-  winUpdate(winId);
-#endif
-
-logMsg("Waiting for input...\n");
+  logMsg("Waiting for input...\n");
   getchar();
 
-logMsg("Destroy window: %x\n", winId);
+  logMsg("Destroy window: %x\n", winId);
   winDestroy(winId);
 
-logMsg("Destroy app: %x\n", appId);
+  logMsg("Destroy app: %x\n", appId);
   winAppDestroy(appId);
 
-  if (!noGfx) {
-    restoreConsole(&oldRegs);
-  }
+  restoreConsole(&oldRegs);
 
-logMsg("done\n");
-  return 0;
-}
-
-int uglWinTest(int frameless)
-{
-  uglWinInit(TRUE);
-  uglWinHello(TRUE, frameless);
+  return UGL_STATUS_OK;
 }
 
 int uglDemoInit(void)
@@ -3519,9 +3476,7 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_uglMouseInit", uglMouseInit, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseLog", uglMouseLog, 0, N_TEXT | N_EXT},
   {NULL, "_uglLogDev", uglLogDev, 0, N_TEXT | N_EXT},
-  {NULL, "_uglWinInit", uglWinInit, 0, N_TEXT | N_EXT},
-  {NULL, "_uglWinHello", uglWinHello, 0, N_TEXT | N_EXT},
-  {NULL, "_uglWinTest", uglWinTest, 0, N_TEXT | N_EXT}
+  {NULL, "_uglWin", uglWin, 0, N_TEXT | N_EXT}
 };
 
     int i;
