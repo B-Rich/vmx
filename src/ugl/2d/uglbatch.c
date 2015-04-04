@@ -99,11 +99,11 @@ UGL_STATUS uglBatchEnd (
         }
     }
 
-    /* Unlock device */
-    uglOSLock (devId->lockId);
-
     /* Unlock GC */
-    uglOSLock (gc->lockId);
+    uglOSUnlock (gc->lockId);
+
+    /* Unlock device */
+    uglOSUnlock (devId->lockId);
 
     return (UGL_STATUS_OK);
 }

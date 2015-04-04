@@ -3256,18 +3256,34 @@ int uglMouseLog(void)
                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
+int uglLogDev(char *devname)
+{
+  static char devName[] = "/serial";
+  int fd;
+
+  if (devname == NULL) {
+    devname = devName;
+  }
+
+  fd = open(devname, O_RDWR);
+  if (fd < 0) {
+    fprintf(stderr, "Error - Unable to open device: %s\n");
+    return ERROR;
+  }
+
+  logFdAdd(fd);
+  logFdDelete(STDERR_FILENO);
+
+  return OK;
+}
+
 int uglWinInit(int noConsole)
 {
-  int fd;
   UGL_REG_DATA *pData;
   UGL_INPUT_SERVICE_ID inputSrvId;
   UGL_INPUT_DEV_ID inputDevId;
   WIN_MGR_ID winMgrId;
   struct vgaHWRec oldRegs;
-
-  fd = open("/serial", O_RDWR);
-  logFdAdd(fd);
-  logFdDelete(STDERR_FILENO);
 
   if (mode4Enter(&oldRegs)) {
     restoreConsole(&oldRegs);
@@ -3502,6 +3518,7 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_winMgrCreate", winMgrCreate, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseInit", uglMouseInit, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseLog", uglMouseLog, 0, N_TEXT | N_EXT},
+  {NULL, "_uglLogDev", uglLogDev, 0, N_TEXT | N_EXT},
   {NULL, "_uglWinInit", uglWinInit, 0, N_TEXT | N_EXT},
   {NULL, "_uglWinHello", uglWinHello, 0, N_TEXT | N_EXT},
   {NULL, "_uglWinTest", uglWinTest, 0, N_TEXT | N_EXT}
