@@ -3330,6 +3330,7 @@ int uglWin(int frameless)
   WIN_APP_ID appId;
   UGL_UINT32 attrib;
   WIN_ID winId;
+  char c;
 
   if (mode4Enter(&oldRegs)) {
     restoreConsole(&oldRegs);
@@ -3401,13 +3402,17 @@ int uglWin(int frameless)
   winAttach(winId, UGL_NULL, UGL_NULL);
 
   logMsg("Waiting for input...\n");
-  getchar();
-
-  logMsg("Destroy window: %x\n", winId);
-  winDestroy(winId);
-
-  logMsg("Destroy app: %x\n", appId);
-  winAppDestroy(appId);
+  do {
+    c = getchar();
+    logMsg("Got character: %c\n", c);
+    switch(c) {
+        case 'e':
+            winSend(winId, MSG_EXPOSE, UGL_NULL, 0);
+            break;
+        default:
+            break;
+    }
+  } while (c != 'q');
 
   restoreConsole(&oldRegs);
 
