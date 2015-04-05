@@ -1878,7 +1878,6 @@ WIN_ID  winDeadGet (
         pWindow = UGL_NULL;
     }
     else {
-        pWindow = UGL_NULL;
         uglOSLock(appId->lockId);
 
         for (pResource = (WIN_RESOURCE *) uglListLast(&appId->resourceList);
@@ -1892,6 +1891,8 @@ WIN_ID  winDeadGet (
         }
 
         uglOSUnlock(appId->lockId);
+
+        pWindow = (UGL_WINDOW *) pResource->id;
     }
 
     return pWindow;
