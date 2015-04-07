@@ -4,7 +4,7 @@
 ADDED_CFLAGS += -Wall
 ADDED_INCFLAGS += -I$(VMX_BASE)/include/ugl
 
-OBJS = wwmInit.o wwmFrame.o wwmColor.o
+OBJS = wwmInit.o wwmFrame.o wwmColor.o wwmCursor.o
 SUBDIRS =
 LIB_TGT = ugl-wwm
 
