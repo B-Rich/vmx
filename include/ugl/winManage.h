@@ -110,6 +110,19 @@ UGL_STATUS  winMgrColorTableSet (
 
 /******************************************************************************
  *
+ * winMgrCursorTableSet - Set window manager cursor table
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMgrCursorTableSet (
+    WIN_MGR_ID     winMgrId,
+    UGL_CDDB_ID *  pCursorTable,
+    UGL_SIZE       cursorTableSize
+    );
+
+/******************************************************************************
+ *
  * winMgrFontTableSet - Set window manager font table
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR

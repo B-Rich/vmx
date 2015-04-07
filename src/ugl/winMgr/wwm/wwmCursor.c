@@ -144,8 +144,8 @@ UGL_LOCAL const UGL_UINT8 cursorInvalid[] = {
 #undef O
 };
 
-/* Cursor drag (19x19) */
-UGL_LOCAL const UGL_UINT8 cursorDrag[] = {
+/* Cursor move (19x19) */
+UGL_LOCAL const UGL_UINT8 cursorMove[] = {
 #define T UGL_CURSOR_COLOR_TRANSPARENT,
 #define B 0,
 #define O 1,
@@ -325,7 +325,7 @@ const UGL_CDIB wwmCDibInvalid = {
     (UGL_UINT8 *) cursorInvalid               /* pData */
 };
 
-const UGL_CDIB wwmCDibDrag = {
+const UGL_CDIB wwmCDibMove = {
     19,                                       /* width */
     19,                                       /* height */
     19,                                       /* stride */
@@ -335,7 +335,7 @@ const UGL_CDIB wwmCDibDrag = {
     },
     sizeof(cursorClut) / sizeof(UGL_ARGB),    /* clutSize */
     (UGL_ARGB *) cursorClut,                  /* pClut */
-    (UGL_UINT8 *) cursorDrag                  /* pData */
+    (UGL_UINT8 *) cursorMove                  /* pData */
 };
 
 const UGL_CDIB wwmCDibSizeHoriz = {

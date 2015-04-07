@@ -526,3 +526,36 @@ UGL_COLOR  winColorGet (
     return color;
 }
 
+/******************************************************************************
+ *
+ * winCursorImageGet - Get cursor from window cursors
+ *
+ * RETURNS: Cursor image id or UGL_NULL
+ */
+
+UGL_CDDB_ID  winCursorImageGet (
+    WIN_ID   winId,
+    UGL_ORD  index
+    ) {
+    UGL_CDDB_ID  cursorId;
+    WIN_MGR *    pWinMgr;
+
+    if (winId == UGL_NULL) {
+        pWinMgr = pDefaultWinMgr;
+    }
+    else {
+        pWinMgr = winId->pApp->pWinMgr;
+    }
+
+    if (pWinMgr == UGL_NULL || index < 0 ||
+        index >= pWinMgr->cursorTableSize) {
+
+        cursorId = UGL_NULL;
+    }
+    else {
+        cursorId = pWinMgr->pCursorTable[index];
+    }
+
+    return cursorId;
+}
+
