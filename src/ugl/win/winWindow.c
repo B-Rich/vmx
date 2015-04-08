@@ -1892,7 +1892,12 @@ WIN_ID  winDeadGet (
 
         uglOSUnlock(appId->lockId);
 
-        pWindow = (UGL_WINDOW *) pResource->id;
+        if (pResource != UGL_NULL) {
+            pWindow = (UGL_WINDOW *) pResource->id;
+        }
+        else {
+            pWindow = UGL_NULL;
+        }
     }
 
     return pWindow;
