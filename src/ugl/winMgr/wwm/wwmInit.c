@@ -126,7 +126,10 @@ UGL_LOCAL void *  wwmCreate (
     /* Set color table */
     winMgrColorTableSet(winMgrId, pColorTable, WIN_NUM_STANDARD_COLORS);
 
-    /* Set cursors */
+    /* Initialize cursor */
+    uglCursorInit(displayId, 32, 32, modeInfo.width / 2, modeInfo.height / 2);
+
+    /* Initialize cursor table */
     pCursorTable = UGL_CALLOC(WIN_NUM_STANDARD_CURSORS, sizeof(UGL_CDDB_ID));
 
     pCursorTable[WIN_CURSOR_INDEX_ARROW] = uglCursorBitmapCreate(
@@ -200,6 +203,10 @@ UGL_LOCAL void *  wwmCreate (
 
     /* Set cursor table */
     winMgrCursorTableSet(winMgrId, pCursorTable, WIN_NUM_STANDARD_CURSORS);
+
+    /* Setup current cursor */
+    uglCursorImageSet(displayId, pCursorTable[WIN_CURSOR_INDEX_ARROW]);
+    uglCursorOn(displayId);
 
     pRegData = uglRegistryFind(UGL_FONT_ENGINE_TYPE, UGL_NULL, 0, 0);
     if (pRegData != UGL_NULL) {
