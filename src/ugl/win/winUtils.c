@@ -577,6 +577,9 @@ WIN_ID  winGetFromPoint (
                     pPoint->x -= pChild->rect.left;
                     pPoint->y -= pChild->rect.top;
 
+                    /* Store hit */
+                    pWindow = pChild;
+
                     /* Advance to last */
                     pChild = (UGL_WINDOW *) uglListLast(&pWindow->childList);
                     continue;
