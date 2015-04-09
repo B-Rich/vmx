@@ -418,6 +418,17 @@ UGL_CDDB_ID  winCursorImageGet (
 
 /******************************************************************************
  *
+ * winPointerGrabGet - Get window which has focus
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winPointerGrabGet (
+    WIN_MGR_ID  winMgrId
+    );
+
+/******************************************************************************
+ *
  * winSend - Prepare and send message to window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR

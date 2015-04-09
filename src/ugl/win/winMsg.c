@@ -27,6 +27,12 @@
 
 /* Locals */
 
+UGL_LOCAL UGL_UINT32     winPointerClickInterval      = 500;
+UGL_LOCAL UGL_ORD        winLastPointerClickButtonNum = -1;
+UGL_LOCAL WIN_ID         winLastPointerClickId        = UGL_NULL;
+UGL_LOCAL UGL_TIMESTAMP  winLastPointerClickTime      = 0;
+UGL_LOCAL UGL_MSG_TYPE   winLastPointerClickMsgType   = 0;
+
 UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
     WIN_ID     winId,
     WIN_MSG *  pMsg
@@ -161,8 +167,80 @@ UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
                 break;
 
             case MSG_POINTER:
-                /* TODO */
-                status = UGL_STATUS_ERROR;
+                if (pWinMgr->pPtrWin != winId) {
+                    if (pWinMgr->pPtrWin != UGL_NULL) {
+                        pMsg->type = MSG_PTR_LEAVE;
+                        winMsgSend(pWinMgr->pPtrWin, pMsg);
+                    }
+
+                    /* Get focus */
+                    pWinMgr->pPtrWin = winId;
+                    pMsg->type = MSG_PTR_ENTER;
+                    winMsgSend(winId, pMsg);
+                }
+
+                /* Button click message */
+                if (pMsg->data.ptr.buttonChange != 0x00) {
+                    UGL_ORD     i;
+                    UGL_UINT32  buttonMask;
+
+                    i = 0;
+                    for (buttonMask = 1;
+                         buttonMask < UGL_PTR_BUTTON_MASK;
+                         buttonMask <<= 1) {
+
+                        if ((pMsg->data.ptr.buttonChange &
+                             buttonMask) != 0x00) {
+                            if ((winId->attributes &
+                                 WIN_ATTRIB_DBL_CLICK) != 0x00 &&
+                                 winLastPointerClickButtonNum == i &&
+                                 winLastPointerClickId == winId &&
+                                 winLastPointerClickTime <
+                                 winPointerClickInterval) {
+
+                                if (winLastPointerClickMsgType ==
+                                    (UGL_MSG_TYPE) (MSG_PTR_BTN1_DOWN + i)) {
+                                    pMsg->type = MSG_PTR_BTN1_DBL_CLICK + i;
+                                }
+                                else if ((winId->attributes &
+                                          WIN_ATTRIB_TRI_CLICK) != 0x00 &&
+                                          winLastPointerClickMsgType ==
+                                          (UGL_MSG_TYPE)
+                                              (MSG_PTR_BTN1_DBL_CLICK + i)) {
+                                    pMsg->type = MSG_PTR_BTN1_TRI_CLICK + i;
+                                }
+                                else {
+                                    pMsg->type = MSG_PTR_BTN1_DOWN + i;
+                                }
+                            }
+                            else {
+                                pMsg->type = MSG_PTR_BTN1_UP + i;
+                            }
+
+                            /* Send button message to window */
+                            winMsgSend(winId, pMsg);
+                        }
+
+                        /* Advance */
+                        i++;
+                    }
+                }
+                else {
+                    /* Move or drag message */
+                    if ((pMsg->data.ptr.buttonState &
+                         UGL_PTR_BUTTON_MASK) == 0x00) {
+                        pMsg->type = MSG_PTR_MOVE;
+                    }
+                    else {
+                        pMsg->type = MSG_PTR_DRAG;
+                    }
+
+                    /* Send message to window */
+                    winMsgSend(winId, pMsg);
+                }
+
+                /* Restore */
+                pMsg->type = MSG_POINTER;
                 break;
 
             case MSG_PTR_BTN1_DOWN:

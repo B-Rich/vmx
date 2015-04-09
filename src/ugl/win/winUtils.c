@@ -559,3 +559,33 @@ UGL_CDDB_ID  winCursorImageGet (
     return cursorId;
 }
 
+/******************************************************************************
+ *
+ * winPointerGrabGet - Get window which has focus
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winPointerGrabGet (
+    WIN_MGR_ID  winMgrId
+    ) {
+    WIN_ID          winId;
+    UGL_REG_DATA *  pData;
+
+    if (winMgrId == UGL_NULL) {
+        pData = uglRegistryFind(UGL_WIN_MGR_TYPE, UGL_NULL, 0, UGL_NULL);
+        if (pData != UGL_NULL) {
+            winMgrId = (WIN_MGR_ID) pData->data;
+        }
+    }
+
+    if (winMgrId != UGL_NULL) {
+        winId = winMgrId->pPtrGrabWindow;
+    }
+    else {
+        winId = UGL_NULL;
+    }
+
+    return winId;
+}
+

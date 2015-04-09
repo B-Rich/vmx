@@ -316,6 +316,16 @@ UGL_LOCAL UGL_STATUS  winManageCbMsgRoute (
     WIN_MGR_ID            winMgrId
     ) {
 
+    if (pMsg->type == MSG_POINTER) {
+        uglCursorMove(
+            winMgrId->pDisplay,
+            pMsg->data.pointer.position.x,
+            pMsg->data.pointer.position.y
+            );
+
+        /* TODO */
+    }
+
     /* TODO */
 
     return UGL_STATUS_ERROR;
