@@ -471,6 +471,50 @@ UGL_STATUS  winWindowRectToScreen (
 
 /******************************************************************************
  *
+ * winScreenToWindow - Convert screen coordinates to window coordinates
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winScreenToWindow (
+    WIN_ID       winId,
+    UGL_POINT *  pPoints,
+    UGL_SIZE     numPoints
+    ) {
+    UGL_STATUS    status;
+    UGL_WINDOW *  pWindow;
+    UGL_ORD       i;
+    UGL_ORD       dx;
+    UGL_ORD       dy;
+
+    if (winId == UGL_NULL || pPoints == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        pWindow = winId;
+        dx = 0;
+        dy = 0;
+
+        while (pWindow != UGL_NULL) {
+            dx -= pWindow->rect.left;
+            dy -= pWindow->rect.top;
+
+            /* Advance */
+            pWindow = pWindow->pParent;
+        }
+
+        for (i = 0; i < numPoints; i++) {
+            UGL_POINT_MOVE(pPoints[i], dx, dy);
+        }
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winDrawRectGet - Get window drawing rectangle
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -493,6 +537,64 @@ UGL_STATUS  winDrawRectGet (
     }
 
     return status;
+}
+
+/******************************************************************************
+ *
+ * winGetFromPoint - Get window at point
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winGetFromPoint (
+    WIN_MGR_ID   winMgrId,
+    UGL_POINT *  pPoint
+    ) {
+    WIN_ID          winId;
+    UGL_REG_DATA *  pData;
+    UGL_WINDOW *    pWindow;
+    UGL_WINDOW *    pChild;
+
+    if (winMgrId == UGL_NULL) {
+        pData = uglRegistryFind(UGL_WIN_MGR_TYPE, UGL_NULL, 0, UGL_NULL);
+        if (pData != UGL_NULL) {
+            winMgrId = (WIN_MGR_ID) pData->data;
+        }
+    }
+
+    if (winMgrId != UGL_NULL) {
+        pChild = winMgrId->pRootWindow;
+        if (pChild == UGL_NULL) {
+            winId = UGL_NULL;
+        }
+        else {
+            winLock(winMgrId->pRootWindow);
+
+            pWindow = UGL_NULL;
+            while (pChild != UGL_NULL) {
+                if ((pChild->state & WIN_STATE_HIDDEN) == 0x00 &&
+                    UGL_POINT_IN_RECT(*pPoint, pChild->rect)) {
+                    pPoint->x -= pChild->rect.left;
+                    pPoint->y -= pChild->rect.top;
+
+                    /* Advance to last */
+                    pChild = (UGL_WINDOW *) uglListLast(&pWindow->childList);
+                    continue;
+                }
+
+                /* Advance */
+                pChild = (UGL_WINDOW *) uglListPrev(&pChild->node);
+            }
+
+            winUnlock(winMgrId->pRootWindow);
+            winId = pWindow;
+        }
+    }
+    else {
+        winId = UGL_NULL;
+    }
+
+    return winId;
 }
 
 /******************************************************************************

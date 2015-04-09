@@ -315,20 +315,38 @@ UGL_LOCAL UGL_STATUS  winManageCbMsgRoute (
     UGL_MSG_Q_ID *        pQueueId,
     WIN_MGR_ID            winMgrId
     ) {
+    WIN_ID  winId;
 
     if (pMsg->type == MSG_POINTER) {
+        winId = winPointerGrabGet(winMgrId);
+
         uglCursorMove(
             winMgrId->pDisplay,
             pMsg->data.pointer.position.x,
             pMsg->data.pointer.position.y
             );
 
-        /* TODO */
+        if (winId != UGL_NULL) {
+            pMsg->objectId = winId;
+            *pQueueId = winId->pApp->pQueue;
+            winScreenToWindow(winId, &pMsg->data.pointer.position, 1);
+        }
+        else {
+            winId = winGetFromPoint(
+                winMgrId,
+                &pMsg->data.pointer.position
+                );
+
+            pMsg->objectId = winId;
+            if (pMsg->objectId != UGL_NULL) {
+                *pQueueId = winId->pApp->pQueue;
+            }
+        }
     }
 
     /* TODO */
 
-    return UGL_STATUS_ERROR;
+    return UGL_STATUS_OK;
 }
 
 /******************************************************************************
