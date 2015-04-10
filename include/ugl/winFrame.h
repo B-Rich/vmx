@@ -41,6 +41,17 @@ UGL_STATUS  winFrameCaptionSet (
     UGL_CHAR *  pCaption
     );
 
+/******************************************************************************
+ *
+ * winFrameResizableGet - Get if frame is resizable
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_BOOL  winFrameResizableGet (
+    WIN_ID  winId
+    );
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

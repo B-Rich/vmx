@@ -101,6 +101,13 @@ UGL_LOCAL UGL_VOID  wwmFrameInit (
     WWM_FRAME_DATA *  pFrameData
     );
 
+UGL_LOCAL UGL_STATUS  wwmMoveSizeCallback (
+    WIN_ID     winId,
+    WIN_MSG *  pMsg,
+    void *     pData,
+    void *     pParam
+    );
+
 UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
     WIN_ID            winId,
     WIN_CLASS_ID      classId,
@@ -483,6 +490,73 @@ UGL_LOCAL UGL_VOID  wwmFrameInit (
 
 /******************************************************************************
  *
+ * wwmMoveSizeCallback
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_LOCAL UGL_STATUS  wwmMoveSizeCallback (
+    WIN_ID     winId,
+    WIN_MSG *  pMsg,
+    void *     pData,
+    void *     pParam
+    ) {
+
+    static  UGL_UINT32  hitResult = 0x00;
+
+    switch (pMsg->type) {
+        case MSG_PTR_MOVE: {
+            WIN_MSG        hitMsg;
+            UGL_DEVICE_ID  displayId;
+
+            /* Send get hit message to window */
+            hitMsg.type = MSG_HIT_TEST;
+            memcpy(
+                &hitMsg.data.hitTest.position,
+                &pMsg->data.ptr.position,
+                sizeof(UGL_POINT)
+                );
+            hitMsg.data.hitTest.hitResult = 0x00;
+            winMsgSend(winId, &hitMsg);
+
+            hitResult = hitMsg.data.hitTest.hitResult;
+            displayId = winDisplayGet(winId);
+
+            /* Process hit message */
+            if (hitResult == 0x00) {
+                uglCursorImageSet(displayId, WIN_CURSOR_ARROW);
+            }
+            else if (hitResult == WIN_HIT_TEST_MOVE) {
+                uglCursorImageSet(displayId, WIN_CURSOR_ARROW);
+            }
+            else if (hitResult == WIN_HIT_TEST_LEFT ||
+                     hitResult == WIN_HIT_TEST_RIGHT) {
+                uglCursorImageSet(displayId, WIN_CURSOR_SIZE_HORIZ);
+            }
+            else if (hitResult == WIN_HIT_TEST_TOP ||
+                     hitResult == WIN_HIT_TEST_BOTTOM) {
+                uglCursorImageSet(displayId, WIN_CURSOR_SIZE_VERT);
+            }
+            else if (hitResult ==
+                     (WIN_HIT_TEST_TOP | WIN_HIT_TEST_LEFT) ||
+                     hitResult ==
+                     (WIN_HIT_TEST_BOTTOM | WIN_HIT_TEST_RIGHT)) {
+                uglCursorImageSet(displayId, WIN_CURSOR_SIZE_TL_BR);
+            }
+            else if (hitResult ==
+                     (WIN_HIT_TEST_TOP | WIN_HIT_TEST_RIGHT) ||
+                     hitResult ==
+                     (WIN_HIT_TEST_BOTTOM | WIN_HIT_TEST_LEFT)) {
+                uglCursorImageSet(displayId, WIN_CURSOR_SIZE_TR_BL);
+            }
+        } break;
+    }
+
+    return UGL_STATUS_OK;
+}
+
+/******************************************************************************
+ *
  * wwmFrameMsgHandler - Frame class message handler
  *
  * RETURNS: Pointer to display or UGL_NULL
@@ -497,9 +571,44 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
 
     switch (pMsg->type) {
 
+        case MSG_HIT_TEST: {
+            UGL_RECT  rect;
+
+            winDrawRectGet(winId, &rect);
+
+            if (winFrameResizableGet(winId) == UGL_TRUE) {
+                if (pMsg->data.hitTest.position.x <= WWM_FRAME_BORDER_SIZE) {
+                    pMsg->data.hitTest.hitResult |= WIN_HIT_TEST_LEFT;
+                }
+                else if (pMsg->data.hitTest.position.x >=
+                         rect.right - WWM_FRAME_BORDER_SIZE) {
+                    pMsg->data.hitTest.hitResult |= WIN_HIT_TEST_RIGHT;
+                }
+
+                if (pMsg->data.hitTest.position.y <= WWM_FRAME_BORDER_SIZE) {
+                    pMsg->data.hitTest.hitResult |= WIN_HIT_TEST_TOP;
+                }
+                else if (pMsg->data.hitTest.position.y >=
+                         rect.bottom - WWM_FRAME_BORDER_SIZE) {
+                    pMsg->data.hitTest.hitResult |= WIN_HIT_TEST_BOTTOM;
+                }
+            }
+            else {
+                pMsg->data.hitTest.hitResult = 0x00;
+            }
+
+            if (pMsg->data.hitTest.hitResult == 0x00 &&
+                UGL_POINT_IN_RECT(
+                    pMsg->data.hitTest.position,
+                    pFrameData->captionRect
+                    ) == UGL_TRUE) {
+                pMsg->data.hitTest.hitResult |= WIN_HIT_TEST_MOVE;
+            }
+
+            } break;
+
         case MSG_CREATE:
             wwmFrameInit(winId, pFrameData);
-#ifdef TODO
             winCbAdd(
                 winId,
                 MSG_PTR_FIRST,
@@ -507,7 +616,6 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
                 wwmMoveSizeCallback,
                 0
                 );
-#endif
             break;
 
         case MSG_DESTROY:

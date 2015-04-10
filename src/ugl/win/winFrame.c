@@ -60,3 +60,39 @@ UGL_STATUS  winFrameCaptionSet (
     return status;
 }
 
+/******************************************************************************
+ *
+ * winFrameResizableGet - Get if frame is resizable
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_BOOL  winFrameResizableGet (
+    WIN_ID  winId
+    ) {
+
+    UGL_BOOL      result;
+    UGL_WINDOW *  pWindow;
+
+    if (winId == UGL_NULL) {
+        result = UGL_FALSE;
+    }
+    else {
+        if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
+            pWindow = winId->pParent;
+        }
+        else {
+            pWindow = winId;
+        }
+
+        if ((pWindow->attributes & WIN_ATTRIB_NO_RESIZE) != 0x00) {
+            result = UGL_FALSE;
+        }
+        else {
+            result = UGL_TRUE;
+        }
+    }
+
+    return result;
+}
+

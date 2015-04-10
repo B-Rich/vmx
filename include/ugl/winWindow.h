@@ -419,6 +419,17 @@ WIN_ID  winGetFromPoint (
 
 /******************************************************************************
  *
+ * winDisplayGet - Get display device for window
+ * 
+ * RETURNS: Display device id or UGL_NULL
+ */
+ 
+UGL_DEVICE_ID  winDisplayGet (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winColorGet - Get color from window standard colors or zero
  *
  * RETURNS: Window color

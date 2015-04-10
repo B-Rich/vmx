@@ -602,6 +602,28 @@ WIN_ID  winGetFromPoint (
 
 /******************************************************************************
  *
+ * winDisplayGet - Get display device for window
+ *
+ * RETURNS: Display device id or UGL_NULL
+ */
+
+UGL_DEVICE_ID  winDisplayGet (
+    WIN_ID  winId
+    ) {
+    UGL_DEVICE_ID  devId;
+
+    if (winId == UGL_NULL || (winId->state & WIN_STATE_MANAGED) == 0x00) {
+        devId = UGL_NULL;
+    }
+    else {
+        devId = winId->pApp->pWinMgr->pDisplay;
+    }
+
+    return devId;
+}
+
+/******************************************************************************
+ *
  * winColorGet - Get color from window standard colors or zero
  *
  * RETURNS: Window color
