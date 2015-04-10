@@ -49,7 +49,7 @@
 #include "cursor.cbm"
 #include "font8x16.cfs"
 
-//#define UGL_POINTER_INIT
+#define UGL_POINTER_INIT
 #define PAL_LENGTH             16
 #define BALL_SPEED             4
 #define DB_CLEAR_COLOR         0x06
@@ -1409,7 +1409,20 @@ int uglCursor4Test(UGL_REGION_ID clipRegionId)
   UGL_GC_ID gc;
   UGL_CDDB *pFgBmp;
   UGL_GENERIC_DRIVER *pDrv;
-  UGL_GEN_CURSOR_DATA *pCursorData;
+  UGL_REG_DATA *pData;
+  UGL_INPUT_SERVICE_ID inputSrvId;
+  UGL_STATUS status;
+  UGL_MSG msg;
+
+  pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    return 1;
+  }
+
+  inputSrvId = (UGL_INPUT_SERVICE_ID) pData->data;
+  if (inputSrvId == UGL_NULL) {
+    return 1;
+  }
 
   if (mode4Enter(&oldRegs)) {
     restoreConsole(&oldRegs);
@@ -1424,7 +1437,7 @@ int uglCursor4Test(UGL_REGION_ID clipRegionId)
     return 1;
   }
 
-  if (uglCursorInit (gfxDevId, cDib.width, cDib.height, 0, 0)
+  if (uglCursorInit (gfxDevId, cDib.width, cDib.height, 320, 200)
                      != UGL_STATUS_OK) {
       restoreConsole(&oldRegs);
       printf("Unable to initialize cursor.\n");
@@ -1432,7 +1445,6 @@ int uglCursor4Test(UGL_REGION_ID clipRegionId)
   }
 
   pDrv = (UGL_GENERIC_DRIVER *) gfxDevId;
-  pCursorData = pDrv->pCursorData;
 
   uglClipRegionSet (gc, clipRegionId);
 
@@ -1463,12 +1475,20 @@ int uglCursor4Test(UGL_REGION_ID clipRegionId)
   }
 
   uglCursorOn(gfxDevId);
-  while (pCursorData->position.y < 480) {
-    uglCursorMove (gfxDevId,
-                   pCursorData->position.x + BALL_SPEED,
-                   pCursorData->position.y + BALL_SPEED);
 
-    /* Delay */
+  while (1) {
+    status = uglInputMsgGet(inputSrvId, &msg, UGL_WAIT_FOREVER);
+    if (status == UGL_STATUS_OK) {
+      if (msg.type == MSG_POINTER) { 
+        uglCursorMove (gfxDevId,
+                       msg.data.pointer.position.x,
+                       msg.data.pointer.position.y);
+        if (msg.data.pointer.buttonState) {
+          break;
+        }
+      }
+    }
+
     taskDelay(animTreshold);
   }
 
@@ -2772,7 +2792,20 @@ int uglCursor8Test(UGL_REGION_ID clipRegionId)
   UGL_GC_ID gc;
   UGL_CDDB *pFgBmp;
   UGL_GENERIC_DRIVER *pDrv;
-  UGL_GEN_CURSOR_DATA *pCursorData;
+  UGL_REG_DATA *pData;
+  UGL_INPUT_SERVICE_ID inputSrvId;
+  UGL_STATUS status;
+  UGL_MSG msg;
+
+  pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    return 1;
+  }
+
+  inputSrvId = (UGL_INPUT_SERVICE_ID) pData->data;
+  if (inputSrvId == UGL_NULL) {
+    return 1;
+  }
 
   if (mode8Enter(&oldRegs)) {
     restoreConsole(&oldRegs);
@@ -2787,7 +2820,7 @@ int uglCursor8Test(UGL_REGION_ID clipRegionId)
     return 1;
   }
 
-  if (uglCursorInit (gfxDevId, cDib.width, cDib.height, 0, 0)
+  if (uglCursorInit (gfxDevId, cDib.width, cDib.height, 160, 100)
                      != UGL_STATUS_OK) {
       restoreConsole(&oldRegs);
       printf("Unable to initialize cursor.\n");
@@ -2795,7 +2828,6 @@ int uglCursor8Test(UGL_REGION_ID clipRegionId)
   }
 
   pDrv = (UGL_GENERIC_DRIVER *) gfxDevId;
-  pCursorData = pDrv->pCursorData;
 
   uglClipRegionSet (gc, clipRegionId);
 
@@ -2819,12 +2851,20 @@ int uglCursor8Test(UGL_REGION_ID clipRegionId)
   }
 
   uglCursorOn(gfxDevId);
-  while (pCursorData->position.y < 200) {
-    uglCursorMove (gfxDevId,
-                   pCursorData->position.x + BALL_SPEED,
-                   pCursorData->position.y + BALL_SPEED);
+  while (1) {
+    status = uglInputMsgGet(inputSrvId, &msg, UGL_WAIT_FOREVER);
+    if (status == UGL_STATUS_OK) {
+      if (msg.type == MSG_POINTER) { 
+        uglCursorMove (gfxDevId,
+                       msg.data.pointer.position.x,
+                       msg.data.pointer.position.y);
 
-    /* Delay */
+        if (msg.data.pointer.buttonState) {
+          break;
+        }
+      }
+    }
+
     taskDelay(animTreshold);
   }
 
