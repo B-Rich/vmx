@@ -231,13 +231,13 @@ UGL_LOCAL const UGL_UINT8 cursorSizeDiagTlBr[] = {
     B O O O O B T T T T T T
     B O O O O B T T T T T T
     B O O O O O B T T T T B
-    B O B B O O O B T T O O
+    B O B B O O O B T T B B
     B B T T B O O O B B O B
     B T T T T B O O O O O B
     T T T T T T B O O O O B
     T T T T T T B O O O O B
     T T T T T B O O O O O B
-    T T T T B O O O O O O B
+    T T T T B B B B B B B B
 #undef T
 #undef B
 #undef O
@@ -253,9 +253,9 @@ UGL_LOCAL const UGL_UINT8 cursorSizeDiagTrBl[] = {
     T T T T T T B O O O O B
     T T T T T T B O O O O B
     B T T T T B O O O O O B
-    B B T T B O O O O O O B
+    B B T T B O O O B B O B
     B O B B O O O B T T B B
-    B O O O O O B T T T T O
+    B O O O O O B T T T T B
     B O O O O B T T T T T T
     B O O O O B T T T T T T
     B O O O O O B T T T T T
