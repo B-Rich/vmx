@@ -178,18 +178,18 @@ UGL_LOCAL const UGL_UINT8 cursorSizeHoriz[] = {
 #define T UGL_CURSOR_COLOR_TRANSPARENT,
 #define B 0,
 #define O 1,
-    T T T T T B T T T T T B T T T T T
-    T T T T B B T T T T T B B T T T T
-    T T T B O B T T T T T B O B T T T
-    T T B O O B T T T T T B O O B T T
-    T B O O O B B B B B B B O O O B T
-    B O O O O O O O O O O O O O O O B
-    B O O O O O O O O O O O O O O O B
-    T B O O O B B B B B B B O O O B T
-    T T B O O B T T T T T B O O B T T
-    T T T B O B T T T T T B O B T T T
-    T T T T B B T T T T T B B T T T T
-    T T T T T B T T T T T B T T T T T
+    T T T T T B T T T T B T T T T T
+    T T T T B B T T T T B B T T T T
+    T T T B O B T T T T B O B T T T
+    T T B O O B T T T T B O O B T T
+    T B O O O B B B B B B O O O B T
+    B O O O O O O O O O O O O O O B
+    B O O O O O O O O O O O O O O B
+    T B O O O B B B B B B O O O B T
+    T T B O O B T T T T B O O B T T
+    T T T B O B T T T T B O B T T T
+    T T T T B B T T T T B B T T T T
+    T T T T T B T T T T B T T T T T
 #undef T
 #undef B
 #undef O
