@@ -51,6 +51,15 @@ typedef struct wwm_frame_class_data {
     UGL_COLOR      shadowColorInactive;
 } WWM_FRAME_CLASS_DATA;
 
+/* Globals */
+
+UGL_RECT  wwmMoveBoundary = {
+         0,
+    -10000,
+     10000,
+     10000
+};
+
 /* Locals */
 
 UGL_LOCAL WWM_FRAME_CLASS_DATA  wwmFrameClassData;
@@ -501,10 +510,18 @@ UGL_LOCAL UGL_STATUS  wwmMoveSizeCallback (
     void *     pData,
     void *     pParam
     ) {
+    static UGL_ORD     dy        = 0;
+    static UGL_UINT32  hitResult = 0x00;
 
-    static  UGL_UINT32  hitResult = 0x00;
+    UGL_STATUS  status;
 
     switch (pMsg->type) {
+        case MSG_PTR_BTN1_DOWN:
+        case MSG_PTR_BTN2_DOWN:
+            winPointerGrab(winId);
+            dy = 0;
+            /* falltru */
+
         case MSG_PTR_MOVE: {
             WIN_MSG        hitMsg;
             UGL_DEVICE_ID  displayId;
@@ -549,10 +566,104 @@ UGL_LOCAL UGL_STATUS  wwmMoveSizeCallback (
                      (WIN_HIT_TEST_BOTTOM | WIN_HIT_TEST_LEFT)) {
                 uglCursorImageSet(displayId, WIN_CURSOR_SIZE_TR_BL);
             }
-        } break;
+            status = UGL_STATUS_OK;
+            } break;
+
+        case MSG_PTR_DRAG:
+            if (winPointerGrabGet(winMgrGet(winId)) != winId) {
+                status = UGL_STATUS_OK;
+                break;
+            }
+
+            if (hitResult != 0x00 &&
+                (pMsg->data.ptr.buttonState &
+                 (UGL_PTR_BUTTON1 | UGL_PTR_BUTTON2)) != 0x00) {
+                UGL_RECT    rect;
+                WIN_ID      dirtyWinId;
+                WIN_APP_ID  appId;
+
+                winRectGet(winId, &rect);
+
+                if ((hitResult & WIN_HIT_TEST_LEFT) != 0x00) {
+                    if ((hitResult & WIN_HIT_TEST_RIGHT) != 0x00) {
+                        rect.left += pMsg->data.ptr.delta.x;
+                    }
+                    else if ((
+                        (rect.right - rect.left + pMsg->data.ptr.delta.x + 1) >
+                        WWM_FRAME_MIN_WIDTH) ||
+                        (pMsg->data.ptr.position.x < WWM_FRAME_BORDER_SIZE)) {
+                        rect.left += pMsg->data.ptr.position.x;
+                    }
+                }
+
+                if ((hitResult & WIN_HIT_TEST_TOP) != 0x00) {
+                    if ((hitResult & WIN_HIT_TEST_BOTTOM) != 0x00) {
+                        rect.top += pMsg->data.ptr.delta.y;
+                    }
+                    else if ((
+                        (rect.bottom - rect.top + pMsg->data.ptr.delta.y + 1) >
+                        WWM_FRAME_MIN_HEIGHT) ||
+                        (pMsg->data.ptr.position.y < WWM_FRAME_BORDER_SIZE)) {
+                        rect.top += pMsg->data.ptr.position.y;
+                    }
+
+                    rect.top -= dy;
+                }
+
+                if ((hitResult & WIN_HIT_TEST_RIGHT) != 0x00) {
+                    if ((hitResult & WIN_HIT_TEST_LEFT) != 0x00) {
+                        rect.right += pMsg->data.ptr.delta.x;
+                    }
+                    else if (pMsg->data.ptr.position.x > WWM_FRAME_MIN_WIDTH) {
+                        rect.right = pMsg->data.ptr.position.x + rect.left;
+                    }
+                }
+
+                if ((hitResult & WIN_HIT_TEST_BOTTOM) != 0x00) {
+                    if ((hitResult & WIN_HIT_TEST_TOP) != 0x00) {
+                        rect.bottom += pMsg->data.ptr.delta.y;
+                    }
+                    else if (pMsg->data.ptr.position.y > WWM_FRAME_MIN_HEIGHT) {
+                        rect.bottom = pMsg->data.ptr.position.y + rect.top;
+                    }
+
+                    rect.bottom -= dy;
+                }
+
+                dy = 0;
+                if (rect.top < wwmMoveBoundary.top) {
+                    dy = wwmMoveBoundary.top - rect.top;
+
+                    rect.top    += dy;
+                    rect.bottom += dy;
+                }
+
+                winRectSet(winId, &rect);
+
+                /* Refresh window view */
+                appId = winAppGet(winId);
+                while ((dirtyWinId = winDirtyGet(appId)) != UGL_NULL) {
+                    winUpdate(dirtyWinId);
+                }
+
+                /* Sleep for a while */
+                uglOSTaskDelay(16);
+
+                status = UGL_STATUS_FINISHED;
+            }
+            else {
+                status = UGL_STATUS_OK;
+            }
+            break;
+
+        case MSG_PTR_BTN1_UP:
+        case MSG_PTR_BTN2_UP:
+            winPointerUngrab(winId);
+            status = UGL_STATUS_OK;
+            break;
     }
 
-    return UGL_STATUS_OK;
+    return status;
 }
 
 /******************************************************************************
@@ -619,9 +730,7 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
             break;
 
         case MSG_DESTROY:
-#ifdef TODO
             winCbRemove(winId, wwmMoveSizeCallback);
-#endif
             if (pFrameData->pTitleText != UGL_NULL) {
                 UGL_FREE(pFrameData->pTitleText);
             }

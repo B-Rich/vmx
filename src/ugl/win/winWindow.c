@@ -365,6 +365,29 @@ UGL_STATUS  winCbAdd (
 
 /******************************************************************************
  *
+ * winCbRemove - Remove callback from window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winCbRemove (
+    WIN_ID    winId,
+    WIN_CB *  pCallback
+    ) {
+    UGL_STATUS  status;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        status = uglCbRemove(&winId->callbackList, (UGL_CB *) pCallback);
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winSizeSet - Set size of a window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -1067,6 +1090,20 @@ UGL_ORD  winZPosGet (
     }
 
     return zPos;
+}
+
+/******************************************************************************
+ *
+ * winRaise - Raise window to top
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winRaise (
+    WIN_ID  winId
+    ) {
+
+    return winZPosSet(winId, 1);
 }
 
 /******************************************************************************

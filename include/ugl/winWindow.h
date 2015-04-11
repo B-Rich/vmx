@@ -454,6 +454,17 @@ UGL_CDDB_ID  winCursorImageGet (
 
 /******************************************************************************
  *
+ * winPointerGrab - Grab pointer input to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winPointerGrab (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winPointerGrabGet - Get window which has focus
  *
  * RETURNS: Window id or UGL_NULL
@@ -461,6 +472,17 @@ UGL_CDDB_ID  winCursorImageGet (
 
 WIN_ID  winPointerGrabGet (
     WIN_MGR_ID  winMgrId
+    );
+
+/******************************************************************************
+ *
+ * winPointerUngrab - Release pointer input from window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winPointerUngrab (
+    WIN_ID  winId
     );
 
 /******************************************************************************
@@ -561,6 +583,18 @@ UGL_STATUS  winCbAdd (
 
 /******************************************************************************
  *
+ * winCbRemove - Remove callback from window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winCbRemove (
+    WIN_ID    winId,
+    WIN_CB *  pCallback
+    );
+
+/******************************************************************************
+ *
  * winSizeSet - Set size of a window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -616,6 +650,17 @@ UGL_STATUS  winZPosSet (
  */
 
 UGL_ORD  winZPosGet (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winRaise - Raise window to top
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winRaise (
     WIN_ID  winId
     );
 

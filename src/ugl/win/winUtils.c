@@ -688,6 +688,31 @@ UGL_CDDB_ID  winCursorImageGet (
 
 /******************************************************************************
  *
+ * winPointerGrab - Grab pointer input to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winPointerGrab (
+    WIN_ID  winId
+    ) {
+    UGL_STATUS  status;
+    WIN_MGR *   pWinMgr;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        pWinMgr = winId->pApp->pWinMgr;
+        pWinMgr->pPtrGrabWindow = winId;
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winPointerGrabGet - Get window which has focus
  *
  * RETURNS: Window id or UGL_NULL
@@ -714,5 +739,35 @@ WIN_ID  winPointerGrabGet (
     }
 
     return winId;
+}
+
+/******************************************************************************
+ *
+ * winPointerUngrab - Release pointer input from window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winPointerUngrab (
+    WIN_ID  winId
+    ) {
+    UGL_STATUS  status;
+    WIN_MGR *   pWinMgr;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        pWinMgr = winId->pApp->pWinMgr;
+        if (pWinMgr->pPtrGrabWindow != winId) {
+            status = UGL_STATUS_ERROR;
+        }
+        else {
+            pWinMgr->pPtrGrabWindow = UGL_NULL;
+            status = UGL_STATUS_OK;
+        }
+    }
+
+    return status;
 }
 

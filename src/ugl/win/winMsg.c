@@ -241,16 +241,29 @@ UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
 
                 /* Restore */
                 pMsg->type = MSG_POINTER;
+                status = UGL_STATUS_OK;
                 break;
 
-            case MSG_PTR_BTN1_DOWN:
-                /* TODO */
-                status = UGL_STATUS_ERROR;
-                break;
+            case MSG_PTR_BTN1_DOWN: {
+                UGL_WINDOW  *pRoot = winId;
+
+                if (pRoot->pParent == UGL_NULL) {
+                    status = UGL_STATUS_OK;
+                }
+                else {
+                    while (pRoot->pParent->pParent != UGL_NULL) {
+                        pRoot = pRoot->pParent;
+                    }
+
+                    winRaise(pRoot);
+                    winActivate(pRoot);
+                    status = UGL_STATUS_OK;
+                }
+                } break;
 
             case MSG_PTR_ENTER:
-                /* TODO */
-                status = UGL_STATUS_ERROR;
+                uglCursorImageSet(winDisplayGet(winId), WIN_CURSOR_ARROW);
+                status = UGL_STATUS_OK;
                 break;
 
             case MSG_ATTACH:
