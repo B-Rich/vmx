@@ -260,7 +260,7 @@ UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
                 break;
 
             case MSG_PTR_BTN1_DOWN: {
-                UGL_WINDOW  *pRoot = winId;
+                UGL_WINDOW *  pRoot = winId;
 
                 if (pRoot->pParent == UGL_NULL) {
                     status = UGL_STATUS_OK;
@@ -270,7 +270,9 @@ UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
                         pRoot = pRoot->pParent;
                     }
 
+#ifdef TODO
                     winRaise(pRoot);
+#endif
                     winActivate(pRoot);
                     status = UGL_STATUS_OK;
                 }
