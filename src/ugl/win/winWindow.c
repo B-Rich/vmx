@@ -948,7 +948,7 @@ UGL_STATUS  winZPosSet (
                     }
 
                     /* Advance */
-                    pSibling = winNext(pSibling);
+                    pSibling = winPrev(pSibling);
                 }
 
                 winRegionObscure(winId, &hideRegion, &winId->rect);
