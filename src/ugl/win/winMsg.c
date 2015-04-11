@@ -191,27 +191,42 @@ UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
 
                         if ((pMsg->data.ptr.buttonChange &
                              buttonMask) != 0x00) {
-                            if ((winId->attributes &
-                                 WIN_ATTRIB_DBL_CLICK) != 0x00 &&
-                                 winLastPointerClickButtonNum == i &&
-                                 winLastPointerClickId == winId &&
-                                 winLastPointerClickTime <
-                                 winPointerClickInterval) {
 
-                                if (winLastPointerClickMsgType ==
-                                    (UGL_MSG_TYPE) (MSG_PTR_BTN1_DOWN + i)) {
-                                    pMsg->type = MSG_PTR_BTN1_DBL_CLICK + i;
-                                }
-                                else if ((winId->attributes &
-                                          WIN_ATTRIB_TRI_CLICK) != 0x00 &&
-                                          winLastPointerClickMsgType ==
-                                          (UGL_MSG_TYPE)
+                            if ((pMsg->data.ptr.buttonState &
+                                 buttonMask) != 0x00) {
+                                if ((winId->attributes &
+                                     WIN_ATTRIB_DBL_CLICK) != 0x00 &&
+                                     winLastPointerClickButtonNum == i &&
+                                     winLastPointerClickId == winId &&
+                                     winLastPointerClickTime <
+                                     winPointerClickInterval) {
+
+                                    if (winLastPointerClickMsgType ==
+                                        (UGL_MSG_TYPE)
+                                        (MSG_PTR_BTN1_DOWN + i)) {
+                                        pMsg->type = MSG_PTR_BTN1_DBL_CLICK + i;
+                                    }
+                                    else if ((winId->attributes &
+                                              WIN_ATTRIB_TRI_CLICK) != 0x00 &&
+                                              winLastPointerClickMsgType ==
+                                              (UGL_MSG_TYPE)
                                               (MSG_PTR_BTN1_DBL_CLICK + i)) {
-                                    pMsg->type = MSG_PTR_BTN1_TRI_CLICK + i;
+                                        pMsg->type = MSG_PTR_BTN1_TRI_CLICK + i;
+                                    }
+                                    else {
+                                        pMsg->type = MSG_PTR_BTN1_DOWN + i;
+                                    }
                                 }
                                 else {
                                     pMsg->type = MSG_PTR_BTN1_DOWN + i;
                                 }
+
+                                /* Update last */
+                                winLastPointerClickButtonNum = i;
+                                winLastPointerClickId        = winId;
+                                winLastPointerClickTime      =
+                                    pMsg->data.ptr.timeStamp;
+                                winLastPointerClickMsgType   = pMsg->type;
                             }
                             else {
                                 pMsg->type = MSG_PTR_BTN1_UP + i;
