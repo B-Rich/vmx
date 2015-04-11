@@ -25,6 +25,8 @@
 
 /* Defines */
 
+#define WWM_BACKGROUND_COLOR      WIN_LIGHTCYAN
+
 #define WWM_FRAME_BORDER_SIZE     4
 #define WWM_FRAME_MIN_WIDTH      60
 #define WWM_FRAME_MIN_HEIGHT     30

@@ -317,9 +317,39 @@ UGL_LOCAL UGL_STATUS  wwmRootWinCb (
     void *     pData,
     void *     pParam
     ) {
+    UGL_STATUS  status;
 
-    /* TODO */
+    switch (pMsg->type) {
+        case MSG_DRAW:
+            uglForegroundColorSet(pMsg->data.draw.gcId, WWM_BACKGROUND_COLOR);
+            uglBackgroundColorSet(pMsg->data.draw.gcId, WWM_BACKGROUND_COLOR);
+            uglRectangle(
+                pMsg->data.draw.gcId,
+                pMsg->data.draw.rect.left,
+                pMsg->data.draw.rect.top,
+                pMsg->data.draw.rect.right,
+                pMsg->data.draw.rect.bottom
+                );
+            status = UGL_STATUS_FINISHED;
+            break;
 
-    return UGL_STATUS_OK;
+        case MSG_RECT_CHILD_CHANGING: {
+            WIN_ID  childId = pMsg->data.rectChildChanging.childId;
+
+            pMsg->type = MSG_RECT_CHANGING;
+            winDrawRectGet(winId, &pMsg->data.rectChanging.maxRect);
+            winMsgSend(childId, pMsg);
+
+            pMsg->type = MSG_RECT_CHILD_CHANGING;
+            pMsg->data.rectChildChanging.childId = childId;
+            status = UGL_STATUS_FINISHED;
+            } break;
+
+        default:
+            status = UGL_STATUS_OK;
+            break;
+    }
+
+    return status;
 }
 
