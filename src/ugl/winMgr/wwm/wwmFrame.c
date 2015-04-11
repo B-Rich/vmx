@@ -520,6 +520,10 @@ UGL_LOCAL UGL_STATUS  wwmMoveSizeCallback (
         case MSG_PTR_BTN2_DOWN:
             winPointerGrab(winId);
             dy = 0;
+
+            /* TODO: Why do I need this? */
+            uglOSTaskDelay(16);
+
             /* falltru */
 
         case MSG_PTR_MOVE: {
