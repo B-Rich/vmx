@@ -40,6 +40,57 @@ UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
 
 /******************************************************************************
  *
+ * winPost - Post a message to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winPost (
+    WIN_ID        winId,
+    UGL_MSG_TYPE  msgType,
+    const void *  pMsgData,
+    UGL_SIZE      dataSize,
+    UGL_TIMEOUT   timeout
+    ) {
+    WIN_MSG  msg;
+
+    msg.type  = msgType;
+    msg.winId = winId;
+
+    if (pMsgData != UGL_NULL) {
+        memcpy(msg.data.uglData.reserved, pMsgData, dataSize);
+    }
+
+    return winMsgPost(winId, &msg, timeout);
+}
+
+/******************************************************************************
+ *
+ * winMsgPost - Post a message to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMsgPost (
+    WIN_ID       winId,
+    WIN_MSG *    pMsg,
+    UGL_TIMEOUT  timeout
+    ) {
+    UGL_STATUS  status;
+
+    if (winId == UGL_NULL || pMsg == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        pMsg->winId = winId;
+        status = uglMsgQPost(winId->pApp->pQueue, (UGL_MSG *) pMsg, timeout);
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winSend - Prepare and send message to window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -413,26 +464,6 @@ UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
                 }
                 break;
 
-            case MSG_FRAME_MAXIMIZE:
-                winId->state |= WIN_STATE_MAXIMIZED;
-                status = UGL_STATUS_OK;
-                break;
-
-            case MSG_FRAME_MINIMIZE:
-                winId->state |= WIN_STATE_MINIMIZED;
-                status = UGL_STATUS_OK;
-                break;
-
-            case MSG_FRAME_RESTORE:
-                if ((winId->state & WIN_STATE_MINIMIZED) != 0x00) {
-                    winId->state &= ~WIN_STATE_MINIMIZED;
-                }
-                else {
-                    winId->state &= ~WIN_STATE_MAXIMIZED;
-                }
-                status = UGL_STATUS_OK;
-                break;
-
             case MSG_ZPOS_CHILD_CHANGING:
                 if ((winId->attributes & WIN_ATTRIB_ROOT) != 0x00) {
                     winMsgSend(pMsg->data.zPos.changeId, pMsg);
@@ -466,6 +497,26 @@ UGL_LOCAL UGL_STATUS  winDefaultMsgHandler (
                         pMsg->data.zPos.newPos = newPos;
                         pMsg->data.zPos.oldPos = oldPos;
                     }
+                }
+                status = UGL_STATUS_OK;
+                break;
+
+            case MSG_FRAME_MAXIMIZE:
+                winId->state |= WIN_STATE_MAXIMIZED;
+                status = UGL_STATUS_OK;
+                break;
+
+            case MSG_FRAME_MINIMIZE:
+                winId->state |= WIN_STATE_MINIMIZED;
+                status = UGL_STATUS_OK;
+                break;
+
+            case MSG_FRAME_RESTORE:
+                if ((winId->state & WIN_STATE_MINIMIZED) != 0x00) {
+                    winId->state &= ~WIN_STATE_MINIMIZED;
+                }
+                else {
+                    winId->state &= ~WIN_STATE_MAXIMIZED;
                 }
                 status = UGL_STATUS_OK;
                 break;

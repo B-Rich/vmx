@@ -487,6 +487,34 @@ UGL_STATUS  winPointerUngrab (
 
 /******************************************************************************
  *
+ * winPost - Post a message to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winPost (
+    WIN_ID        winId,
+    UGL_MSG_TYPE  msgType,
+    const void *  pMsgData,
+    UGL_SIZE      dataSize,
+    UGL_TIMEOUT   timeout
+    );
+
+/******************************************************************************
+ *
+ * winMsgPost - Post a message to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMsgPost (
+    WIN_ID       winId,
+    WIN_MSG *    pMsg,
+    UGL_TIMEOUT  timeout
+    );
+
+/******************************************************************************
+ *
  * winSend - Prepare and send message to window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR

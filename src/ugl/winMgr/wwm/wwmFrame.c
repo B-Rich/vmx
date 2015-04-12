@@ -23,6 +23,7 @@
 #include <string.h>
 #include "ugl.h"
 #include "winMgr/wwm/wwm.h"
+#include "winMgr/wwm/wwmFrame.h"
 
 /* Types */
 
@@ -686,6 +687,154 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
 
     switch (pMsg->type) {
 
+        case MSG_PTR_BTN1_DOWN: {
+            UGL_BOOL  hit;
+            UGL_RECT  rect;
+
+            if (UGL_POINT_IN_RECT(
+                    pMsg->data.ptr.position,
+                    pFrameData->closeRect
+                    ) == UGL_TRUE) {
+
+                pFrameData->buttonState |= WWM_FRAME_CLOSE_BUTTON;
+                memcpy(&rect, &pFrameData->closeRect, sizeof(UGL_RECT));
+                hit = UGL_TRUE;
+            }
+            else if (UGL_POINT_IN_RECT(
+                         pMsg->data.ptr.position,
+                         pFrameData->minRect
+                         ) == UGL_TRUE) {
+
+                pFrameData->buttonState |= WWM_FRAME_MIN_BUTTON;
+                memcpy(&rect, &pFrameData->minRect, sizeof(UGL_RECT));
+                hit = UGL_TRUE;
+            }
+            else if (UGL_POINT_IN_RECT(
+                         pMsg->data.ptr.position,
+                         pFrameData->maxRect
+                         ) == UGL_TRUE) {
+
+                pFrameData->buttonState |= WWM_FRAME_MAX_BUTTON;
+                memcpy(&rect, &pFrameData->maxRect, sizeof(UGL_RECT));
+                hit = UGL_TRUE;
+            }
+            else {
+                hit = UGL_FALSE;
+            }
+
+            if (hit == UGL_TRUE) {
+                UGL_GC_ID  gcId;
+                winMsgHandle(winId, classId, pMsg);
+                winUpdate(winId);
+                gcId = winDrawStart(winId, UGL_NULL, UGL_FALSE);
+                wwmFrame3DRectDraw(winId, gcId, &rect, -1, pFrameData);
+                winDrawEnd(winId, gcId, UGL_FALSE);
+            }
+
+            } break;
+
+        case MSG_PTR_BTN1_UP: {
+            UGL_BOOL  hit;
+            UGL_RECT  rect;
+
+            if ((pFrameData->buttonState & WWM_FRAME_CLOSE_BUTTON) != 0x00 &&
+                 UGL_POINT_IN_RECT(
+                     pMsg->data.ptr.position,
+                     pFrameData->closeRect
+                     ) == UGL_TRUE) {
+
+                winPost(winId, MSG_CLOSE, UGL_NULL, 0, UGL_NO_WAIT);
+                memcpy(&rect, &pFrameData->closeRect, sizeof(UGL_RECT));
+                hit = UGL_TRUE;
+            }
+            else if ((pFrameData->buttonState &
+                          WWM_FRAME_MIN_BUTTON) != 0x00 &&
+                     UGL_POINT_IN_RECT(
+                         pMsg->data.ptr.position,
+                         pFrameData->minRect
+                         ) == UGL_TRUE) {
+
+                winFrameMinimize(winId);
+                memcpy(&rect, &pFrameData->minRect, sizeof(UGL_RECT));
+                hit = UGL_TRUE;
+            }
+            else if ((pFrameData->buttonState &
+                          WWM_FRAME_MAX_BUTTON) != 0x00 &&
+                     UGL_POINT_IN_RECT(
+                         pMsg->data.ptr.position,
+                         pFrameData->maxRect
+                         ) == UGL_TRUE) {
+
+                if ((winStateGet(winId) & WIN_STATE_MAXIMIZED) != 0x00) {
+                    winFrameRestore(winId);
+                }
+                else {
+                    winFrameMaximize(winId);
+                }
+                memcpy(&rect, &pFrameData->minRect, sizeof(UGL_RECT));
+                hit = UGL_TRUE;
+            }
+            else {
+                hit = UGL_FALSE;
+            }
+
+            if (hit == UGL_TRUE) {
+                UGL_GC_ID  gcId;
+                winMsgHandle(winId, classId, pMsg);
+                gcId = winDrawStart(winId, UGL_NULL, UGL_FALSE);
+                wwmFrame3DRectDraw(winId, gcId, &rect, 1, pFrameData);
+                winDrawEnd(winId, gcId, UGL_FALSE);
+            }
+
+            pFrameData->buttonState = 0x00;
+            } break;
+
+        case MSG_PTR_DRAG: {
+            UGL_BOOL  hit;
+            UGL_RECT  rect;
+
+            if ((pFrameData->buttonState & WWM_FRAME_CLOSE_BUTTON) != 0x00) {
+                memcpy(&rect, &pFrameData->closeRect, sizeof(UGL_RECT));
+                hit = UGL_TRUE;
+            }
+            else if ((pFrameData->buttonState & WWM_FRAME_MIN_BUTTON) != 0x00) {
+                memcpy(&rect, &pFrameData->minRect, sizeof(UGL_RECT));
+                hit = UGL_TRUE;
+            }
+            else if ((pFrameData->buttonState & WWM_FRAME_MAX_BUTTON) != 0x00) {
+                memcpy(&rect, &pFrameData->maxRect, sizeof(UGL_RECT));
+                hit = UGL_TRUE;
+            }
+            else {
+                hit = UGL_FALSE;
+            }
+
+            if (hit == UGL_TRUE) {
+                UGL_POINT  point;
+
+                point.x = pMsg->data.ptr.position.x - pMsg->data.ptr.delta.x;
+                point.y = pMsg->data.ptr.position.y - pMsg->data.ptr.delta.y;
+                if (UGL_POINT_IN_RECT(pMsg->data.ptr.position, rect) !=
+                    UGL_POINT_IN_RECT(point, rect)) {
+                    UGL_GC_ID  gcId;
+
+                    gcId = winDrawStart(winId, UGL_NULL, UGL_FALSE);
+                    if (UGL_POINT_IN_RECT(
+                            pMsg->data.ptr.position,
+                            rect
+                            ) == UGL_TRUE) {
+
+                        wwmFrame3DRectDraw(winId, gcId, &rect, -1, pFrameData);
+                    }
+                    else {
+                        wwmFrame3DRectDraw(winId, gcId, &rect, 1, pFrameData);
+                    }
+                    winDrawEnd(winId, gcId, UGL_FALSE);
+                }
+            }
+
+            } break;
+
         case MSG_HIT_TEST: {
             UGL_RECT  rect;
 
@@ -1033,6 +1182,44 @@ UGL_LOCAL UGL_STATUS  wwmFrameMsgHandler (
             winRectInvalidate(winId, UGL_NULL);
 
             break;
+
+        case MSG_FRAME_MAXIMIZE:
+            winRectGet(winId, &pFrameData->restoreRect);
+            winMsgHandle(winId, classId, pMsg);
+            winRectSet(winId, UGL_NULL);
+            return UGL_STATUS_OK;
+
+        case MSG_FRAME_MINIMIZE:
+            if (winVisibleGet(winId) == UGL_TRUE &&
+                (winStateGet(winId) & WIN_STATE_MINIMIZED) != 0x00) {
+
+                return UGL_STATUS_FINISHED;
+            }
+
+            /* TODO */
+            break;
+
+        case MSG_FRAME_RESTORE:
+            if ((winStateGet(winId) & WIN_STATE_MAXIMIZED) != 0x00 &&
+                (winStateGet(winId) & WIN_STATE_MINIMIZED) == 0x00) {
+
+                winMsgHandle(winId, classId, pMsg);
+                winRectSet(winId, &pFrameData->restoreRect);
+                return UGL_STATUS_FINISHED;
+            }
+
+            if (winVisibleGet(winId) == UGL_TRUE &&
+                (winStateGet(winId) & WIN_STATE_MINIMIZED) == 0x00) {
+
+                return UGL_STATUS_FINISHED;
+            }
+
+            if (winVisibleGet(winId) == UGL_FALSE) {
+                winVisibleSet(winId, UGL_TRUE);
+            }
+
+            winMsgHandle(winId, classId, pMsg);
+            return UGL_STATUS_FINISHED;
 
         default:
             /* TODO: Catch all other message types */
