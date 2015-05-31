@@ -263,6 +263,9 @@ SYMBOL standTable[] =
 
   /* logLib */
   {NULL, "_logMsg", logMsg, 0, N_TEXT | N_EXT},
+  {NULL, "_logFdAdd", logFdAdd, 0, N_TEXT | N_EXT},
+  {NULL, "_logFdDelete", logFdDelete, 0, N_TEXT | N_EXT},
+  {NULL, "_logShow", logShow, 0, N_TEXT | N_EXT},
 
   /* erfLib */
   {NULL, "_erfHandlerRegister", erfHandlerRegister, 0, N_TEXT | N_EXT},

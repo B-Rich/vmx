@@ -728,7 +728,7 @@ UGL_LOCAL UGL_VOID uglInputTask (
                UGL_STATUS_OK) {
             qId = srvId->pDefaultQ;
 
-            status = uglCbListExecute(srvId->pCbList, srvId, &msg, qId);
+            status = uglCbListExecute(srvId->pCbList, srvId, &msg, &qId);
             if (status == UGL_STATUS_OK && qId != UGL_NULL) {
                 uglMsgQPost(qId, &msg, UGL_NO_WAIT);
             }

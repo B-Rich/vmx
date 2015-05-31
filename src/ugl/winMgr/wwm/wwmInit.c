@@ -29,8 +29,19 @@
 #define WWM_APP_STACK_SIZE        20000
 
 /* Imports */
-extern const UGL_RGB  wwmRGBColorTable[16];
-extern WIN_CLASS_ID   wwmFrameClassCreate(void);
+extern const UGL_RGB   wwmRGBColorTable[16];
+
+extern const UGL_CDIB  wwmCDibArrow;
+extern const UGL_CDIB  wwmCDibEdit;
+extern const UGL_CDIB  wwmCDibWait;
+extern const UGL_CDIB  wwmCDibInvalid;
+extern const UGL_CDIB  wwmCDibMove;
+extern const UGL_CDIB  wwmCDibSizeHoriz;
+extern const UGL_CDIB  wwmCDibSizeVert;
+extern const UGL_CDIB  wwmCDibSizeDiagTlBr;
+extern const UGL_CDIB  wwmCDibSizeDiagTrBl;
+
+extern WIN_CLASS_ID    wwmFrameClassCreate(void);
 
 /* Locals */
 
@@ -82,6 +93,7 @@ UGL_LOCAL void *  wwmCreate (
     UGL_REG_DATA *      pRegData;
     UGL_FONT_DRIVER_ID  fntDrvId;
     UGL_FONT_DEF        fntDef;
+    UGL_CDDB_ID *       pCursorTable;
     UGL_FONT_ID *       pFntTable;
     UGL_ORD             textOrigin;
     UGL_ORD             i;
@@ -113,6 +125,88 @@ UGL_LOCAL void *  wwmCreate (
 
     /* Set color table */
     winMgrColorTableSet(winMgrId, pColorTable, WIN_NUM_STANDARD_COLORS);
+
+    /* Initialize cursor */
+    uglCursorInit(displayId, 32, 32, modeInfo.width / 2, modeInfo.height / 2);
+
+    /* Initialize cursor table */
+    pCursorTable = UGL_CALLOC(WIN_NUM_STANDARD_CURSORS, sizeof(UGL_CDDB_ID));
+
+    pCursorTable[WIN_CURSOR_INDEX_ARROW] = uglCursorBitmapCreate(
+        displayId,
+        (UGL_CDIB *) &wwmCDibArrow
+        );
+
+    pCursorTable[WIN_CURSOR_INDEX_EDIT] = uglCursorBitmapCreate(
+        displayId,
+        (UGL_CDIB *) &wwmCDibEdit
+        );
+
+    pCursorTable[WIN_CURSOR_INDEX_WAIT] = uglCursorBitmapCreate(
+        displayId,
+        (UGL_CDIB *) &wwmCDibWait
+        );
+
+    pCursorTable[WIN_CURSOR_INDEX_INVALID] = uglCursorBitmapCreate(
+        displayId,
+        (UGL_CDIB *) &wwmCDibInvalid
+        );
+
+    pCursorTable[WIN_CURSOR_INDEX_MOVE] = uglCursorBitmapCreate(
+        displayId,
+        (UGL_CDIB *) &wwmCDibMove
+        );
+
+    pCursorTable[WIN_CURSOR_INDEX_SIZE_HORIZ] = uglCursorBitmapCreate(
+        displayId,
+        (UGL_CDIB *) &wwmCDibSizeHoriz
+        );
+
+    pCursorTable[WIN_CURSOR_INDEX_SIZE_LEFT] =
+        pCursorTable[WIN_CURSOR_INDEX_SIZE_HORIZ];
+
+    pCursorTable[WIN_CURSOR_INDEX_SIZE_RIGHT] =
+        pCursorTable[WIN_CURSOR_INDEX_SIZE_HORIZ];
+
+    pCursorTable[WIN_CURSOR_INDEX_SIZE_VERT] = uglCursorBitmapCreate(
+        displayId,
+        (UGL_CDIB *) &wwmCDibSizeVert
+        );
+
+    pCursorTable[WIN_CURSOR_INDEX_SIZE_TOP] =
+        pCursorTable[WIN_CURSOR_INDEX_SIZE_VERT];
+
+    pCursorTable[WIN_CURSOR_INDEX_SIZE_BOTTOM] =
+        pCursorTable[WIN_CURSOR_INDEX_SIZE_VERT];
+
+    pCursorTable[WIN_CURSOR_INDEX_SIZE_TL_BR] = uglCursorBitmapCreate(
+        displayId,
+        (UGL_CDIB *) &wwmCDibSizeDiagTlBr
+        );
+
+    pCursorTable[WIN_CURSOR_INDEX_SIZE_TOP_LEFT] =
+        pCursorTable[WIN_CURSOR_INDEX_SIZE_TL_BR];
+
+    pCursorTable[WIN_CURSOR_INDEX_SIZE_BOTTOM_RIGHT] =
+        pCursorTable[WIN_CURSOR_INDEX_SIZE_TL_BR];
+
+    pCursorTable[WIN_CURSOR_INDEX_SIZE_TR_BL] = uglCursorBitmapCreate(
+        displayId,
+        (UGL_CDIB *) &wwmCDibSizeDiagTrBl
+        );
+
+    pCursorTable[WIN_CURSOR_INDEX_SIZE_TOP_RIGHT] =
+        pCursorTable[WIN_CURSOR_INDEX_SIZE_TR_BL];
+
+    pCursorTable[WIN_CURSOR_INDEX_SIZE_BOTTOM_LEFT] =
+        pCursorTable[WIN_CURSOR_INDEX_SIZE_TR_BL];
+
+    /* Set cursor table */
+    winMgrCursorTableSet(winMgrId, pCursorTable, WIN_NUM_STANDARD_CURSORS);
+
+    /* Setup current cursor */
+    uglCursorImageSet(displayId, pCursorTable[WIN_CURSOR_INDEX_ARROW]);
+    uglCursorOn(displayId);
 
     pRegData = uglRegistryFind(UGL_FONT_ENGINE_TYPE, UGL_NULL, 0, 0);
     if (pRegData != UGL_NULL) {
@@ -223,9 +317,39 @@ UGL_LOCAL UGL_STATUS  wwmRootWinCb (
     void *     pData,
     void *     pParam
     ) {
+    UGL_STATUS  status;
 
-    /* TODO */
+    switch (pMsg->type) {
+        case MSG_DRAW:
+            uglForegroundColorSet(pMsg->data.draw.gcId, WWM_BACKGROUND_COLOR);
+            uglBackgroundColorSet(pMsg->data.draw.gcId, WWM_BACKGROUND_COLOR);
+            uglRectangle(
+                pMsg->data.draw.gcId,
+                pMsg->data.draw.rect.left,
+                pMsg->data.draw.rect.top,
+                pMsg->data.draw.rect.right,
+                pMsg->data.draw.rect.bottom
+                );
+            status = UGL_STATUS_FINISHED;
+            break;
 
-    return UGL_STATUS_OK;
+        case MSG_RECT_CHILD_CHANGING: {
+            WIN_ID  childId = pMsg->data.rectChildChanging.childId;
+
+            pMsg->type = MSG_RECT_CHANGING;
+            winDrawRectGet(winId, &pMsg->data.rectChanging.maxRect);
+            winMsgSend(childId, pMsg);
+
+            pMsg->type = MSG_RECT_CHILD_CHANGING;
+            pMsg->data.rectChildChanging.childId = childId;
+            status = UGL_STATUS_FINISHED;
+            } break;
+
+        default:
+            status = UGL_STATUS_OK;
+            break;
+    }
+
+    return status;
 }
 

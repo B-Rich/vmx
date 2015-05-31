@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <a.out.h>
 
 #include <vmx.h>
@@ -47,7 +49,7 @@
 #include "cursor.cbm"
 #include "font8x16.cfs"
 
-//#define UGL_POINTER_INIT
+#define UGL_POINTER_INIT
 #define PAL_LENGTH             16
 #define BALL_SPEED             4
 #define DB_CLEAR_COLOR         0x06
@@ -1407,7 +1409,20 @@ int uglCursor4Test(UGL_REGION_ID clipRegionId)
   UGL_GC_ID gc;
   UGL_CDDB *pFgBmp;
   UGL_GENERIC_DRIVER *pDrv;
-  UGL_GEN_CURSOR_DATA *pCursorData;
+  UGL_REG_DATA *pData;
+  UGL_INPUT_SERVICE_ID inputSrvId;
+  UGL_STATUS status;
+  UGL_MSG msg;
+
+  pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    return 1;
+  }
+
+  inputSrvId = (UGL_INPUT_SERVICE_ID) pData->data;
+  if (inputSrvId == UGL_NULL) {
+    return 1;
+  }
 
   if (mode4Enter(&oldRegs)) {
     restoreConsole(&oldRegs);
@@ -1422,7 +1437,7 @@ int uglCursor4Test(UGL_REGION_ID clipRegionId)
     return 1;
   }
 
-  if (uglCursorInit (gfxDevId, cDib.width, cDib.height, 0, 0)
+  if (uglCursorInit (gfxDevId, cDib.width, cDib.height, 320, 200)
                      != UGL_STATUS_OK) {
       restoreConsole(&oldRegs);
       printf("Unable to initialize cursor.\n");
@@ -1430,7 +1445,6 @@ int uglCursor4Test(UGL_REGION_ID clipRegionId)
   }
 
   pDrv = (UGL_GENERIC_DRIVER *) gfxDevId;
-  pCursorData = pDrv->pCursorData;
 
   uglClipRegionSet (gc, clipRegionId);
 
@@ -1461,12 +1475,20 @@ int uglCursor4Test(UGL_REGION_ID clipRegionId)
   }
 
   uglCursorOn(gfxDevId);
-  while (pCursorData->position.y < 480) {
-    uglCursorMove (gfxDevId,
-                   pCursorData->position.x + BALL_SPEED,
-                   pCursorData->position.y + BALL_SPEED);
 
-    /* Delay */
+  while (1) {
+    status = uglInputMsgGet(inputSrvId, &msg, UGL_WAIT_FOREVER);
+    if (status == UGL_STATUS_OK) {
+      if (msg.type == MSG_POINTER) { 
+        uglCursorMove (gfxDevId,
+                       msg.data.pointer.position.x,
+                       msg.data.pointer.position.y);
+        if (msg.data.pointer.buttonState) {
+          break;
+        }
+      }
+    }
+
     taskDelay(animTreshold);
   }
 
@@ -2770,7 +2792,20 @@ int uglCursor8Test(UGL_REGION_ID clipRegionId)
   UGL_GC_ID gc;
   UGL_CDDB *pFgBmp;
   UGL_GENERIC_DRIVER *pDrv;
-  UGL_GEN_CURSOR_DATA *pCursorData;
+  UGL_REG_DATA *pData;
+  UGL_INPUT_SERVICE_ID inputSrvId;
+  UGL_STATUS status;
+  UGL_MSG msg;
+
+  pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    return 1;
+  }
+
+  inputSrvId = (UGL_INPUT_SERVICE_ID) pData->data;
+  if (inputSrvId == UGL_NULL) {
+    return 1;
+  }
 
   if (mode8Enter(&oldRegs)) {
     restoreConsole(&oldRegs);
@@ -2785,7 +2820,7 @@ int uglCursor8Test(UGL_REGION_ID clipRegionId)
     return 1;
   }
 
-  if (uglCursorInit (gfxDevId, cDib.width, cDib.height, 0, 0)
+  if (uglCursorInit (gfxDevId, cDib.width, cDib.height, 160, 100)
                      != UGL_STATUS_OK) {
       restoreConsole(&oldRegs);
       printf("Unable to initialize cursor.\n");
@@ -2793,7 +2828,6 @@ int uglCursor8Test(UGL_REGION_ID clipRegionId)
   }
 
   pDrv = (UGL_GENERIC_DRIVER *) gfxDevId;
-  pCursorData = pDrv->pCursorData;
 
   uglClipRegionSet (gc, clipRegionId);
 
@@ -2817,12 +2851,20 @@ int uglCursor8Test(UGL_REGION_ID clipRegionId)
   }
 
   uglCursorOn(gfxDevId);
-  while (pCursorData->position.y < 200) {
-    uglCursorMove (gfxDevId,
-                   pCursorData->position.x + BALL_SPEED,
-                   pCursorData->position.y + BALL_SPEED);
+  while (1) {
+    status = uglInputMsgGet(inputSrvId, &msg, UGL_WAIT_FOREVER);
+    if (status == UGL_STATUS_OK) {
+      if (msg.type == MSG_POINTER) { 
+        uglCursorMove (gfxDevId,
+                       msg.data.pointer.position.x,
+                       msg.data.pointer.position.y);
 
-    /* Delay */
+        if (msg.data.pointer.buttonState) {
+          break;
+        }
+      }
+    }
+
     taskDelay(animTreshold);
   }
 
@@ -3253,61 +3295,25 @@ int uglMouseLog(void)
                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
-int uglWinInit(int noConsole)
+int uglLogDev(char *devname)
 {
-  UGL_REG_DATA *pData;
-  UGL_INPUT_SERVICE_ID inputSrvId;
-  UGL_INPUT_DEV_ID inputDevId;
-  WIN_MGR_ID winMgrId;
-  struct vgaHWRec oldRegs;
+  static char devName[] = "/serial";
+  int fd;
 
-  if (mode4Enter(&oldRegs)) {
-    restoreConsole(&oldRegs);
-    printf("Unable to set graphics mode to 640x480 @60Hz, 16 color.\n");
-    return 1;
+  if (devname == NULL) {
+    devname = devName;
   }
 
-  pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
-  if (pData == UGL_NULL) {
-    printf("Input service not started.\n");
-    return 1;
+  fd = open(devname, O_RDWR);
+  if (fd < 0) {
+    fprintf(stderr, "Error - Unable to open device: %s\n");
+    return ERROR;
   }
 
-  inputSrvId = (UGL_INPUT_SERVICE_ID) pData->data;
-  if (inputSrvId == UGL_NULL) {
-    printf("Null input service.\n");
-    return 1;
-  }
+  logFdAdd(fd);
+  logFdDelete(STDERR_FILENO);
 
-#ifdef UGL_POINTER_INIT
-  uglMouseInit();
-
-  pData = uglRegistryFind(UGL_PTR_TYPE, UGL_NULL, 0, UGL_NULL);
-  if (pData == UGL_NULL) {
-    printf("No pointer device found.\n");
-    return 1;
-  }
-
-  inputDevId = (UGL_INPUT_DEV_ID) pData->data;
-  if (inputDevId == UGL_NULL) {
-    printf("Null input device.\n");
-    return 1;
-  }
-#endif
-
-  winMgrId = winMgrCreate(gfxDevId, inputSrvId, wwmEngineId);
-  if (winMgrId == UGL_NULL) {
-    printf("Unable to create instance of window manager.\n");
-    return 1;
-  }
-
-  uglRegistryAdd(UGL_WIN_MGR_TYPE, winMgrId, 0, UGL_NULL);
-
-  if (!noConsole) {
-    restoreConsole(&oldRegs);
-  }
-
-  return 0;
+  return OK;
 }
 
 UGL_STATUS uglWinHelloDrawCb(
@@ -3319,6 +3325,7 @@ UGL_STATUS uglWinHelloDrawCb(
   UGL_FONT_ID *pFonts;
   UGL_SIZE width, height;
 
+  logMsg("<==WINDOW CALLBACK: %d for %x==>\n", pMsg->type, winId);
   uglBackgroundColorSet(pMsg->data.draw.gcId, WIN_BLUE);
   uglForegroundColorSet(pMsg->data.draw.gcId, WIN_WHITE);
   uglRectangle(
@@ -3353,59 +3360,103 @@ UGL_STATUS uglWinHelloDrawCb(
   return UGL_STATUS_OK;
 }
 
-int uglWinHello(int noGfx)
+int uglWin(int frameless)
 {
   struct vgaHWRec oldRegs;
+  UGL_REG_DATA *pData;
+  UGL_INPUT_SERVICE_ID inputSrvId;
+  UGL_INPUT_DEV_ID inputDevId;
+  WIN_MGR_ID winMgrId;
   WIN_APP_ID appId;
+  UGL_UINT32 attrib;
   WIN_ID winId;
+  char c;
 
-  if (!noGfx && mode4Enter(&oldRegs)) {
+  if (mode4Enter(&oldRegs)) {
     restoreConsole(&oldRegs);
     printf("Unable to set graphics mode to 640x480 @60Hz, 16 color.\n");
-    return 1;
+    return UGL_STATUS_ERROR;
   }
+
+  pData = uglRegistryFind(UGL_INPUT_SERVICE_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    printf("Input service not started.\n");
+    return UGL_STATUS_ERROR;
+  }
+
+  inputSrvId = (UGL_INPUT_SERVICE_ID) pData->data;
+  if (inputSrvId == UGL_NULL) {
+    printf("Null input service.\n");
+    return UGL_STATUS_ERROR;
+  }
+
+#ifdef UGL_POINTER_INIT
+  uglMouseInit();
+
+  pData = uglRegistryFind(UGL_PTR_TYPE, UGL_NULL, 0, UGL_NULL);
+  if (pData == UGL_NULL) {
+    printf("No pointer device found.\n");
+    return UGL_STATUS_ERROR;
+  }
+
+  inputDevId = (UGL_INPUT_DEV_ID) pData->data;
+  if (inputDevId == UGL_NULL) {
+    printf("Null input device.\n");
+    return UGL_STATUS_ERROR;
+  }
+#endif
+
+  winMgrId = winMgrCreate(gfxDevId, inputSrvId, wwmEngineId);
+  if (winMgrId == UGL_NULL) {
+    printf("Unable to create instance of window manager.\n");
+    return UGL_STATUS_ERROR;
+  }
+
+  uglRegistryAdd(UGL_WIN_MGR_TYPE, winMgrId, 0, UGL_NULL);
+  logMsg("Initialized window system.\n");
 
   appId = winAppCreate("winHello", 0, 0, 0, UGL_NULL);
   if (appId == UGL_NULL) {
-    if (!noGfx) {
-      restoreConsole(&oldRegs);
-    }
+    restoreConsole(&oldRegs);
     printf("Unable to create window application context.\n");
-    return 1;
+    return UGL_STATUS_ERROR;
+  }
+  logMsg("Created window application context: %x\n", appId);
+
+  attrib = WIN_ATTRIB_VISIBLE;
+  if (!frameless) {
+      attrib |= WIN_ATTRIB_FRAMED;
   }
 
-  winId = winCreate(appId, UGL_NULL, WIN_ATTRIB_VISIBLE | WIN_ATTRIB_FRAMED,
+  winId = winCreate(appId, UGL_NULL, attrib,
                     100, 100, 200, 160, UGL_NULL, 0, UGL_NULL);
   if (winId == UGL_NULL) {
     winAppDestroy(appId);
-    if (!noGfx) {
-      restoreConsole(&oldRegs);
-    }
+    restoreConsole(&oldRegs);
     printf("Unable to create window .\n");
-    return 1;
+    return UGL_STATUS_ERROR;
   }
+  logMsg("Created window: %x\n", winId);
 
   winCbAdd(winId, MSG_DRAW, 0, uglWinHelloDrawCb, UGL_NULL);
-
   winAttach(winId, UGL_NULL, UGL_NULL);
-  winUpdate(winId);
 
-  getchar();
+  logMsg("Waiting for input...\n");
+  do {
+    c = getchar();
+    logMsg("Got character: %c\n", c);
+    switch(c) {
+        case 'e':
+            winSend(winId, MSG_EXPOSE, UGL_NULL, 0);
+            break;
+        default:
+            break;
+    }
+  } while (c != 'q');
 
-  winDestroy(winId);
-  winAppDestroy(appId);
+  restoreConsole(&oldRegs);
 
-  if (!noGfx) {
-    restoreConsole(&oldRegs);
-  }
-
-  return 0;
-}
-
-int uglWinTest(void)
-{
-  uglWinInit(TRUE);
-  uglWinHello(TRUE);
+  return UGL_STATUS_OK;
 }
 
 int uglDemoInit(void)
@@ -3469,9 +3520,8 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_winMgrCreate", winMgrCreate, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseInit", uglMouseInit, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseLog", uglMouseLog, 0, N_TEXT | N_EXT},
-  {NULL, "_uglWinInit", uglWinInit, 0, N_TEXT | N_EXT},
-  {NULL, "_uglWinHello", uglWinHello, 0, N_TEXT | N_EXT},
-  {NULL, "_uglWinTest", uglWinTest, 0, N_TEXT | N_EXT}
+  {NULL, "_uglLogDev", uglLogDev, 0, N_TEXT | N_EXT},
+  {NULL, "_uglWin", uglWin, 0, N_TEXT | N_EXT}
 };
 
     int i;

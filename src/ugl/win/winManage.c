@@ -132,7 +132,8 @@ UGL_STATUS  winMgrRootWinSet (
 
         /* Setup root window */
         winMgrId->pRootWindow = (UGL_WINDOW *) rootWinId;
-        winMgrId->pRootWindow->state |= WIN_ATTRIB_ROOT;
+        winMgrId->pRootWindow->attributes |= WIN_ATTRIB_ROOT;
+        winMgrId->pRootWindow->state |= WIN_STATE_ACTIVE;
         winRectSet(winMgrId->pRootWindow, &rect);
         winManage(winMgrId->pRootWindow);
         winShow(winMgrId->pRootWindow);
@@ -222,6 +223,33 @@ UGL_STATUS  winMgrColorTableSet (
 
 /******************************************************************************
  *
+ * winMgrCursorTableSet - Set window manager cursor table
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMgrCursorTableSet (
+    WIN_MGR_ID     winMgrId,
+    UGL_CDDB_ID *  pCursorTable,
+    UGL_SIZE       cursorTableSize
+    ) {
+    UGL_STATUS  status;
+
+    if (winMgrId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        winMgrId->pCursorTable    = pCursorTable;
+        winMgrId->cursorTableSize = cursorTableSize;
+
+        status = UGL_STATUS_OK;
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winMgrFontTableSet - Set window manager font table
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -287,10 +315,38 @@ UGL_LOCAL UGL_STATUS  winManageCbMsgRoute (
     UGL_MSG_Q_ID *        pQueueId,
     WIN_MGR_ID            winMgrId
     ) {
+    WIN_ID  winId;
+
+    if (pMsg->type == MSG_POINTER) {
+        winId = winPointerGrabGet(winMgrId);
+
+        uglCursorMove(
+            winMgrId->pDisplay,
+            pMsg->data.pointer.position.x,
+            pMsg->data.pointer.position.y
+            );
+
+        if (winId != UGL_NULL) {
+            pMsg->objectId = winId;
+            *pQueueId = winId->pApp->pQueue;
+            winScreenToWindow(winId, &pMsg->data.pointer.position, 1);
+        }
+        else {
+            winId = winGetFromPoint(
+                winMgrId,
+                &pMsg->data.pointer.position
+                );
+
+            pMsg->objectId = winId;
+            if (pMsg->objectId != UGL_NULL) {
+                *pQueueId = winId->pApp->pQueue;
+            }
+        }
+    }
 
     /* TODO */
 
-    return UGL_STATUS_ERROR;
+    return UGL_STATUS_OK;
 }
 
 /******************************************************************************

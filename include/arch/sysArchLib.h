@@ -42,7 +42,7 @@ extern "C" {
  * RETURNS: Byte data from I/O port
  */
 
-u_int8_t sysInByte(
+int8_t sysInByte(
     u_int32_t address
     );
 
@@ -52,7 +52,7 @@ u_int8_t sysInByte(
  * RETURNS: Word data from I/O port
  */
 
-u_int16_t sysInWord(
+int16_t sysInWord(
     u_int32_t address
     );
 
@@ -62,7 +62,7 @@ u_int16_t sysInWord(
  * RETURNS: Long-word data from I/O port
  */
 
-u_int32_t sysInLong(
+int32_t sysInLong(
     u_int32_t address
     );
 
@@ -74,7 +74,7 @@ u_int32_t sysInLong(
 
 void sysOutByte(
     u_int32_t address,
-    u_int8_t data
+    int8_t data
     );
 
 /******************************************************************************
@@ -85,7 +85,7 @@ void sysOutByte(
 
 void sysOutWord(
     u_int32_t address,
-    u_int16_t data
+    int16_t data
     );
 
 /******************************************************************************
@@ -96,7 +96,7 @@ void sysOutWord(
 
 void sysOutLong(
     u_int32_t address,
-    u_int32_t data
+    int32_t data
     );
 
 /******************************************************************************
@@ -107,7 +107,7 @@ void sysOutLong(
 
 void sysInWordString(
     u_int32_t port,
-    u_int16_t *address,
+    int16_t *address,
     u_int32_t count
     );
 
@@ -119,7 +119,7 @@ void sysInWordString(
 
 void sysInLongString(
     u_int32_t port,
-    u_int32_t *address,
+    int32_t *address,
     u_int32_t count
     );
 
@@ -131,7 +131,7 @@ void sysInLongString(
 
 void sysOutWordString(
     u_int32_t port,
-    u_int16_t *address,
+    int16_t *address,
     u_int32_t count
     );
 
@@ -143,7 +143,7 @@ void sysOutWordString(
 
 void sysOutLongString(
     u_int32_t port,
-    u_int32_t *address,
+    int32_t *address,
     u_int32_t count
     );
 

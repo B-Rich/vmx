@@ -26,9 +26,12 @@
 #include <signal.h>
 #include <a.out.h>
 #include <os/symLib.h>
+#include <os/sioLib.h>
+#include <os/serialDrv.h>
 
 /* Imports */
 IMPORT SYMTAB_ID sysSymTable;
+IMPORT SIO_CHAN* sysSerialChanGet(int channel);
 
 static jmp_buf jbuf;
 
@@ -185,6 +188,74 @@ int sendQSignalTest(
     return 0;
 }
 
+int serialOutTest(
+    char *str
+    )
+{
+    int i;
+    int result;
+    int len = strlen(str);
+    SIO_CHAN *pChan = sysSerialChanGet(0);
+    if (pChan != NULL) {
+        i = 0;
+        while (i < len) {
+            result = SIO_POLL_OUTPUT(pChan, str[i]);
+            if (result == OK) {
+                i++;
+            }
+            else if (result == EAGAIN) {
+                continue;
+            }
+            else {
+                printf("Unknown error\n");
+                break;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int serialInTest(
+    void
+    )
+{
+    int status;
+    char c;
+    SIO_CHAN *pChan = sysSerialChanGet(0);
+
+    while (TRUE) {
+        status = SIO_POLL_INPUT(pChan, &c);
+        if (status == OK) {
+            printf("%c", c);
+        }
+        else if (status == EAGAIN) {
+            continue;
+        }
+        else {
+            printf("Unknown error\n");
+            break;
+        }
+    }
+
+    return 0;
+}
+
+int serialInit(
+    char *name,
+    int   channel
+    )
+{
+    static char defName[] = "/serial";
+
+    if (name == NULL) {
+        name = defName;
+    }
+
+    serialDrvInit();
+    return serialDevCreate(name, sysSerialChanGet(channel), 40, 40);
+}
+
 void usrTestInit(
     void
     )
@@ -195,7 +266,10 @@ void usrTestInit(
         {NULL, "_waitSignalTest", waitSignalTest, 0, N_TEXT | N_EXT},
         {NULL, "_selfSignalTest", selfSignalTest, 0, N_TEXT | N_EXT},
         {NULL, "_sendSignalTest", sendSignalTest, 0, N_TEXT | N_EXT},
-        {NULL, "_sendQSignalTest", sendQSignalTest, 0, N_TEXT | N_EXT}
+        {NULL, "_sendQSignalTest", sendQSignalTest, 0, N_TEXT | N_EXT},
+        {NULL, "_serialOutTest", serialOutTest, 0, N_TEXT | N_EXT},
+        {NULL, "_serialInTest", serialInTest, 0, N_TEXT | N_EXT},
+        {NULL, "_serialInit", serialInit, 0, N_TEXT | N_EXT}
     };
 
     int i;

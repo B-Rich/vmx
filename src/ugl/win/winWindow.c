@@ -365,6 +365,29 @@ UGL_STATUS  winCbAdd (
 
 /******************************************************************************
  *
+ * winCbRemove - Remove callback from window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winCbRemove (
+    WIN_ID    winId,
+    WIN_CB *  pCallback
+    ) {
+    UGL_STATUS  status;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        status = uglCbRemove(&winId->callbackList, (UGL_CB *) pCallback);
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
  * winSizeSet - Set size of a window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -834,201 +857,192 @@ UGL_STATUS  winZPosSet (
 
     if (winId == UGL_NULL || winId->pParent == UGL_NULL) {
         status = UGL_STATUS_ERROR;
+        goto ZPosSetRet;
     }
-    else {
-        status = UGL_STATUS_OK;
 
-        if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
-            winId = winId->pParent;
-            if (winId->pParent == UGL_NULL) {
-                status = UGL_STATUS_ERROR;
-            }
-        }
-
-        if (zPos == 0 || zPos > winCount(winId->pParent)) {
+    if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
+        winId = winId->pParent;
+        if (winId->pParent == UGL_NULL) {
             status = UGL_STATUS_ERROR;
+            goto ZPosSetRet;
         }
     }
 
-    if (status == UGL_STATUS_OK) {
-        if (zPos < 0) {
-            zPos = winCount(winId->pParent) + zPos + 1;
+    if (zPos == 0 || zPos > winCount(winId->pParent)) {
+        status = UGL_STATUS_ERROR;
+        goto ZPosSetRet;
+    }
+
+    if (zPos < 0) {
+        zPos = winCount(winId->pParent) + zPos + 1;
+    }
+
+    pParent   = winId->pParent;
+    oldPos    = winZPosGet(winId);
+    bottomPos = winCount(winId->pParent);
+
+    /* Send zpos child changing message */
+    msg.type               = MSG_ZPOS_CHILD_CHANGING;
+    msg.data.zPos.newPos   = zPos;
+    msg.data.zPos.oldPos   = oldPos;
+    msg.data.zPos.changeId = winId;
+    winMsgSend(winId->pParent, &msg);
+
+    newPos = msg.data.zPos.newPos;
+
+    /* Check that new position is different */
+    if (newPos != oldPos) {
+        winLock(winId);
+
+        /* Change postition in window list */
+        pOldWindow = winPrev(winId);
+        uglListRemove(&pParent->childList, &winId->node);
+        if (newPos == 1) {
+            pNextWindow = UGL_NULL;
         }
+        else if (newPos == bottomPos) {
+            pNextWindow = winFirst(pParent);
+        }
+        else {
+            pNextWindow = winNth(pParent, -(newPos - 1));
+        }
+        uglListInsert(&pParent->childList, &winId->node, &pNextWindow->node);
 
-        pParent = winId->pParent;
-        oldPos = winZPosGet(winId);
-        bottomPos = winCount(winId->pParent);
+        /* Update window regions */
+        if ((winId->state & WIN_STATE_HIDDEN) == 0x00) {
+            uglRegionInit(&hideRegion);
+            uglRegionInit(&exposeRegion);
 
-        /* Send zpos child changing message */
-        msg.type               = MSG_ZPOS_CHILD_CHANGING;
-        msg.data.zPos.newPos   = zPos;
-        msg.data.zPos.oldPos   = oldPos;
-        msg.data.zPos.changeId = winId;
-        winMsgSend(winId->pParent, &msg);
+            if (newPos > oldPos) {
+                uglRegionCopy(&winId->paintersRegion, &exposeRegion);
+                uglRegionMove(&exposeRegion, winId->rect.left, winId->rect.top);
 
-        newPos = msg.data.zPos.newPos;
+                pSibling = pOldWindow;
+                while (pSibling != winId &&
+                       exposeRegion.pFirstTL2BR != UGL_NULL) {
 
-        /* Check that new position is different */
-        if (newPos != oldPos) {
-            winLock(winId);
+                    if ((pSibling->state & WIN_STATE_HIDDEN) == 0x00) {
+                        UGL_RECT_INTERSECT(
+                            pSibling->rect,
+                            winId->rect,
+                            intersectRect
+                            );
 
-            /* Change postition in window list */
-            pOldWindow = winPrev(winId);
-            uglListRemove(&pParent->childList, &winId->node);
-            if (newPos == 1) {
-                pNextWindow = UGL_NULL;
-            }
-            else if (newPos == bottomPos) {
-                pNextWindow = winFirst(pParent);
+                        if (intersectRect.right >= intersectRect.left &&
+                            intersectRect.bottom >= intersectRect.top) {
+
+                            winRegionExpose(
+                                pSibling,
+                                &exposeRegion,
+                                &intersectRect
+                                );
+                            uglRegionRectExclude(
+                                &exposeRegion,
+                                &intersectRect
+                                );
+                            uglRegionRectInclude(
+                                &hideRegion,
+                                &intersectRect
+                                );
+                        }
+                    }
+
+                    /* Advance */
+                    pSibling = winPrev(pSibling);
+                }
+
+                winRegionObscure(winId, &hideRegion, &winId->rect);
             }
             else {
-                pNextWindow = winNth(pParent, -(newPos - 1));
-            }
-            uglListInsert(
-                &pParent->childList,
-                &winId->node,
-                &pNextWindow->node
-                );
+                uglRegionRectInclude(&hideRegion, &winId->rect);
+                uglRegionIntersect(
+                    &hideRegion,
+                    &pParent->paintersRegion,
+                    &hideRegion
+                    );
+                uglRegionMove(
+                    &hideRegion,
+                    -winId->rect.left,
+                    -winId->rect.top
+                    );
+                uglRegionExclude(&hideRegion, &winId->paintersRegion);
+                uglRegionMove(
+                    &hideRegion,
+                    winId->rect.left,
+                    winId->rect.top
+                    );
+                uglRegionCopy(&hideRegion, &exposeRegion);
 
-            /* Update window regions */
-            if ((winId->state & WIN_STATE_HIDDEN) == 0x00) {
-                uglRegionInit(&hideRegion);
-                uglRegionInit(&exposeRegion);
+                pSibling = winPrev(winId);
+                while (pSibling != pOldWindow &&
+                       hideRegion.pFirstTL2BR != UGL_NULL) {
 
-                if (newPos > oldPos) {
-                    uglRegionCopy(&winId->paintersRegion, &exposeRegion);
-                    uglRegionMove(
-                        &exposeRegion,
-                        winId->rect.left,
-                        winId->rect.top
-                        );
+                    if ((pSibling->state & WIN_STATE_HIDDEN) == 0x00) {
+                        UGL_RECT_INTERSECT(
+                            pSibling->rect,
+                            winId->rect,
+                            intersectRect
+                            );
 
-                    pSibling = pOldWindow;
-                    while (pSibling != winId &&
-                           exposeRegion.pFirstTL2BR != UGL_NULL) {
+                        if (intersectRect.right >= intersectRect.left &&
+                            intersectRect.bottom >= intersectRect.top) {
 
-                        if ((pSibling->state & WIN_STATE_HIDDEN) == 0x00) {
-                            UGL_RECT_INTERSECT(
-                                pSibling->rect,
-                                winId->rect,
-                                intersectRect
+                            winRegionObscure(
+                                pSibling,
+                                UGL_NULL,
+                                &intersectRect
                                 );
-
-                            if (intersectRect.right >= intersectRect.left &&
-                                intersectRect.bottom >= intersectRect.top) {
-
-                                winRegionExpose(
-                                    pSibling,
-                                    &exposeRegion,
-                                    &intersectRect
-                                    );
-                                uglRegionRectExclude(
-                                    &exposeRegion,
-                                    &intersectRect
-                                    );
-                                uglRegionRectInclude(
-                                    &hideRegion,
-                                    &intersectRect
-                                    );
-                            }
+                            uglRegionRectExclude(
+                                &hideRegion,
+                                &intersectRect
+                                );
                         }
-
-                        /* Advance */
-                        pSibling = winNext(pSibling);
                     }
 
-                    winRegionObscure(winId, &hideRegion, &winId->rect);
-                }
-                else {
-                    uglRegionRectInclude(&hideRegion, &winId->rect);
-                    uglRegionIntersect(
-                        &hideRegion,
-                        &pParent->paintersRegion,
-                        &hideRegion
-                        );
-                    uglRegionMove(
-                        &hideRegion,
-                        -winId->rect.left,
-                        -winId->rect.top
-                        );
-                    uglRegionExclude(&hideRegion, &winId->paintersRegion);
-                    uglRegionMove(
-                        &hideRegion,
-                        winId->rect.left,
-                        winId->rect.top
-                        );
-                    uglRegionCopy(&hideRegion, &exposeRegion);
-
-                    pSibling = winPrev(winId);
-                    while (pSibling != pOldWindow &&
-                           hideRegion.pFirstTL2BR != UGL_NULL) {
-
-                        if ((pSibling->state & WIN_STATE_HIDDEN) == 0x00) {
-                            UGL_RECT_INTERSECT(
-                                pSibling->rect,
-                                winId->rect,
-                                intersectRect
-                                );
-
-                            if (intersectRect.right >= intersectRect.left &&
-                                intersectRect.bottom >= intersectRect.top) {
-
-                                winRegionObscure(
-                                    pSibling,
-                                    UGL_NULL,
-                                    &intersectRect
-                                    );
-                                uglRegionRectExclude(
-                                    &hideRegion,
-                                    &intersectRect
-                                    );
-                            }
-                        }
-
-                        /* Advance */
-                        pSibling = winPrev(pSibling);
-                    }
-
-                    pSibling = winNext(winId);
-                    while (pSibling != UGL_NULL) {
-                        if ((pSibling->state & WIN_STATE_HIDDEN) == 0x00) {
-                            UGL_RECT_INTERSECT(
-                                pSibling->rect,
-                                winId->rect,
-                                intersectRect
-                                );
-
-                            if (intersectRect.right >= intersectRect.left &&
-                                intersectRect.bottom >= intersectRect.top) {
-
-                                uglRegionRectExclude(
-                                    &exposeRegion,
-                                    &intersectRect
-                                    );
-                            }
-                        }
-
-                        /* Advance */
-                        pSibling = winNext(pSibling);
-                    }
-
-                    winRegionExpose(winId, &exposeRegion, &winId->rect);
+                    /* Advance */
+                    pSibling = winPrev(pSibling);
                 }
 
-                uglRegionDeinit(&hideRegion);
-                uglRegionDeinit(&exposeRegion);
+                pSibling = winNext(winId);
+                while (pSibling != UGL_NULL) {
+                    if ((pSibling->state & WIN_STATE_HIDDEN) == 0x00) {
+                        UGL_RECT_INTERSECT(
+                            pSibling->rect,
+                            winId->rect,
+                            intersectRect
+                            );
+
+                        if (intersectRect.right >= intersectRect.left &&
+                            intersectRect.bottom >= intersectRect.top) {
+
+                            uglRegionRectExclude(&exposeRegion, &intersectRect);
+                        }
+                    }
+
+                    /* Advance */
+                    pSibling = winNext(pSibling);
+                }
+
+                winRegionExpose(winId, &exposeRegion, &winId->rect);
             }
 
-            /* Send zpos changed message */
-            msg.type               = MSG_ZPOS_CHANGED;
-            msg.data.zPos.oldPos   = oldPos;
-            msg.data.zPos.newPos   = newPos;
-            msg.data.zPos.changeId = winId;
-            winMsgSend(winId, &msg);
-
-            winUnlock(winId);
+            uglRegionDeinit(&hideRegion);
+            uglRegionDeinit(&exposeRegion);
         }
+
+        /* Send zpos changed message */
+        msg.type               = MSG_ZPOS_CHANGED;
+        msg.data.zPos.oldPos   = oldPos;
+        msg.data.zPos.newPos   = newPos;
+        msg.data.zPos.changeId = winId;
+        winMsgSend(winId, &msg);
+
+        winUnlock(winId);
+
+        status = UGL_STATUS_OK;
     }
+
+ZPosSetRet:
 
     return status;
 }
@@ -1067,6 +1081,20 @@ UGL_ORD  winZPosGet (
     }
 
     return zPos;
+}
+
+/******************************************************************************
+ *
+ * winRaise - Raise window to top
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winRaise (
+    WIN_ID  winId
+    ) {
+
+    return winZPosSet(winId, 1);
 }
 
 /******************************************************************************
@@ -1878,7 +1906,6 @@ WIN_ID  winDeadGet (
         pWindow = UGL_NULL;
     }
     else {
-        pWindow = UGL_NULL;
         uglOSLock(appId->lockId);
 
         for (pResource = (WIN_RESOURCE *) uglListLast(&appId->resourceList);
@@ -1892,6 +1919,13 @@ WIN_ID  winDeadGet (
         }
 
         uglOSUnlock(appId->lockId);
+
+        if (pResource != UGL_NULL) {
+            pWindow = (UGL_WINDOW *) pResource->id;
+        }
+        else {
+            pWindow = UGL_NULL;
+        }
     }
 
     return pWindow;

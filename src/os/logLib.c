@@ -353,6 +353,42 @@ STATUS logFdAdd(
 }
 
 /******************************************************************************
+ * logFdDelete - Delete logging file descriptor
+ *
+ * RETURNS: OK or ERROR
+ */
+
+STATUS logFdDelete(
+    int fd
+    )
+{
+    STATUS status;
+    int i;
+    int j;
+
+    semTake(&logFdSem, WAIT_FOREVER);
+
+    for (i = 0, j = 0; i < numLogFds; i++, j++) {
+        logFd[j] = logFd[i];
+        if ((logFd[j] == fd) && (i == j)) {
+            j--;
+        }
+    }
+
+    if (i == j) {
+        status = ERROR;
+    }
+    else {
+        numLogFds--;
+        status = OK;
+    }
+
+    semGive(&logFdSem);
+
+    return status;
+}
+
+/******************************************************************************
  * lprintf - Log printf
  *
  * RETURNS: N/A
@@ -378,5 +414,27 @@ LOCAL void lprintf(
     }
 
     semGive(&logFdSem);
+}
+
+/******************************************************************************
+ * logShow - Show log file descriptors
+ *
+ * RETURNS: N/A
+ */
+
+void logShow (
+    void
+    )
+{
+    int i;
+
+    printf("%3s %3s\n", "num", "fd");
+    printf("%3s %3s\n", "---", "--");
+
+    for (i = 0; i < numLogFds; i++) {
+        printf("%3d %3d\n", i, logFd[i]);
+    }
+
+    msgQShow(logMsgQId, 1);
 }
 

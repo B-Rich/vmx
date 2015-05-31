@@ -96,6 +96,29 @@ UGL_STATUS  winAppCbAdd (
 
 /******************************************************************************
  *
+ * winAppCbRemove - Remove message callback from application
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winAppCbRemove (
+    WIN_APP_ID    appId,
+    WIN_APP_CB *  pCallback
+    );
+
+/******************************************************************************
+ *
+ * winAppGet - Get application context for window
+ *
+ * RETURNS: Window application context id or UGL_NULL
+ */
+
+WIN_APP_ID  winAppGet (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winAppMsgPost - Post message to application queue
  *
  * RETURNS: UGL_STATUS_OK or error code

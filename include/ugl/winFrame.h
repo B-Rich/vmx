@@ -41,6 +41,50 @@ UGL_STATUS  winFrameCaptionSet (
     UGL_CHAR *  pCaption
     );
 
+/******************************************************************************
+ *
+ * winFrameResizableGet - Get if frame is resizable
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_BOOL  winFrameResizableGet (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winFrameMinimize - Minimize window
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_STATUS  winFrameMinimize (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winFrameMaximize - Maximize window
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_STATUS  winFrameMaximize (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winFrameRestore- Restore window from minimized or maxmimized state
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_STATUS  winFrameRestore (
+    WIN_ID  winId
+    );
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

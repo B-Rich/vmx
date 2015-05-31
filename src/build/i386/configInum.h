@@ -18,18 +18,34 @@
  *   along with Real VMX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* wwmConfig.h - Window manager configuration */
+/* configInum.h - */
 
-#ifndef _wwmConfig_h
-#define _wwmConfig_h
+#ifndef _configInum_h
+#define _configInum_h
 
 /* Defines */
 
-#define WWM_BACKGROUND_COLOR      WIN_LIGHTCYAN
+#define INT_NUM_IOAPIC_IRQ0     0xcb
+#define INT_NUM_IOAPIC_IRQ1     0xc4
+#define INT_NUM_IOAPIC_IRQ2     0xac
+#define INT_NUM_IOAPIC_IRQ3     0xa4
+#define INT_NUM_IOAPIC_IRQ4     0x9c
+#define INT_NUM_IOAPIC_IRQ5     0x94
+#define INT_NUM_IOAPIC_IRQ6     0x8c
+#define INT_NUM_IOAPIC_IRQ7     0x84
+#define INT_NUM_IOAPIC_IRQ8     0x7c
+#define INT_NUM_IOAPIC_IRQ9     0x74
+#define INT_NUM_IOAPIC_IRQA     0x6c
+#define INT_NUM_IOAPIC_IRQB     0x64
+#define INT_NUM_IOAPIC_IRQC     0x5c
+#define INT_NUM_IOAPIC_IRQD     0x54
+#define INT_NUM_IOAPIC_IRQE     0x4c
+#define INT_NUM_IOAPIC_IRQF     0x44
 
-#define WWM_FRAME_BORDER_SIZE     4
-#define WWM_FRAME_MIN_WIDTH      60
-#define WWM_FRAME_MIN_HEIGHT     30
+#define INT_NUM_COM1            (INT_NUM_IOAPIC_IRQ4)
+#define INT_NUM_COM2            (INT_NUM_IOAPIC_IRQ3)
+#define INT_NUM_COM3            (INT_NUM_IOAPIC_IRQ5)
+#define INT_NUM_COM4            (INT_NUM_IOAPIC_IRQ9)
 
 #ifndef _ASMLANGUAGE
 
@@ -37,21 +53,11 @@
 extern "C" {
 #endif
 
-#define WWM_FRAME_COLOR_ACTIVE           UGL_MAKE_RGB(128,   0,   0)
-#define WWM_FRAME_COLOR_INACTIVE         UGL_MAKE_RGB(128, 128, 128)
-#define WWM_FRAME_TEXT_COLOR_ACTIVE      UGL_MAKE_RGB(255, 255,  84)
-#define WWM_FRAME_TEXT_COLOR_INACTIVE    UGL_MAKE_RGB(255, 255, 255)
-
-#define WWM_FRAME_FONT                   "pixelSize = 10; familyName = Times"
-#define WWM_SYSTEM_FONT                  "pixelSize = 10; familyName = Times"
-#define WWM_SMALL_FONT                   "pixelSize =  6; familyName = Times"
-#define WWM_FIXED_FONT                   "pixelSize = 10; familyName = Courier"
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
 #endif /* _ASMLANGUAGE */
 
-#endif /* _wwmConfig_h */
+#endif /* _configInum_h */
 

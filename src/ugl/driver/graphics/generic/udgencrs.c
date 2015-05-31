@@ -664,7 +664,7 @@ UGL_STATUS uglGenericCursorMove (
         pCddb = pCursorData->imageBitmap;
 
         currRect.left   = pCursorData->position.x - pCddb->hotSpot.x;
-        currRect.top    = pCursorData->position.x - pCddb->hotSpot.y;
+        currRect.top    = pCursorData->position.y - pCddb->hotSpot.y;
         currRect.right  = currRect.left + pCddb->tddb.header.width - 1;
         currRect.bottom = currRect.top + pCddb->tddb.header.height - 1;
 

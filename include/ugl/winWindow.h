@@ -88,6 +88,26 @@
 #define WIN_INDEX_YELLOW                    14
 #define WIN_INDEX_WHITE                     15
 
+/* Cursors */
+#define WIN_NUM_STANDARD_CURSORS            17
+#define WIN_CURSOR_INDEX_ARROW               0
+#define WIN_CURSOR_INDEX_EDIT                1
+#define WIN_CURSOR_INDEX_WAIT                2
+#define WIN_CURSOR_INDEX_INVALID             3
+#define WIN_CURSOR_INDEX_MOVE                4
+#define WIN_CURSOR_INDEX_SIZE_HORIZ          5
+#define WIN_CURSOR_INDEX_SIZE_LEFT           6
+#define WIN_CURSOR_INDEX_SIZE_RIGHT          7
+#define WIN_CURSOR_INDEX_SIZE_VERT           8
+#define WIN_CURSOR_INDEX_SIZE_TOP            9
+#define WIN_CURSOR_INDEX_SIZE_BOTTOM        10
+#define WIN_CURSOR_INDEX_SIZE_TL_BR         11
+#define WIN_CURSOR_INDEX_SIZE_TOP_LEFT      12
+#define WIN_CURSOR_INDEX_SIZE_BOTTOM_RIGHT  13
+#define WIN_CURSOR_INDEX_SIZE_TR_BL         14
+#define WIN_CURSOR_INDEX_SIZE_TOP_RIGHT     15
+#define WIN_CURSOR_INDEX_SIZE_BOTTOM_LEFT   16
+
 /* Fonts */
 #define WIN_NUM_STANDARD_FONTS               3
 
@@ -103,6 +123,7 @@ extern "C" {
 
 /* Macros */
 
+/* Colors */
 #define WIN_BLACK               (winColorGet(UGL_NULL, WIN_INDEX_BLACK))
 #define WIN_BLUE                (winColorGet(UGL_NULL, WIN_INDEX_BLUE))
 #define WIN_GREEN               (winColorGet(UGL_NULL, WIN_INDEX_GREEN))
@@ -119,6 +140,58 @@ extern "C" {
 #define WIN_LIGHTMAGENTA        (winColorGet(UGL_NULL, WIN_INDEX_LIGHTMAGENTA))
 #define WIN_YELLOW              (winColorGet(UGL_NULL, WIN_INDEX_YELLOW))
 #define WIN_WHITE               (winColorGet(UGL_NULL, WIN_INDEX_WHITE))
+
+/* Cursors */
+#define WIN_CURSOR_ARROW \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_ARROW))
+
+#define WIN_CURSOR_EDIT \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_EDIT))
+
+#define WIN_CURSOR_WAIT \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_WAIT))
+
+#define WIN_CURSOR_INVALID \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_INVALID))
+
+#define WIN_CURSOR_MOVE \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_MOVE))
+
+#define WIN_CURSOR_SIZE_HORIZ \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_SIZE_HORIZ))
+
+#define WIN_CURSOR_SIZE_LEFT \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_SIZE_LEFT))
+
+#define WIN_CURSOR_SIZE_RIGHT \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_SIZE_RIGHT))
+
+#define WIN_CURSOR_SIZE_VERT \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_SIZE_VERT))
+
+#define WIN_CURSOR_SIZE_TOP \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_SIZE_TOP))
+
+#define WIN_CURSOR_SIZE_BOTTOM \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_SIZE_BOTTOM))
+
+#define WIN_CURSOR_SIZE_TL_BR \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_SIZE_TL_BR))
+
+#define WIN_CURSOR_SIZE_TOP_LEFT \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_SIZE_TOP_LEFT))
+
+#define WIN_CURSOR_SIZE_BOTTOM_RIGHT \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_SIZE_BOTTOM_RIGHT))
+
+#define WIN_CURSOR_SIZE_TR_BL \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_SIZE_TR_BL))
+
+#define WIN_CURSOR_SIZE_TOP_RIGHT \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_SIZE_TOP_RIGHT))
+
+#define WIN_CURSOR_SIZE_BOTTOM_LEFT \
+    (winCursorImageGet(UGL_NULL, WIN_CURSOR_INDEX_SIZE_BOTTOM_LEFT))
 
 /* Types */
 
@@ -309,6 +382,19 @@ UGL_STATUS  winWindowRectToScreen (
 
 /******************************************************************************
  *
+ * winScreenToWindow - Convert screen coordinates to window coordinates
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winScreenToWindow (
+    WIN_ID       winId,
+    UGL_POINT *  pPoints,
+    UGL_SIZE     numPoints
+    );
+
+/******************************************************************************
+ *
  * winDrawRectGet - Get window drawing rectangle
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -321,6 +407,29 @@ UGL_STATUS  winDrawRectGet (
 
 /******************************************************************************
  *
+ * winGetFromPoint - Get window at point
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winGetFromPoint (
+    WIN_MGR_ID   winMgrId,
+    UGL_POINT *  pPoint
+    );
+
+/******************************************************************************
+ *
+ * winDisplayGet - Get display device for window
+ * 
+ * RETURNS: Display device id or UGL_NULL
+ */
+ 
+UGL_DEVICE_ID  winDisplayGet (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
  * winColorGet - Get color from window standard colors or zero
  *
  * RETURNS: Window color
@@ -329,6 +438,79 @@ UGL_STATUS  winDrawRectGet (
 UGL_COLOR  winColorGet (
     WIN_ID   winId,
     UGL_ORD  index
+    );
+
+/******************************************************************************
+ *
+ * winCursorImageGet - Get cursor from window cursors
+ *
+ * RETURNS: Cursor image id or UGL_NULL
+ */
+
+UGL_CDDB_ID  winCursorImageGet (
+    WIN_ID   winId,
+    UGL_ORD  index
+    );
+
+/******************************************************************************
+ *
+ * winPointerGrab - Grab pointer input to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winPointerGrab (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winPointerGrabGet - Get window which has focus
+ *
+ * RETURNS: Window id or UGL_NULL
+ */
+
+WIN_ID  winPointerGrabGet (
+    WIN_MGR_ID  winMgrId
+    );
+
+/******************************************************************************
+ *
+ * winPointerUngrab - Release pointer input from window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winPointerUngrab (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winPost - Post a message to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winPost (
+    WIN_ID        winId,
+    UGL_MSG_TYPE  msgType,
+    const void *  pMsgData,
+    UGL_SIZE      dataSize,
+    UGL_TIMEOUT   timeout
+    );
+
+/******************************************************************************
+ *
+ * winMsgPost - Post a message to window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winMsgPost (
+    WIN_ID       winId,
+    WIN_MSG *    pMsg,
+    UGL_TIMEOUT  timeout
     );
 
 /******************************************************************************
@@ -429,6 +611,18 @@ UGL_STATUS  winCbAdd (
 
 /******************************************************************************
  *
+ * winCbRemove - Remove callback from window
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winCbRemove (
+    WIN_ID    winId,
+    WIN_CB *  pCallback
+    );
+
+/******************************************************************************
+ *
  * winSizeSet - Set size of a window
  *
  * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
@@ -484,6 +678,17 @@ UGL_STATUS  winZPosSet (
  */
 
 UGL_ORD  winZPosGet (
+    WIN_ID  winId
+    );
+
+/******************************************************************************
+ *
+ * winRaise - Raise window to top
+ *
+ * RETURNS: UGL_STATUS_OK or UGL_STATUS_ERROR
+ */
+
+UGL_STATUS  winRaise (
     WIN_ID  winId
     );
 

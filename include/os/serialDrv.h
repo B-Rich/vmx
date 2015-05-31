@@ -18,18 +18,15 @@
  *   along with Real VMX.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* wwmConfig.h - Window manager configuration */
+/* serialDrv.h - Serial driver header */
 
-#ifndef _wwmConfig_h
-#define _wwmConfig_h
+#ifndef _serialDrv_h
+#define _serialDrv_h
 
-/* Defines */
+/* Includes */
 
-#define WWM_BACKGROUND_COLOR      WIN_LIGHTCYAN
-
-#define WWM_FRAME_BORDER_SIZE     4
-#define WWM_FRAME_MIN_WIDTH      60
-#define WWM_FRAME_MIN_HEIGHT     30
+#include <os/tyLib.h>
+#include <os/sioLib.h>
 
 #ifndef _ASMLANGUAGE
 
@@ -37,15 +34,49 @@
 extern "C" {
 #endif
 
-#define WWM_FRAME_COLOR_ACTIVE           UGL_MAKE_RGB(128,   0,   0)
-#define WWM_FRAME_COLOR_INACTIVE         UGL_MAKE_RGB(128, 128, 128)
-#define WWM_FRAME_TEXT_COLOR_ACTIVE      UGL_MAKE_RGB(255, 255,  84)
-#define WWM_FRAME_TEXT_COLOR_INACTIVE    UGL_MAKE_RGB(255, 255, 255)
+/* Types */
 
-#define WWM_FRAME_FONT                   "pixelSize = 10; familyName = Times"
-#define WWM_SYSTEM_FONT                  "pixelSize = 10; familyName = Times"
-#define WWM_SMALL_FONT                   "pixelSize =  6; familyName = Times"
-#define WWM_FIXED_FONT                   "pixelSize = 10; familyName = Courier"
+typedef struct {
+    DEV_HEADER      devHeader;
+    TY_DEV          tyDev;
+    SIO_CHAN *      pChan;
+    VOIDFUNCPTR     isr;
+} SERIAL_DEV;
+
+/* Functions */
+
+/******************************************************************************
+ * serialDrvInit- Install serial device
+ *
+ * RETURNS: OK or ERROR
+ */
+
+STATUS serialDrvInit(
+    void
+    );
+
+/*******************************************************************************
+ * serialDevCreate - Create serial device
+ *
+ * RETURNS: OK or ERROR
+ */
+
+STATUS serialDevCreate(
+    char *name,
+    SIO_CHAN *pChan,
+    int readBufferSize,
+    int writeBufferSize
+    );
+
+/******************************************************************************
+ * serialDevDelete - Delete serial device
+ *
+ * RETURNS: OK or ERROR
+ */
+
+STATUS serialDevDelete(
+    char *name
+    );
 
 #ifdef __cplusplus
 }
@@ -53,5 +84,5 @@ extern "C" {
 
 #endif /* _ASMLANGUAGE */
 
-#endif /* _wwmConfig_h */
+#endif /* _serialDrv_h */
 

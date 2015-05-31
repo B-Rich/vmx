@@ -60,3 +60,172 @@ UGL_STATUS  winFrameCaptionSet (
     return status;
 }
 
+/******************************************************************************
+ *
+ * winFrameResizableGet - Get if frame is resizable
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_BOOL  winFrameResizableGet (
+    WIN_ID  winId
+    ) {
+
+    UGL_BOOL      result;
+    UGL_WINDOW *  pWindow;
+
+    if (winId == UGL_NULL) {
+        result = UGL_FALSE;
+    }
+    else {
+        if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
+            pWindow = winId->pParent;
+        }
+        else {
+            pWindow = winId;
+        }
+
+        if ((pWindow->attributes & WIN_ATTRIB_NO_RESIZE) != 0x00) {
+            result = UGL_FALSE;
+        }
+        else {
+            result = UGL_TRUE;
+        }
+    }
+
+    return result;
+}
+
+/******************************************************************************
+ *
+ * winFrameMinimize - Minimize window
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_STATUS  winFrameMinimize (
+    WIN_ID  winId
+    ) {
+    UGL_STATUS  status;
+    WIN_MSG     msg;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
+            winId = winId->pParent;
+        }
+
+        if ((winId->attributes & WIN_ATTRIB_NO_MINIMIZE) == 0x00 &&
+            (winId->state & WIN_STATE_MINIMIZED) == 0x00) {
+
+            msg.data.minimized.oldState = winId->state;
+            winSend(winId, MSG_FRAME_MINIMIZE, UGL_NULL, 0);
+            if ((winId->state & WIN_STATE_MINIMIZED) != 0x00) {
+                msg.type = MSG_MINIMIZED;
+                msg.data.minimized.newState = winId->state;
+                winMsgSend(winFirst(winId), &msg);
+                status = UGL_STATUS_OK;
+            }
+            else {
+                status = UGL_STATUS_ERROR;
+            }
+        }
+        else {
+            status = UGL_STATUS_ERROR;
+        }
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * winFrameMaximize - Maximize window
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_STATUS  winFrameMaximize (
+    WIN_ID  winId
+    ) {
+    UGL_STATUS  status;
+    WIN_MSG     msg;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
+            winId = winId->pParent;
+        }
+
+        if ((winId->attributes & WIN_ATTRIB_NO_MAXIMIZE) == 0x00 &&
+            (winId->state & WIN_STATE_MAXIMIZED) == 0x00) {
+
+            msg.data.maximized.oldState = winId->state;
+            winSend(winId, MSG_FRAME_MAXIMIZE, UGL_NULL, 0);
+            if ((winId->state & WIN_STATE_MAXIMIZED) != 0x00) {
+                msg.type = MSG_MAXIMIZED;
+                msg.data.maximized.newState = winId->state;
+                winMsgSend(winFirst(winId), &msg);
+                status = UGL_STATUS_OK;
+            }
+            else {
+                status = UGL_STATUS_ERROR;
+            }
+        }
+        else {
+            status = UGL_STATUS_ERROR;
+        }
+    }
+
+    return status;
+}
+
+/******************************************************************************
+ *
+ * winFrameRestore- Restore window from minimized or maxmimized state
+ *
+ * RETURNS: UGL_TRUE or UGL_FALSE
+ */
+
+UGL_STATUS  winFrameRestore (
+    WIN_ID  winId
+    ) {
+    UGL_STATUS  status;
+    WIN_MSG     msg;
+
+    if (winId == UGL_NULL) {
+        status = UGL_STATUS_ERROR;
+    }
+    else {
+        if ((winId->attributes & WIN_ATTRIB_FRAMED) != 0x00) {
+            winId = winId->pParent;
+        }
+
+        if ((winId->state &
+            (WIN_STATE_MINIMIZED | WIN_STATE_MAXIMIZED)) != 0x00) {
+
+            msg.data.restored.oldState = winId->state;
+            winSend(winId, MSG_FRAME_RESTORE, UGL_NULL, 0);
+            if (((winId->state ^ msg.data.maximized.oldState) &
+                (WIN_STATE_MINIMIZED | WIN_STATE_MAXIMIZED)) != 0x00) {
+                msg.type = MSG_RESTORED;
+                msg.data.restored.newState = winId->state;
+                winMsgSend(winFirst(winId), &msg);
+                status = UGL_STATUS_OK;
+            }
+            else {
+                status = UGL_STATUS_ERROR;
+            }
+        }
+        else {
+            status = UGL_STATUS_ERROR;
+        }
+    }
+
+    return status;
+}
+
