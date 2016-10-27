@@ -63,6 +63,7 @@
 /* Imports */
 IMPORT SYMTAB_ID         sysSymTable;
 IMPORT WIN_MGR_ENGINE *  wwmEngineId;
+IMPORT void mouseLog(void);
 
 /* Exports */
 const UGL_BMF_FONT_DESC * uglBMFFontData[] = {
@@ -3520,6 +3521,7 @@ static SYMBOL symTableUglDemo[] = {
   {NULL, "_winMgrCreate", winMgrCreate, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseInit", uglMouseInit, 0, N_TEXT | N_EXT},
   {NULL, "_uglMouseLog", uglMouseLog, 0, N_TEXT | N_EXT},
+  {NULL, "_mouseLog", mouseLog, 0, N_TEXT | N_EXT},
   {NULL, "_uglLogDev", uglLogDev, 0, N_TEXT | N_EXT},
   {NULL, "_uglWin", uglWin, 0, N_TEXT | N_EXT}
 };

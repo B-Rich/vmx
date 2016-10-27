@@ -20,6 +20,7 @@
 
 /* i8042KbdMse.c - Intel 8042 keyboard and mouse driver */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <vmx.h>
 #include <arch/sysArchLib.h>
@@ -34,6 +35,12 @@ LOCAL BOOL    i8042MseLibInstalled = FALSE;
 LOCAL BOOL    i8042Timeout;
 LOCAL int     i8042TimeoutCount;
 LOCAL WDOG_ID i8042Wdid;
+
+LOCAL int     i8042IntrCount = 0;
+void mouseLog(void)
+{
+    printf("Interrupt count: %d\n", i8042IntrCount);
+}
 
 LOCAL void i8042MseHwInit(
     I8042_MSE_DEVICE *pDev
@@ -466,6 +473,7 @@ LOCAL STATUS i8042Read(
 {
     STATUS status = ERROR;
 
+printf("i8042Read: %x, %x ", statReg, dataReg);
     /* Start watchdog */
     i8042Timeout = FALSE;
     wdStart(i8042Wdid,
@@ -487,6 +495,7 @@ LOCAL STATUS i8042Read(
         status = OK;
     }
 
+printf(" Read done: %d, with value: %x\n", status, *pData);
     return status;
 }
 
@@ -504,6 +513,7 @@ LOCAL STATUS i8042Write(
 {
     STATUS status = ERROR;
 
+printf("i8042Write: %x, %x, %x", statReg, dataReg, data);
     /* Start watchdog */
     i8042Timeout = FALSE;
     wdStart(i8042Wdid,
@@ -512,7 +522,8 @@ LOCAL STATUS i8042Write(
             0);
 
     /* Wait for output buffer to be ready */
-    while ((sysInByte(statReg) & I8042_KBD_IBFULL) && (i8042Timeout == FALSE));
+    while ((sysInByte(statReg) & I8042_KBD_IBFULL) &&
+           (i8042Timeout == FALSE));
     wdCancel(i8042Wdid);
 
     /* Write data */
@@ -523,6 +534,7 @@ LOCAL STATUS i8042Write(
         status = OK;
     }
 
+printf(" Write done: %d\n", status);
     return status;
 }
 
@@ -540,6 +552,7 @@ LOCAL void i8042Intr(
 
     if (sysInByte(pDev->statReg) & (I8042_KBD_OBFULL | I8042_KBD_AUXB))
     {
+i8042IntrCount++;
         inByte = sysInByte(pDev->dataReg);
         tyIntRd(&pDev->tyDev, inByte);
     }
